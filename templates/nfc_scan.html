@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ElderCare — {% if residente %}{{ residente.nombre }} {{ residente.apellidos }}{% else %}NFC Tag{% endif %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:    #1B4D3E;
+      --primary-lt: #E8F0EE;
+      --accent:     #D4714A;
+      --success:    #15803D;
+      --success-bg: #F0FDF4;
+      --warning:    #B45309;
+      --warning-bg: #FFFBEB;
+      --danger:     #DC2626;
+      --danger-bg:  #FEF2F2;
+      --text:       #1A1A1A;
+      --text-sm:    #6B7280;
+      --border:     #E5E7EB;
+      --radius:     14px;
+    }
+
+    body {
+      font-family: 'IBM Plex Sans', sans-serif;
+      background: #F3F4F6;
+      color: var(--text);
+      min-height: 100dvh;
+      padding: 0 0 40px;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      background: var(--primary);
+      padding: 16px 20px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .topbar-logo {
+      width: 34px; height: 34px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .topbar-logo i { color: #fff; font-size: 16px; }
+    .topbar-title {
+      font-size: 15px; font-weight: 700; color: #fff; line-height: 1;
+    }
+    .topbar-sub { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+
+    /* ── Content ── */
+    .content { padding: 20px 16px; display: flex; flex-direction: column; gap: 14px; max-width: 520px; margin: 0 auto; }
+
+    /* ── Error state ── */
+    .error-card {
+      background: var(--danger-bg);
+      border: 1px solid #FECACA;
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      text-align: center;
+    }
+    .error-card i { font-size: 40px; color: var(--danger); margin-bottom: 12px; display: block; }
+    .error-card h2 { font-size: 16px; font-weight: 700; color: var(--danger); margin-bottom: 6px; }
+    .error-card p { font-size: 13px; color: #7F1D1D; }
+
+    /* ── Patient card ── */
+    .patient-card {
+      background: var(--primary);
+      border-radius: var(--radius);
+      padding: 22px 20px;
+      color: #fff;
+    }
+    .patient-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: rgba(255,255,255,0.55);
+      margin-bottom: 6px;
+    }
+    .patient-name { font-size: 22px; font-weight: 700; line-height: 1.1; margin-bottom: 14px; }
+    .patient-meta {
+      display: flex; flex-wrap: wrap; gap: 10px;
+    }
+    .meta-chip {
+      background: rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12.5px;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .meta-chip i { font-size: 11px; opacity: .7; }
+
+    .scan-badge {
+      margin-top: 16px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 9px;
+      padding: 8px 14px;
+      font-size: 11.5px;
+      color: rgba(255,255,255,0.75);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .scan-badge i { color: rgba(255,255,255,0.5); }
+
+    /* ── Section card ── */
+    .card {
+      background: #fff;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 14px 18px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card-header-icon {
+      width: 30px; height: 30px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; flex-shrink: 0;
+    }
+    .icon-green { background: var(--success-bg); color: var(--success); }
+    .icon-amber { background: var(--warning-bg); color: var(--warning); }
+    .icon-blue  { background: #EFF6FF; color: #1D4ED8; }
+    .card-title { font-size: 13px; font-weight: 700; }
+    .card-sub   { font-size: 11px; color: var(--text-sm); margin-top: 1px; }
+    .card-body  { padding: 14px 18px; }
+
+    /* ── Medication list ── */
+    .med-item {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .med-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .med-item:first-child { padding-top: 0; }
+
+    .med-info { flex: 1; min-width: 0; }
+    .med-name { font-size: 13.5px; font-weight: 600; }
+    .med-dose {
+      font-size: 11.5px; color: var(--text-sm); margin-top: 2px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .med-dose i { font-size: 10px; }
+
+    .pill {
+      font-size: 10.5px; font-weight: 700; padding: 4px 10px;
+      border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+      letter-spacing: .02em;
+    }
+    .pill-ok { background: var(--success-bg); color: var(--success); }
+    .pill-pending { background: var(--warning-bg); color: var(--warning); }
+
+    /* ── Scan history ── */
+    .scan-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .scan-row:last-child { border-bottom: none; }
+    .scan-who { font-size: 13px; font-weight: 500; }
+    .scan-when { font-size: 11px; color: var(--text-sm); font-variant-numeric: tabular-nums; }
+
+    /* ── Empty ── */
+    .empty { text-align: center; padding: 22px 0; color: var(--text-sm); font-size: 13px; }
+    .empty i { display: block; font-size: 26px; margin-bottom: 8px; opacity: .35; }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center; font-size: 10.5px; color: var(--text-sm);
+      margin-top: 6px; letter-spacing: .03em;
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo"><i class="fa-solid fa-heart-pulse"></i></div>
+  <div>
+    <div class="topbar-title">ElderCare</div>
+    <div class="topbar-sub">Sistema de Gestion Asistencial</div>
+  </div>
+</div>
+
+<div class="content">
+
+{% if error %}
+  <!-- Error state -->
+  <div class="error-card">
+    <i class="fa-solid fa-circle-xmark"></i>
+    <h2>Tag no reconocido</h2>
+    <p>{{ error }}</p>
+    {% if codigo %}<p style="margin-top:8px;font-size:11px;opacity:.6">Codigo: {{ codigo }}</p>{% endif %}
+  </div>
+
+{% else %}
+  <!-- Patient card -->
+  <div class="patient-card">
+    <div class="patient-label">Residente</div>
+    <div class="patient-name">{{ residente.nombre }} {{ residente.apellidos }}</div>
+    <div class="patient-meta">
+      {% if residente.habitacion %}
+      <div class="meta-chip"><i class="fa-solid fa-bed"></i> Hab. {{ residente.habitacion }}</div>
+      {% endif %}
+      {% if residente.sala_nombre %}
+      <div class="meta-chip"><i class="fa-solid fa-house-medical"></i> {{ residente.sala_nombre }}</div>
+      {% endif %}
+      {% if residente.fecha_ingreso %}
+      <div class="meta-chip"><i class="fa-solid fa-calendar-days"></i> Ingreso: {{ residente.fecha_ingreso.strftime('%d/%m/%Y') if residente.fecha_ingreso else '—' }}</div>
+      {% endif %}
+    </div>
+    {% if tag.descripcion %}
+    <div class="scan-badge">
+      <i class="fa-solid fa-tag"></i>
+      {{ tag.descripcion }}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Medications -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-icon icon-green"><i class="fa-solid fa-pills"></i></div>
+      <div>
+        <div class="card-title">Medicacion de Hoy</div>
+        <div class="card-sub">
+          {% set total = meds|length %}
+          {% set dados = meds|selectattr('administrado')|list|length %}
+          {{ dados }}/{{ total }} administrados
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      {% if meds %}
+        {% for m in meds %}
+        <div class="med-item">
+          <div class="med-info">
+            <div class="med-name">{{ m.nombre }}</div>
+            <div class="med-dose">
+              <i class="fa-solid fa-syringe"></i>{{ m.dosis }}
+              &nbsp;·&nbsp;
+              <i class="fa-solid fa-clock"></i>
+              {{ m.hora_programada.strftime('%H:%M') if m.hora_programada else '—' }}
+            </div>
+          </div>
+          {% if m.administrado %}
+            <span class="pill pill-ok"><i class="fa-solid fa-check"></i> Dado</span>
+          {% else %}
+            <span class="pill pill-pending"><i class="fa-solid fa-clock"></i> Pendiente</span>
+          {% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty"><i class="fa-solid fa-pills"></i>Sin medicacion activa para hoy</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Scan history -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-icon icon-blue"><i class="fa-solid fa-clock-rotate-left"></i></div>
+      <div>
+        <div class="card-title">Ultimos Escaneos</div>
+        <div class="card-sub">Ultimas 5 lecturas del tag</div>
+      </div>
+    </div>
+    <div class="card-body">
+      {% if eventos %}
+        {% for e in eventos %}
+        <div class="scan-row">
+          <div class="scan-who"><i class="fa-solid fa-user-nurse" style="color:var(--text-sm);margin-right:6px;font-size:11px"></i>{{ e.staff }}</div>
+          <div class="scan-when">{{ e.escaneado_en.strftime('%d/%m %H:%M') if e.escaneado_en else '—' }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty"><i class="fa-solid fa-clock-rotate-left"></i>Sin escaneos previos</div>
+      {% endif %}
+    </div>
+  </div>
+
+{% endif %}
+
+<div class="footer">ElderCare &copy; 2026 &mdash; Acceso restringido a personal autorizado</div>
+
+</div>
+</body>
+</html>

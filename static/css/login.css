@@ -1,0 +1,116 @@
+/* =========================
+   ESTILOS LOGIN PAGE
+   ========================= */
+
+.login-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: var(--bg-body);
+}
+
+.login-container {
+    width: 100%;
+    max-width: 420px;
+    padding: 20px;
+}
+
+.login-card {
+    background-color: var(--white);
+    border-radius: var(--radius);
+    padding: 40px;
+    box-shadow: var(--shadow-md);
+    border-top: 5px solid var(--sidebar-bg);
+    text-align: center;
+}
+
+.login-logo {
+    font-size: 48px;
+    color: var(--sidebar-bg);
+    margin-bottom: 16px;
+}
+
+.login-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--sidebar-bg);
+    margin-bottom: 4px;
+}
+
+.login-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+}
+
+/* Form elements for login */
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-family: var(--font-main);
+    font-size: 14px;
+    color: var(--text-primary);
+    background-color: var(--bg-body);
+    outline: none;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.form-input:focus {
+    border-color: var(--info);
+    background-color: var(--white);
+}
+
+.btn-login {
+    width: 100%;
+    padding: 13px;
+    background-color: var(--sidebar-bg);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-main);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-login:hover {
+    background-color: #152b45;
+    transform: translateY(-1px);
+}
+
+.btn-login:active {
+    transform: translateY(0);
+}
+
+.helper-text {
+    margin-top: 24px;
+    padding: 14px;
+    background-color: #F0F4FF;
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.8;
+    text-align: left;
+}
+
+.helper-text strong {
+    color: var(--sidebar-bg);
+}

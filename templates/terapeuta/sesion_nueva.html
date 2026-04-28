@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Nueva Sesion{% endblock %}
+{% block page_title %}Nueva Sesion Terapeutica{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><h1>Agendar Sesion</h1><p>Verificacion automatica de conflictos de horario</p></div>
+  <a href="{{ url_for('terapeuta_sesiones') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-arrow-left"></i> Volver</a>
+</div>
+
+{% if conflicto %}
+<div style="background:var(--danger-bg);border:1px solid #FECACA;border-radius:var(--radius-sm);padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:18px">
+  <i class="fa-solid fa-calendar-xmark" style="color:var(--danger);font-size:18px;flex-shrink:0"></i>
+  <div>
+    <strong style="color:var(--danger)">Conflicto de horario detectado</strong>
+    <div style="font-size:13px;color:#7F1D1D;margin-top:2px">{{ conflicto }}</div>
+  </div>
+</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start">
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">Datos de la Sesion</span></div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('terapeuta_sesion_nueva') }}">
+        <div class="form-grid" style="margin-bottom:18px">
+          <div class="form-group">
+            <label>Residente *</label>
+            <select name="id_residente" required>
+              <option value="">Seleccionar residente…</option>
+              {% for r in residentes %}
+              <option value="{{ r.id_residente }}" {% if preselect_residente==r.id_residente|string %}selected{% endif %}>
+                {{ r.nombre }} {{ r.apellidos }} — Hab. {{ r.habitacion or '—' }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Sala *</label>
+            <select name="id_sala" required>
+              <option value="">Seleccionar sala…</option>
+              {% for s in salas %}
+              <option value="{{ s.id_sala }}">{{ s.nombre_sala }} (cap. {{ s.capacidad }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Tipo de sesion *</label>
+            <select name="tipo_sesion" required>
+              <option value="Individual">Individual</option>
+              <option value="Grupal">Grupal</option>
+              <option value="Cognitiva">Cognitiva</option>
+              <option value="Ocupacional">Ocupacional</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Duracion (minutos) *</label>
+            <input type="number" name="duracion_min" value="60" min="15" max="180" required>
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Fecha y hora *</label>
+            <input type="datetime-local" name="fecha_sesion" required>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <a href="{{ url_for('terapeuta_sesiones') }}" class="btn btn-outline">Cancelar</a>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-calendar-plus"></i> Agendar sesion</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Info de salas -->
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="card">
+      <div class="card-header"><span class="card-title" style="font-size:14px">Salas Disponibles</span></div>
+      <div class="card-body" style="padding-top:12px;display:flex;flex-direction:column;gap:8px">
+        {% for s in salas %}
+        <div style="padding:10px 12px;background:var(--bg);border-radius:9px">
+          <div style="font-weight:600;font-size:13px">{{ s.nombre_sala }}</div>
+          <div style="font-size:11px;color:var(--text-sm)">Capacidad: {{ s.capacidad }} · {{ s.ala or 'Sin ala' }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card" style="background:linear-gradient(135deg,#0D1F17,#1B3A29);border-color:transparent">
+      <div class="card-body">
+        <p style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.6">
+          <i class="fa-solid fa-circle-info" style="color:#52B788;margin-right:6px"></i>
+          El sistema detecta automaticamente conflictos de horario: sala ocupada o residente con sesion simultanea.
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

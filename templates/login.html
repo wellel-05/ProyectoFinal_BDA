@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar Sesion — ElderCare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'IBM Plex Sans',sans-serif;min-height:100vh;display:flex;background:#F4F0E8}
+
+    .split-left{
+      width:420px;flex-shrink:0;background:#0D1F17;
+      display:flex;flex-direction:column;justify-content:space-between;
+      padding:48px 44px;position:relative;overflow:hidden;
+    }
+    .split-left::before{
+      content:'';position:absolute;top:-80px;right:-80px;
+      width:260px;height:260px;
+      background:radial-gradient(circle,rgba(82,183,136,0.18) 0%,transparent 65%);
+      pointer-events:none;
+    }
+    .split-left::after{
+      content:'';position:absolute;bottom:-60px;left:-60px;
+      width:200px;height:200px;
+      background:radial-gradient(circle,rgba(212,113,74,0.12) 0%,transparent 65%);
+      pointer-events:none;
+    }
+
+    .brand{position:relative;z-index:1}
+    .brand-icon{
+      width:52px;height:52px;
+      background:linear-gradient(135deg,#52B788,#2D8A5E);
+      border-radius:14px;display:flex;align-items:center;justify-content:center;
+      font-size:22px;color:#fff;margin-bottom:20px;
+      box-shadow:0 6px 20px rgba(82,183,136,0.35);
+    }
+    .brand-name{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:#fff;letter-spacing:.06em}
+    .brand-sub{font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#52B788;margin-top:4px}
+    .brand-desc{margin-top:32px;font-size:14px;color:rgba(255,255,255,0.45);line-height:1.7;font-style:italic}
+
+    .features{position:relative;z-index:1;display:flex;flex-direction:column;gap:14px}
+    .feat-item{display:flex;align-items:center;gap:12px;color:rgba(255,255,255,0.5);font-size:12.5px}
+    .feat-item i{width:28px;height:28px;background:rgba(82,183,136,0.12);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#52B788;flex-shrink:0}
+
+    .split-right{
+      flex:1;display:flex;align-items:center;justify-content:center;padding:40px;
+    }
+
+    .login-box{width:100%;max-width:400px}
+    .login-heading{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;color:#1A1A18;line-height:1.1;margin-bottom:6px}
+    .login-sub{font-size:13.5px;color:#7A8070;margin-bottom:36px}
+
+    .form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+    .form-group label{font-size:11.5px;font-weight:600;color:#4A5240;letter-spacing:.03em}
+    .input-wrap{position:relative}
+    .input-wrap i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#AAA49C;font-size:13px;pointer-events:none}
+    .input-wrap input{
+      width:100%;padding:11px 13px 11px 38px;
+      border:1.5px solid #E3DDD5;border-radius:9px;
+      font-family:'IBM Plex Sans',sans-serif;font-size:13.5px;color:#1A1A18;
+      background:#FAFAF8;transition:border-color .14s,box-shadow .14s;outline:none;
+    }
+    .input-wrap input:focus{border-color:#1B4D3E;box-shadow:0 0 0 3px rgba(27,77,62,0.1);background:#fff}
+
+    .error-banner{
+      background:#FEE2E2;border:1px solid #FECACA;border-radius:9px;
+      padding:11px 14px;display:flex;align-items:center;gap:10px;
+      font-size:13px;color:#7F1D1D;margin-bottom:20px;
+    }
+
+    .btn-login{
+      width:100%;padding:12px;border-radius:9px;
+      background:#1B4D3E;color:#fff;border:none;
+      font-family:'IBM Plex Sans',sans-serif;font-size:14px;font-weight:600;
+      cursor:pointer;transition:background .16s,transform .12s;
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      margin-top:8px;
+    }
+    .btn-login:hover{background:#2D6A4F}
+    .btn-login:active{transform:scale(.99)}
+
+    .login-footer{margin-top:28px;text-align:center;font-size:12px;color:#AAA49C}
+    .login-footer strong{color:#4A5240}
+  </style>
+</head>
+<body>
+
+<div class="split-left">
+  <div class="brand">
+    <div class="brand-icon"><i class="fa-solid fa-hands-holding-circle"></i></div>
+    <div class="brand-name">ELDERCARE</div>
+    <div class="brand-sub">Asilo · Salud Mental</div>
+    <p class="brand-desc">Sistema de gestion integral para el cuidado de adultos mayores. Seguimiento clinico, IoT y bienestar.</p>
+  </div>
+  <div class="features">
+    <div class="feat-item"><i class="fa-solid fa-user-nurse"></i><span>Gestion de residentes y personal</span></div>
+    <div class="feat-item"><i class="fa-solid fa-pills"></i><span>Control de medicamentos via NFC</span></div>
+    <div class="feat-item"><i class="fa-solid fa-map-location-dot"></i><span>Monitoreo IoT — GPS, Beacon, RFID</span></div>
+    <div class="feat-item"><i class="fa-solid fa-shield-halved"></i><span>Auditoria completa de accesos</span></div>
+  </div>
+</div>
+
+<div class="split-right">
+  <div class="login-box">
+    <h1 class="login-heading">Bienvenido de<br><em>regreso</em></h1>
+    <p class="login-sub">Ingresa tus credenciales para continuar</p>
+
+    {% if error %}
+    <div class="error-banner">
+      <i class="fa-solid fa-circle-xmark"></i>
+      <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('login') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group">
+        <label>Usuario</label>
+        <div class="input-wrap">
+          <i class="fa-solid fa-user"></i>
+          <input type="text" name="username" placeholder="tu.usuario" autocomplete="username" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <div class="input-wrap">
+          <i class="fa-solid fa-lock"></i>
+          <input type="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
+        </div>
+      </div>
+      <button type="submit" class="btn-login">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i>
+        Iniciar sesion
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <p>Cuentas de prueba — <strong>admin / admin123</strong> &nbsp;·&nbsp; <strong>jramirez / terapeuta123</strong> &nbsp;·&nbsp; <strong>mlopez / cuidador123</strong></p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

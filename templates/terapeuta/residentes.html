@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Residentes — Terapeuta{% endblock %}
+{% block page_title %}Mis Residentes{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><h1>Residentes Asignados</h1><p>{{ residentes|length }} residentes bajo su cuidado terapeutico</p></div>
+</div>
+
+<div class="card">
+  <div class="card-header" style="padding-bottom:16px">
+    <input type="text" placeholder="Buscar residente…" style="max-width:280px;margin:0" oninput="filterTable(this.value,'res-table')">
+    <div class="flex gap-2">
+      <span class="badge badge-success">{{ residentes|selectattr('nivel_movilidad','eq','Autonomo')|list|length }} Autonomos</span>
+      <span class="badge badge-warning">{{ residentes|selectattr('nivel_movilidad','eq','Asistido')|list|length }} Asistidos</span>
+      <span class="badge badge-danger">{{ residentes|selectattr('nivel_movilidad','eq','Encamado')|list|length }} Encamados</span>
+    </div>
+  </div>
+  <div class="tbl-wrap">
+    <table id="res-table">
+      <thead>
+        <tr><th>Residente</th><th>Hab.</th><th>Diagnostico</th><th>Movilidad</th><th>Ultimo Animo</th><th>Sesiones</th><th>Acciones</th></tr>
+      </thead>
+      <tbody>
+      {% for r in residentes %}
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6B9FD4,#4A7FB5);display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:700;flex-shrink:0">{{ r.residente[0] }}</div>
+            <div>
+              <div style="font-weight:600">{{ r.residente }}</div>
+              <div style="font-size:11px;color:var(--text-sm)">{{ r.edad }} años</div>
+            </div>
+          </div>
+        </td>
+        <td><span class="badge badge-neutral">{{ r.habitacion or '—' }}</span></td>
+        <td style="max-width:160px;font-size:12.5px">{{ r.diagnostico_principal or '—' }}</td>
+        <td>
+          <span class="badge {% if r.nivel_movilidad=='Autonomo' %}badge-success{% elif r.nivel_movilidad=='Asistido' %}badge-warning{% else %}badge-danger{% endif %}">
+            {{ r.nivel_movilidad }}
+          </span>
+        </td>
+        <td>
+          {% if r.ultimo_puntaje_animo %}
+          <div style="display:flex;align-items:center;gap:5px">
+            <div style="display:flex;gap:2px">
+              {% for i in range(1,6) %}
+              <div style="width:8px;height:8px;border-radius:50%;background:{% if i<=r.ultimo_puntaje_animo %}{% if r.ultimo_puntaje_animo<=2 %}var(--danger){% elif r.ultimo_puntaje_animo<=3 %}var(--warning){% else %}var(--success){% endif %}{% else %}#E3DDD5{% endif %}"></div>
+              {% endfor %}
+            </div>
+            <span style="font-size:11px;color:var(--text-sm)">{{ r.ultimo_puntaje_animo }}/5</span>
+          </div>
+          {% else %}<span style="color:var(--text-sm);font-size:12px">Sin registro</span>{% endif %}
+        </td>
+        <td style="font-size:12.5px;color:var(--text-sm)">{{ r.total_sesiones or 0 }} sesiones</td>
+        <td>
+          <a href="{{ url_for('terapeuta_residente_detalle', id_residente=r.id_residente) }}" class="btn btn-ghost btn-sm" title="Ver expediente">
+            <i class="fa-solid fa-eye"></i>
+          </a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-users"></i><p>Sin residentes asignados</p></div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% block scripts %}
+<script>
+function filterTable(q,id){
+  q=q.toLowerCase();
+  document.querySelectorAll('#'+id+' tbody tr').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q)?'':'none'});
+}
+</script>
+{% endblock %}
+{% endblock %}

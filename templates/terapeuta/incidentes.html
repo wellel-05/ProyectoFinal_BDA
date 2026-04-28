@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% block title %}Incidentes — Terapeuta{% endblock %}
+{% block page_title %}Incidentes de Residentes{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><h1>Incidentes</h1><p>{{ incidentes|length }} registros · Generados manual y automaticamente</p></div>
+</div>
+
+<!-- Stats rapidos -->
+<div class="grid-3" style="margin-bottom:18px">
+  <div class="card">
+    <div class="card-body" style="display:flex;align-items:center;gap:14px">
+      <div class="stat-icon red"><i class="fa-solid fa-circle-exclamation"></i></div>
+      <div>
+        <div class="stat-label">Alta severidad</div>
+        <div class="stat-value">{{ incidentes|selectattr('severidad','eq','Alta')|list|length }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body" style="display:flex;align-items:center;gap:14px">
+      <div class="stat-icon" style="background:rgba(245,158,11,0.12);color:var(--warning)"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div>
+        <div class="stat-label">Media severidad</div>
+        <div class="stat-value">{{ incidentes|selectattr('severidad','eq','Media')|list|length }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body" style="display:flex;align-items:center;gap:14px">
+      <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+      <div>
+        <div class="stat-label">Baja severidad</div>
+        <div class="stat-value">{{ incidentes|selectattr('severidad','eq','Baja')|list|length }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header" style="padding-bottom:16px">
+    <input type="text" placeholder="Buscar incidente…" style="max-width:260px;margin:0" oninput="filterTable(this.value,'inc-table')">
+    <div class="flex gap-2">
+      <span class="badge badge-danger" style="cursor:pointer" onclick="filterSev('Alta')">Alta</span>
+      <span class="badge badge-warning" style="cursor:pointer" onclick="filterSev('Media')">Media</span>
+      <span class="badge badge-success" style="cursor:pointer" onclick="filterSev('Baja')">Baja</span>
+      <span class="badge badge-neutral" style="cursor:pointer" onclick="filterSev('')">Todos</span>
+    </div>
+  </div>
+  <div class="tbl-wrap">
+    <table id="inc-table">
+      <thead>
+        <tr><th>Residente</th><th>Tipo</th><th>Severidad</th><th>Fecha</th><th>Descripcion</th><th>Reportado por</th><th></th></tr>
+      </thead>
+      <tbody>
+      {% for i in incidentes %}
+      <tr data-sev="{{ i.severidad }}">
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#52B788,#2D8A5E);display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:700;flex-shrink:0">{{ i.residente[0] }}</div>
+            <span style="font-weight:600;font-size:13px">{{ i.residente }}</span>
+          </div>
+        </td>
+        <td style="font-size:12.5px">{{ i.tipo.replace('_',' ') }}</td>
+        <td>
+          <span class="badge {% if i.severidad=='Alta' %}badge-danger{% elif i.severidad=='Media' %}badge-warning{% else %}badge-success{% endif %}" style="font-size:10px">
+            {{ i.severidad }}
+          </span>
+        </td>
+        <td style="font-size:12px;color:var(--text-sm)">{{ i.fecha }}</td>
+        <td style="font-size:12px;max-width:200px">{{ i.descripcion or '—' }}</td>
+        <td style="font-size:12.5px">{{ i.reportado_por }}</td>
+        <td>
+          <button class="btn btn-ghost btn-sm" title="Editar"
+            onclick="openEditInc({{ i.id_incidente }},'{{ i.tipo|e }}','{{ (i.descripcion or '')|e }}','{{ i.severidad|e }}')">
+            <i class="fa-solid fa-pen-to-square" style="color:var(--primary)"></i>
+          </button>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-shield-halved"></i><p>Sin incidentes registrados</p></div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal editar incidente -->
+<div id="modal-edit-inc" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;align-items:center;justify-content:center;padding:20px">
+  <div class="card" style="width:100%;max-width:500px">
+    <div class="card-header" style="padding-bottom:0">
+      <span class="card-title">Editar Incidente</span>
+      <button onclick="document.getElementById('modal-edit-inc').style.display='none'" class="btn btn-ghost btn-sm"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="card-body">
+      <form method="POST" id="form-edit-inc" action="">
+        <div class="form-grid" style="margin-bottom:16px">
+          <div class="form-group">
+            <label>Tipo *</label>
+            <select name="tipo" id="ei-tipo" required>
+              {% for t in ['Caida','Agitacion','Deambulacion','Rechazo_Medicamento','Otro'] %}
+              <option value="{{ t }}">{{ t.replace('_',' ') }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Severidad *</label>
+            <select name="severidad" id="ei-severidad" required>
+              <option value="Alta">Alta</option>
+              <option value="Media">Media</option>
+              <option value="Baja">Baja</option>
+            </select>
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Descripcion</label>
+            <textarea name="descripcion" id="ei-descripcion" rows="3"></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button type="button" onclick="document.getElementById('modal-edit-inc').style.display='none'" class="btn btn-outline">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% block scripts %}
+<script>
+function filterTable(q,id){
+  q=q.toLowerCase();
+  document.querySelectorAll('#'+id+' tbody tr').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q)?'':'none'});
+}
+function filterSev(sev){
+  document.querySelectorAll('#inc-table tbody tr[data-sev]').forEach(r=>{
+    r.style.display=(!sev||r.dataset.sev===sev)?'':'none';
+  });
+}
+function openEditInc(id, tipo, desc, sev){
+  document.getElementById('form-edit-inc').action='/terapeuta/incidentes/'+id+'/editar';
+  document.getElementById('ei-tipo').value=tipo;
+  document.getElementById('ei-severidad').value=sev;
+  document.getElementById('ei-descripcion').value=desc;
+  document.getElementById('modal-edit-inc').style.display='flex';
+}
+document.getElementById('modal-edit-inc').addEventListener('click',function(e){if(e.target===this)this.style.display='none'});
+</script>
+{% endblock %}
+{% endblock %}

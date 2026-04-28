@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% block title %}{{ residente.nombre }} {{ residente.apellidos }} — Terapeuta{% endblock %}
+{% block page_title %}Expediente Terapeutico{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{{ residente.nombre }} {{ residente.apellidos }}</h1>
+    <p>Habitacion {{ residente.habitacion or '—' }} · {{ residente.edad }} años · Diagnostico: {{ residente.diagnostico_principal or 'Sin registrar' }}</p>
+  </div>
+  <a href="{{ url_for('terapeuta_residentes') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-arrow-left"></i> Volver</a>
+</div>
+
+<div style="display:grid;grid-template-columns:280px 1fr;gap:18px;align-items:start">
+
+  <!-- Panel izquierdo -->
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <div class="card">
+      <div class="card-body">
+        <div style="text-align:center;padding:16px 0 20px">
+          <div style="width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,#6B9FD4,#2D5A8E);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:28px;color:#fff;font-weight:700;margin:0 auto 12px">
+            {{ residente.nombre[0] }}
+          </div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:700">{{ residente.nombre }} {{ residente.apellidos }}</div>
+          <span class="badge {% if residente.nivel_movilidad=='Autonomo' %}badge-success{% elif residente.nivel_movilidad=='Asistido' %}badge-warning{% else %}badge-danger{% endif %}" style="margin-top:6px">
+            {{ residente.nivel_movilidad }}
+          </span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:9px;border-top:1px solid var(--border);padding-top:14px">
+          <div style="display:flex;justify-content:space-between;font-size:12.5px">
+            <span style="color:var(--text-sm)">Sexo</span><span>{{ 'Masculino' if residente.sexo=='M' else 'Femenino' }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px">
+            <span style="color:var(--text-sm)">Habitacion</span><span>{{ residente.habitacion or '—' }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px">
+            <span style="color:var(--text-sm)">Ingreso</span><span>{{ residente.fecha_ingreso }}</span>
+          </div>
+          <div style="font-size:12.5px;margin-top:4px">
+            <div style="color:var(--text-sm);margin-bottom:4px">Diagnostico</div>
+            <div>{{ residente.diagnostico_principal or 'Sin diagnostico registrado' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sesion rapida -->
+    <div class="card">
+      <div class="card-header"><span class="card-title" style="font-size:14px">Agendar Sesion</span></div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('terapeuta_sesion_nueva') }}">
+          <input type="hidden" name="id_residente" value="{{ residente.id_residente }}">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div class="form-group">
+              <label>Sala *</label>
+              <select name="id_sala" required>
+                <option value="">Seleccionar…</option>
+                {% for s in salas %}
+                <option value="{{ s.id_sala }}">{{ s.nombre_sala }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Tipo *</label>
+              <select name="tipo_sesion" required>
+                <option value="Individual">Individual</option>
+                <option value="Grupal">Grupal</option>
+                <option value="Cognitiva">Cognitiva</option>
+                <option value="Ocupacional">Ocupacional</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Fecha y hora *</label>
+              <input type="datetime-local" name="fecha_sesion" required>
+            </div>
+            <div class="form-group">
+              <label>Duracion (min)</label>
+              <input type="number" name="duracion_min" value="60" min="15" max="180">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">
+              <i class="fa-solid fa-calendar-plus"></i> Agendar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel derecho -->
+  <div style="display:flex;flex-direction:column;gap:18px">
+
+    <!-- Grafica evolucion animo — Escenario 1 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-chart-line" style="color:var(--info);margin-right:8px"></i>Evolucion del Estado de Animo</span>
+        <span class="badge badge-info" style="font-size:10px">Ultimos 30 dias</span>
+      </div>
+      <div class="card-body" style="padding-top:14px">
+        {% if evolucion_animo %}
+        <canvas id="moodChart" style="max-height:220px"></canvas>
+        {% else %}
+        <div class="empty-state"><i class="fa-solid fa-chart-line"></i><p>Sin datos de animo para graficar</p></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Historial de sesiones -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Sesiones Terapeuticas</span>
+        <span class="badge badge-neutral">{{ sesiones|length }}</span>
+      </div>
+      <div class="card-body" style="padding-top:12px">
+        {% if sesiones %}
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Sala</th><th>Tipo</th><th>Duracion</th><th>Asistio</th></tr></thead>
+            <tbody>
+            {% for s in sesiones %}
+            <tr>
+              <td style="font-size:12px;color:var(--text-sm)">{{ s.fecha_sesion.strftime('%d %b %Y %H:%M') if s.fecha_sesion else '—' }}</td>
+              <td style="font-size:12.5px">{{ s.sala }}</td>
+              <td><span class="badge badge-info" style="font-size:10px">{{ s.tipo_sesion }}</span></td>
+              <td style="font-size:12.5px">{{ s.duracion_min }} min</td>
+              <td>
+                <span class="badge {% if s.asistio %}badge-success{% else %}badge-danger{% endif %}" style="font-size:10px">
+                  {{ 'Si' if s.asistio else 'No' }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state"><i class="fa-solid fa-calendar"></i><p>Sin sesiones registradas</p></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Incidentes -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Incidentes</span></div>
+      <div class="card-body" style="padding-top:12px">
+        {% if incidentes %}
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Tipo</th><th>Severidad</th><th>Reportado por</th></tr></thead>
+            <tbody>
+            {% for i in incidentes %}
+            <tr>
+              <td style="font-size:12px;color:var(--text-sm)">{{ i.fecha }}</td>
+              <td style="font-size:12.5px">{{ i.tipo.replace('_',' ') }}</td>
+              <td><span class="badge {% if i.severidad=='Alta' %}badge-danger{% elif i.severidad=='Media' %}badge-warning{% else %}badge-success{% endif %}" style="font-size:10px">{{ i.severidad }}</span></td>
+              <td style="font-size:12px">{{ i.reportado_por }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state"><i class="fa-solid fa-shield-halved"></i><p>Sin incidentes registrados</p></div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% block scripts %}
+{% if evolucion_animo %}
+<script>
+const labels = {{ evolucion_animo | map(attribute='fecha') | list | tojson }};
+const scores = {{ evolucion_animo | map(attribute='puntaje') | list | tojson }};
+
+const ctx = document.getElementById('moodChart').getContext('2d');
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: labels,
+    datasets: [{
+      label: 'Puntaje de Animo',
+      data: scores,
+      borderColor: '#52B788',
+      backgroundColor: 'rgba(82,183,136,0.12)',
+      borderWidth: 2.5,
+      pointBackgroundColor: scores.map(v => v<=2?'#EF4444':v<=3?'#F59E0B':'#52B788'),
+      pointRadius: 5,
+      pointHoverRadius: 7,
+      tension: 0.35,
+      fill: true
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => `Animo: ${ctx.parsed.y}/5`
+        }
+      }
+    },
+    scales: {
+      y: {
+        min: 0, max: 5,
+        ticks: {
+          stepSize: 1,
+          font: { family: 'Outfit', size: 11 },
+          color: '#7C6E5A'
+        },
+        grid: { color: 'rgba(0,0,0,0.05)' }
+      },
+      x: {
+        ticks: { font: { family: 'Outfit', size: 10 }, color: '#7C6E5A', maxRotation: 45 },
+        grid: { display: false }
+      }
+    }
+  }
+});
+</script>
+{% endif %}
+{% endblock %}
+{% endblock %}

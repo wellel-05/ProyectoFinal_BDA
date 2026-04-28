@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Medicamentos — Cuidador{% endblock %}
+{% block page_title %}Medicamentos de Hoy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><h1>Medicamentos del Dia</h1><p>Pendientes y administrados · {{ current_date_str }}</p></div>
+  <a href="{{ url_for('cuidador_nfc') }}" class="btn btn-primary btn-sm">
+    <i class="fa-solid fa-mobile-screen"></i> Confirmar por NFC
+  </a>
+</div>
+
+<!-- Stats -->
+<div class="grid-3" style="margin-bottom:18px">
+  <div class="card">
+    <div class="card-body" style="display:flex;align-items:center;gap:14px">
+      <div class="stat-icon {% if pendientes %}red{% else %}green{% endif %}"><i class="fa-solid fa-pills"></i></div>
+      <div>
+        <div class="stat-label">Pendientes</div>
+        <div class="stat-value">{{ pendientes|length }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body" style="display:flex;align-items:center;gap:14px">
+      <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+      <div>
+        <div class="stat-label">Administrados hoy</div>
+        <div class="stat-value">{{ administrados|length }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body" style="display:flex;align-items:center;gap:14px">
+      <div class="stat-icon blue"><i class="fa-solid fa-users"></i></div>
+      <div>
+        <div class="stat-label">Residentes con tomas</div>
+        <div class="stat-value">{{ (pendientes + administrados) | map(attribute='residente') | unique | list | length }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pendientes -->
+{% if pendientes %}
+<div class="card" style="margin-bottom:18px;border-color:#FECACA">
+  <div class="card-header">
+    <span class="card-title"><i class="fa-solid fa-clock" style="color:var(--danger);margin-right:8px"></i>Pendientes de Administrar</span>
+    <span class="badge badge-danger">{{ pendientes|length }}</span>
+  </div>
+  <div class="card-body" style="padding-top:14px">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Residente</th><th>Hab.</th><th>Medicamento</th><th>Dosis</th><th>Hora Prog.</th><th>Via</th></tr></thead>
+        <tbody>
+        {% for m in pendientes %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#D4714A,#B85A36);display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:700;flex-shrink:0">{{ m.residente[0] }}</div>
+              <span style="font-weight:600;font-size:13px">{{ m.residente }}</span>
+            </div>
+          </td>
+          <td><span class="badge badge-neutral" style="font-size:10px">{{ m.habitacion or '—' }}</span></td>
+          <td style="font-weight:600;font-size:13px">{{ m.medicamento }}</td>
+          <td style="font-size:12.5px">{{ m.dosis }}</td>
+          <td style="font-size:13px;font-weight:600;color:var(--danger);font-family:monospace">{{ m.hora_programada }}</td>
+          <td style="font-size:12px;color:var(--text-sm)">{{ m.via_administracion or '—' }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Administrados -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title"><i class="fa-solid fa-circle-check" style="color:var(--success);margin-right:8px"></i>Administrados Hoy</span>
+    <span class="badge badge-success">{{ administrados|length }}</span>
+  </div>
+  <div class="card-body" style="padding-top:14px">
+    {% if administrados %}
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Residente</th><th>Medicamento</th><th>Dosis</th><th>Hora Admin.</th><th>Confirmado por</th><th>Metodo</th></tr></thead>
+        <tbody>
+        {% for m in administrados %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#52B788,#2D8A5E);display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:700;flex-shrink:0">{{ m.residente[0] }}</div>
+              <span style="font-weight:600;font-size:13px">{{ m.residente }}</span>
+            </div>
+          </td>
+          <td style="font-weight:600;font-size:13px">{{ m.medicamento }}</td>
+          <td style="font-size:12.5px">{{ m.dosis }}</td>
+          <td style="font-size:12px;font-family:monospace;color:var(--text-sm)">{{ m.hora_administrado }}</td>
+          <td style="font-size:12.5px">{{ m.confirmado_por }}</td>
+          <td>
+            <span class="badge badge-neutral" style="font-size:10px">
+              <i class="fa-solid {% if m.metodo=='NFC' %}fa-mobile-screen{% else %}fa-hand{% endif %}"></i>
+              {{ m.metodo or 'Manual' }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="fa-solid fa-pills"></i><p>Sin medicamentos administrados hoy</p></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

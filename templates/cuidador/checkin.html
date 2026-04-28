@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Check-in de Animo{% endblock %}
+{% block page_title %}Registrar Estado de Animo{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><h1>Check-in de Animo</h1><p>Registro de bienestar emocional del residente</p></div>
+  <a href="{{ url_for('cuidador_residentes') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-arrow-left"></i> Volver</a>
+</div>
+
+<div style="max-width:560px;margin:0 auto">
+  <div class="card">
+    <div class="card-header"><span class="card-title">Nuevo Check-in</span></div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('cuidador_checkin') }}">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="form-group">
+            <label>Residente *</label>
+            <select name="id_residente" required>
+              <option value="">Seleccionar…</option>
+              {% for r in residentes %}
+              <option value="{{ r.id_residente }}">{{ r.nombre }} {{ r.apellidos }} — Hab. {{ r.habitacion or '—' }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Puntaje de animo *</label>
+            <div style="display:flex;gap:8px;margin-top:6px">
+              {% for v in [1,2,3,4,5] %}
+              <label style="flex:1;text-align:center;cursor:pointer">
+                <input type="radio" name="puntaje" value="{{ v }}" required style="display:none">
+                <div style="padding:10px 0;border-radius:10px;border:2px solid var(--border);font-weight:700;font-size:16px;color:var(--text-sm);transition:all .15s;user-select:none"
+                     onclick="selectMood(this,{{ v }})">{{ v }}</div>
+              </label>
+              {% endfor %}
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--text-sm);margin-top:4px;padding:0 4px">
+              <span>Muy bajo</span><span>Excelente</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Notas (opcional)</label>
+            <textarea name="notas" rows="3" placeholder="Observaciones sobre el estado emocional del residente…"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">
+            <i class="fa-solid fa-check"></i> Registrar check-in
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% block scripts %}
+<script>
+function selectMood(el, v){
+  document.querySelectorAll('[onclick^="selectMood"]').forEach(d=>{
+    d.style.background='';d.style.borderColor='var(--border)';d.style.color='var(--text-sm)';
+  });
+  const color=v<=2?'var(--danger)':v<=3?'var(--warning)':'var(--success)';
+  const bg=v<=2?'var(--danger-bg)':v<=3?'rgba(245,158,11,0.1)':'rgba(82,183,136,0.12)';
+  el.style.borderColor=color;el.style.background=bg;el.style.color=color;
+}
+</script>
+{% endblock %}
+{% endblock %}

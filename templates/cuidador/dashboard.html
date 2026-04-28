@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block title %}Panel Cuidador{% endblock %}
+{% block page_title %}Panel del Cuidador{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Bienvenido, {{ current_user.nombre }}</h1>
+    <p>{{ current_date_str }} · Turno activo</p>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid" style="margin-bottom:22px">
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fa-solid fa-users"></i></div>
+    <div class="stat-label">Residentes a cargo</div>
+    <div class="stat-value">{{ total_residentes }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon {% if meds_pendientes %}red{% else %}green{% endif %}">
+      <i class="fa-solid fa-pills"></i>
+    </div>
+    <div class="stat-label">Medicamentos pendientes</div>
+    <div class="stat-value">{{ meds_pendientes|length }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="fa-solid fa-face-smile"></i></div>
+    <div class="stat-label">Check-ins hoy</div>
+    <div class="stat-value">{{ checkins_hoy }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon {% if incidentes_hoy %}red{% else %}green{% endif %}">
+      <i class="fa-solid {% if incidentes_hoy %}fa-triangle-exclamation{% else %}fa-shield-halved{% endif %}"></i>
+    </div>
+    <div class="stat-label">Incidentes hoy</div>
+    <div class="stat-value">{{ incidentes_hoy }}</div>
+  </div>
+</div>
+
+<div class="grid-2">
+
+  <!-- Medicamentos pendientes -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-pills" style="color:var(--danger);margin-right:8px"></i>Medicamentos Pendientes</span>
+      <a href="{{ url_for('cuidador_medicamentos') }}" class="btn btn-ghost btn-sm">Ver todos <i class="fa-solid fa-arrow-right"></i></a>
+    </div>
+    <div class="card-body" style="padding-top:14px">
+      {% if meds_pendientes %}
+      <div style="display:flex;flex-direction:column;gap:8px">
+        {% for m in meds_pendientes[:5] %}
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg);border-radius:10px;border-left:3px solid var(--danger)">
+          <i class="fa-solid fa-pills" style="color:var(--danger);font-size:14px;flex-shrink:0"></i>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:13px">{{ m.residente }}</div>
+            <div style="font-size:11px;color:var(--text-sm)">{{ m.medicamento }} · {{ m.dosis }}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:12px;font-weight:600;color:var(--danger)">{{ m.hora_programada }}</div>
+            <div style="font-size:10px;color:var(--text-sm)">Hab. {{ m.habitacion or '—' }}</div>
+          </div>
+        </div>
+        {% endfor %}
+        {% if meds_pendientes|length > 5 %}
+        <div style="text-align:center;font-size:12px;color:var(--text-sm);padding:6px">+{{ meds_pendientes|length - 5 }} mas</div>
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="empty-state"><i class="fa-solid fa-circle-check" style="color:var(--success)"></i><p>Todos los medicamentos administrados</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Acciones rapidas -->
+  <div style="display:flex;flex-direction:column;gap:14px">
+
+    <div class="card">
+      <div class="card-header"><span class="card-title" style="font-size:14px">Acciones Rapidas</span></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px;padding-top:14px">
+        <a href="{{ url_for('cuidador_checkin') }}" class="btn btn-outline" style="justify-content:flex-start;gap:10px">
+          <i class="fa-solid fa-face-smile" style="color:var(--info)"></i> Registrar estado de animo
+        </a>
+        <a href="{{ url_for('cuidador_incidente') }}" class="btn btn-outline" style="justify-content:flex-start;gap:10px">
+          <i class="fa-solid fa-triangle-exclamation" style="color:var(--warning)"></i> Reportar incidente
+        </a>
+        <a href="{{ url_for('cuidador_nfc') }}" class="btn btn-outline" style="justify-content:flex-start;gap:10px">
+          <i class="fa-solid fa-mobile-screen" style="color:var(--success)"></i> Confirmar med. por NFC
+        </a>
+        <a href="{{ url_for('cuidador_residentes') }}" class="btn btn-outline" style="justify-content:flex-start;gap:10px">
+          <i class="fa-solid fa-users" style="color:var(--primary)"></i> Ver mis residentes
+        </a>
+      </div>
+    </div>
+
+    <!-- Residentes con animo bajo -->
+    {% if animo_bajo %}
+    <div class="card" style="border-color:#FECACA">
+      <div class="card-header" style="padding-bottom:10px">
+        <span class="card-title" style="color:var(--danger);font-size:14px"><i class="fa-solid fa-circle-exclamation" style="margin-right:6px"></i>Animo Bajo — Atencion</span>
+      </div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:8px;padding-top:10px">
+        {% for a in animo_bajo %}
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--danger-bg);border-radius:8px">
+          <span style="font-weight:600;font-size:13px">{{ a.residente }}</span>
+          <div style="display:flex;gap:2px">
+            {% for i in range(1,6) %}<div style="width:8px;height:8px;border-radius:50%;background:{% if i<=a.puntaje %}var(--danger){% else %}#E3DDD5{% endif %}"></div>{% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

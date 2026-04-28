@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% block title %}{{ residente.nombre }} {{ residente.apellidos }}{% endblock %}
+{% block page_title %}Expediente del Residente{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><h1>{{ residente.nombre }} {{ residente.apellidos }}</h1>
+    <p>Habitacion {{ residente.habitacion or '—' }} · {{ residente.edad }} años · Ingreso: {{ residente.fecha_ingreso }}</p>
+  </div>
+  <a href="{{ url_for('admin_residentes') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-arrow-left"></i> Volver</a>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 2fr;gap:18px;align-items:start">
+
+  <!-- Panel izquierdo -->
+  <div style="display:flex;flex-direction:column;gap:18px">
+
+    <!-- Info basica -->
+    <div class="card">
+      <div class="card-body">
+        <div style="text-align:center;padding:16px 0 20px">
+          <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#52B788,#1B4D3E);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:30px;color:#fff;font-weight:700;margin:0 auto 12px">
+            {{ residente.nombre[0] }}
+          </div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700">{{ residente.nombre }} {{ residente.apellidos }}</div>
+          <span class="badge {% if residente.nivel_movilidad=='Autonomo' %}badge-success{% elif residente.nivel_movilidad=='Asistido' %}badge-warning{% else %}badge-danger{% endif %}" style="margin-top:6px">
+            {{ residente.nivel_movilidad }}
+          </span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--border);padding-top:16px">
+          <div style="display:flex;justify-content:space-between;font-size:12.5px">
+            <span style="color:var(--text-sm)">Sexo</span><span>{{ 'Masculino' if residente.sexo=='M' else 'Femenino' }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px">
+            <span style="color:var(--text-sm)">Habitacion</span><span>{{ residente.habitacion or '—' }}</span>
+          </div>
+          <div style="font-size:12.5px">
+            <div style="color:var(--text-sm);margin-bottom:4px">Diagnostico</div>
+            <div>{{ residente.diagnostico_principal or 'Sin diagnostico registrado' }}</div>
+          </div>
+          <div style="font-size:12.5px">
+            <div style="color:var(--text-sm);margin-bottom:4px">Emergencia</div>
+            <div>{{ residente.contacto_emergencia or '—' }}</div>
+            <div style="color:var(--text-sm)">{{ residente.tel_emergencia or '' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Asignaciones -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Equipo Asignado</span></div>
+      <div class="card-body" style="padding-top:12px;display:flex;flex-direction:column;gap:10px">
+        {% for a in asignaciones %}
+        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border-radius:9px">
+          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#52B788,#2D8A5E);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:700;flex-shrink:0">{{ a.staff_nombre[0] }}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.staff_nombre }}</div>
+            <div style="font-size:11px;color:var(--text-sm)">{{ a.tipo_rol }}{% if a.es_principal %} · Principal{% endif %}</div>
+          </div>
+        </div>
+        {% else %}
+        <p style="font-size:13px;color:var(--text-sm);text-align:center">Sin asignaciones</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Editar -->
+    <div class="card">
+      <div class="card-header"><span class="card-title" style="font-size:15px">Editar Datos</span></div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('admin_residente_editar', id_residente=residente.id_residente) }}">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div class="form-group">
+              <label>Habitacion</label>
+              <input type="text" name="habitacion" value="{{ residente.habitacion or '' }}">
+            </div>
+            <div class="form-group">
+              <label>Nivel de Movilidad</label>
+              <select name="nivel_movilidad">
+                <option value="Autonomo" {% if residente.nivel_movilidad=='Autonomo' %}selected{% endif %}>Autonomo</option>
+                <option value="Asistido" {% if residente.nivel_movilidad=='Asistido' %}selected{% endif %}>Asistido</option>
+                <option value="Encamado" {% if residente.nivel_movilidad=='Encamado' %}selected{% endif %}>Encamado</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Diagnostico</label>
+              <textarea name="diagnostico">{{ residente.diagnostico_principal or '' }}</textarea>
+            </div>
+            <div class="form-group">
+              <label>Contacto Emergencia</label>
+              <input type="text" name="contacto" value="{{ residente.contacto_emergencia or '' }}">
+            </div>
+            <div class="form-group">
+              <label>Telefono Emergencia</label>
+              <input type="text" name="tel_contacto" value="{{ residente.tel_emergencia or '' }}">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">
+              <i class="fa-solid fa-floppy-disk"></i> Guardar cambios
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel derecho -->
+  <div style="display:flex;flex-direction:column;gap:18px">
+
+    <!-- Sesiones -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Historial de Sesiones</span></div>
+      <div class="card-body" style="padding-top:12px">
+        {% if sesiones %}
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Terapeuta</th><th>Sala</th><th>Tipo</th><th>Duracion</th><th>Asistio</th></tr></thead>
+            <tbody>
+            {% for s in sesiones %}
+            <tr>
+              <td style="font-size:12px;color:var(--text-sm)">{{ s.fecha_sesion.strftime('%d %b %Y') if s.fecha_sesion else '—' }}</td>
+              <td>{{ s.terapeuta }}</td>
+              <td>{{ s.sala }}</td>
+              <td><span class="badge badge-info">{{ s.tipo_sesion }}</span></td>
+              <td>{{ s.duracion_min }} min</td>
+              <td><span class="badge {% if s.asistio %}badge-success{% else %}badge-danger{% endif %}">{{ 'Si' if s.asistio else 'No' }}</span></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state"><i class="fa-solid fa-calendar"></i><p>Sin sesiones registradas</p></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Check-ins de animo -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Estado de Animo — Ultimos Registros</span></div>
+      <div class="card-body" style="padding-top:12px">
+        {% if checkins %}
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Cuidador</th><th>Puntaje</th><th>Notas</th></tr></thead>
+            <tbody>
+            {% for c in checkins %}
+            <tr>
+              <td style="font-size:12px;color:var(--text-sm)">{{ c.fecha_registro.strftime('%d %b %H:%M') if c.fecha_registro else '—' }}</td>
+              <td>{{ c.cuidador }}</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:5px">
+                  <div style="display:flex;gap:2px">
+                    {% for i in range(1,6) %}<div style="width:8px;height:8px;border-radius:50%;background:{% if i<=c.puntaje %}{% if c.puntaje<=2 %}var(--danger){% elif c.puntaje<=3 %}var(--warning){% else %}var(--success){% endif %}{% else %}#E3DDD5{% endif %}"></div>{% endfor %}
+                  </div>
+                  <span style="font-size:12px;font-weight:600">{{ c.puntaje }}/5</span>
+                </div>
+              </td>
+              <td style="font-size:12px;max-width:200px">{{ c.notas or '—' }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state"><i class="fa-solid fa-face-smile"></i><p>Sin check-ins registrados</p></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Incidentes -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Incidentes Recientes</span>
+        <form method="POST" action="{{ url_for('admin_residente_baja', id_residente=residente.id_residente) }}"
+              onsubmit="return confirm('¿Dar de baja a este residente? Sus datos historicos se conservaran.')">
+          <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-user-slash"></i> Dar de baja</button>
+        </form>
+      </div>
+      <div class="card-body" style="padding-top:12px">
+        {% if incidentes %}
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Tipo</th><th>Severidad</th><th>Reportado por</th></tr></thead>
+            <tbody>
+            {% for i in incidentes %}
+            <tr>
+              <td style="font-size:12px;color:var(--text-sm)">{{ i.fecha }}</td>
+              <td>{{ i.tipo.replace('_',' ') }}</td>
+              <td><span class="badge {% if i.severidad=='Alta' %}badge-danger{% elif i.severidad=='Media' %}badge-warning{% else %}badge-success{% endif %}">{{ i.severidad }}</span></td>
+              <td style="font-size:12.5px">{{ i.reportado_por }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state"><i class="fa-solid fa-shield-halved"></i><p>Sin incidentes registrados</p></div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,392 @@
+{% extends 'base.html' %}
+{% block title %}Monitoreo IoT{% endblock %}
+{% block page_title %}Monitoreo IoT{% endblock %}
+
+{% block head %}
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+<style>
+  .chart-card { background:var(--card);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow) }
+  .chart-header { padding:18px 22px 0;display:flex;align-items:center;justify-content:space-between }
+  .chart-title  { font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--text) }
+  .chart-sub    { font-size:11px;color:var(--text-sm);margin-top:2px }
+  .chart-body   { padding:12px 8px 16px }
+  .live-dot     { width:7px;height:7px;border-radius:50%;background:var(--success);display:inline-block;margin-right:5px;animation:pulse-dot 2s infinite }
+  @keyframes pulse-dot {
+    0%,100%{ box-shadow:0 0 0 0 rgba(45,122,80,.5) }
+    50%     { box-shadow:0 0 0 5px rgba(45,122,80,0) }
+  }
+  .update-row { display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-sm) }
+</style>
+{% endblock %}
+
+{% block topbar_actions %}
+<div class="update-row">
+  <span class="live-dot"></span>
+  <span>Actualiza cada 10 s &nbsp;·&nbsp; ultima vez: <strong id="ts-update">—</strong></span>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Alertas GPS ──────────────────────────────────────────────────────── -->
+{% if fuera_limite %}
+<div style="background:var(--danger-bg);border:1px solid #FECACA;border-radius:var(--radius-sm);padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:18px">
+  <i class="fa-solid fa-location-crosshairs" style="color:var(--danger);font-size:18px;flex-shrink:0"></i>
+  <div>
+    <strong style="color:var(--danger)">Alerta GPS — Residentes fuera del jardin</strong>
+    <div style="font-size:13px;color:#7F1D1D;margin-top:2px">
+      {% for r in fuera_limite %}{{ r.residente }}{% if not loop.last %}, {% endif %}{% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── KPI cards ──────────────────────────────────────────────────────────── -->
+<div class="stats-grid" style="margin-bottom:18px">
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fa-solid fa-satellite-dish"></i></div>
+    <div>
+      <div class="stat-label">GPS — Residentes</div>
+      <div class="stat-value">{{ gps_status|length }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="fa-solid fa-broadcast-tower"></i></div>
+    <div>
+      <div class="stat-label">Beacon — Staff hoy</div>
+      <div class="stat-value" id="kpi-total-hoy">—</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon orange"><i class="fa-solid fa-users-viewfinder"></i></div>
+    <div>
+      <div class="stat-label">Staff activo (60 min)</div>
+      <div class="stat-value" id="kpi-staff-activo">—</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon {% if fuera_limite %}red{% else %}green{% endif %}">
+      <i class="fa-solid {% if fuera_limite %}fa-triangle-exclamation{% else %}fa-shield-halved{% endif %}"></i>
+    </div>
+    <div>
+      <div class="stat-label">Fuera del perimetro</div>
+      <div class="stat-value">{{ fuera_limite|length }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Tablas GPS + Beacon ─────────────────────────────────────────────────── -->
+<div class="grid-2" style="margin-bottom:18px">
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-satellite-dish" style="color:var(--success);margin-right:8px"></i>GPS — Jardin</span>
+      {% if limite %}
+      <span class="badge badge-neutral" style="font-size:10px">
+        {{ limite.lat_min }}°, {{ limite.lon_min }}° → {{ limite.lat_max }}°, {{ limite.lon_max }}°
+      </span>
+      {% endif %}
+    </div>
+    <div class="card-body" style="padding-top:14px">
+      {% if gps_status %}
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Residente</th><th>Hab.</th><th>Coords</th><th>Estado</th><th>Hace</th></tr></thead>
+          <tbody>
+          {% for g in gps_status %}
+          <tr>
+            <td><strong>{{ g.residente }}</strong></td>
+            <td><span class="badge badge-neutral">{{ g.habitacion or '—' }}</span></td>
+            <td style="font-size:11px;color:var(--text-sm);font-family:monospace">{{ "%.4f"|format(g.latitud) }}, {{ "%.4f"|format(g.longitud) }}</td>
+            <td>
+              <span class="badge {% if g.dentro_limite %}badge-success{% else %}badge-danger{% endif %}">
+                <i class="fa-solid {% if g.dentro_limite %}fa-circle-check{% else %}fa-triangle-exclamation{% endif %}"></i>
+                {{ 'Dentro' if g.dentro_limite else 'FUERA' }}
+              </span>
+            </td>
+            <td style="font-size:12px;color:var(--text-sm)">{{ "%.0f"|format(g.minutos_desde_ping) }} min</td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state"><i class="fa-solid fa-satellite"></i><p>Sin pings GPS registrados</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-broadcast-tower" style="color:var(--info);margin-right:8px"></i>Beacons — Personal</span>
+    </div>
+    <div class="card-body" style="padding-top:14px">
+      {% if staff_ubicacion %}
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Personal</th><th>Rol</th><th>Ala detectada</th><th>Ultima deteccion</th></tr></thead>
+          <tbody>
+          {% for s in staff_ubicacion %}
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#52B788,#2D8A5E);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:700;flex-shrink:0">{{ s.staff[0] }}</div>
+                <span style="font-weight:600;font-size:13px">{{ s.staff }}</span>
+              </div>
+            </td>
+            <td><span class="badge badge-neutral" style="font-size:10px">{{ s.rol }}</span></td>
+            <td>
+              {% if s.ala_detectada %}
+              <span class="badge badge-info"><i class="fa-solid fa-location-dot"></i> {{ s.ala_detectada }}</span>
+              {% else %}
+              <span style="color:var(--text-sm);font-size:12px">Sin señal</span>
+              {% endif %}
+            </td>
+            <td style="font-size:12px;color:var(--text-sm)">
+              {% if s.ultima_deteccion %}{{ s.ultima_deteccion }} ({{ "%.0f"|format(s.minutos_desde_deteccion) }} min){% else %}—{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state"><i class="fa-solid fa-wifi"></i><p>Sin detecciones de beacon hoy</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Graficas Highcharts ─────────────────────────────────────────────────── -->
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+  <span style="font-family:'IBM Plex Sans',sans-serif;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-sm)">Analisis de Beacon en Tiempo Real</span>
+  <div style="flex:1;height:1px;background:var(--border)"></div>
+  <span class="live-dot"></span>
+</div>
+
+<div class="grid-2" style="margin-bottom:18px">
+
+  <!-- Grafica 1: Detecciones por ala (column) -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title"><i class="fa-solid fa-chart-column" style="color:var(--primary);margin-right:8px;font-size:15px"></i>Detecciones por Ala — Hoy</div>
+        <div class="chart-sub">Total de pings recibidos por area desde las 00:00</div>
+      </div>
+    </div>
+    <div class="chart-body"><div id="chart-por-ala" style="height:260px"></div></div>
+  </div>
+
+  <!-- Grafica 2: Distribucion de staff activo (donut) -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title"><i class="fa-solid fa-chart-pie" style="color:var(--accent);margin-right:8px;font-size:15px"></i>Personal Activo por Ala</div>
+        <div class="chart-sub">Staff con deteccion en los ultimos 60 minutos</div>
+      </div>
+    </div>
+    <div class="chart-body"><div id="chart-staff-ala" style="height:260px"></div></div>
+  </div>
+
+</div>
+
+<!-- Grafica 3: Actividad por hora (area spline) — ancho completo -->
+<div class="chart-card">
+  <div class="chart-header">
+    <div>
+      <div class="chart-title"><i class="fa-solid fa-chart-area" style="color:var(--info);margin-right:8px;font-size:15px"></i>Actividad de Beacon por Hora</div>
+      <div class="chart-sub">Numero de detecciones registradas cada hora del dia de hoy</div>
+    </div>
+  </div>
+  <div class="chart-body"><div id="chart-por-hora" style="height:240px"></div></div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Tema global Highcharts ────────────────────────────────────────────────────
+Highcharts.setOptions({
+  lang: {
+    months: ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+             'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
+    shortMonths: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+    weekdays: ['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'],
+    loading: 'Cargando...', noData: 'Sin datos aun'
+  },
+  chart: {
+    style: { fontFamily: "'IBM Plex Sans', sans-serif" },
+    backgroundColor: 'transparent',
+    animation: { duration: 500 }
+  },
+  title:    { text: null },
+  subtitle: { text: null },
+  credits:  { enabled: false },
+  legend: {
+    itemStyle: { fontFamily: "'IBM Plex Sans', sans-serif", fontWeight: '500', fontSize: '12px', color: '#4A5240' }
+  },
+  tooltip: {
+    borderRadius: 8,
+    backgroundColor: '#1A1A18',
+    style: { color: '#fff', fontSize: '12px', fontFamily: "'IBM Plex Sans', sans-serif" },
+    shadow: false
+  },
+  xAxis: {
+    lineColor: '#E3DDD5', tickColor: '#E3DDD5',
+    labels: { style: { color: '#7A8070', fontSize: '11px' } }
+  },
+  yAxis: {
+    gridLineColor: '#F0EDE8',
+    labels: { style: { color: '#7A8070', fontSize: '11px' } },
+    title: { style: { color: '#7A8070', fontSize: '11px' } }
+  },
+  colors: ['#1B4D3E', '#D4714A', '#0369A1', '#52B788', '#B45309', '#2D7A50']
+});
+
+// ── Grafica 1: Detecciones por ala (column) ───────────────────────────────────
+const chartPorAla = Highcharts.chart('chart-por-ala', {
+  chart: { type: 'column' },
+  xAxis: {
+    type: 'category',
+    labels: { style: { fontWeight: '600', fontSize: '12px', color: '#4A5240' } }
+  },
+  yAxis: {
+    min: 0,
+    title: { text: 'Detecciones', style: { color: '#7A8070', fontSize: '11px' } },
+    allowDecimals: false
+  },
+  plotOptions: {
+    column: {
+      borderRadius: 6,
+      dataLabels: {
+        enabled: true,
+        style: { fontWeight: '700', fontSize: '12px', color: '#1A1A18', textOutline: 'none' }
+      }
+    }
+  },
+  series: [{
+    name: 'Detecciones hoy',
+    colorByPoint: true,
+    colors: ['#1B4D3E', '#D4714A', '#0369A1', '#52B788'],
+    data: []
+  }]
+});
+
+// ── Grafica 2: Staff activo por ala (donut) ───────────────────────────────────
+const chartStaffAla = Highcharts.chart('chart-staff-ala', {
+  chart: { type: 'pie' },
+  tooltip: { pointFormat: '<b>{point.y}</b> personas ({point.percentage:.0f}%)' },
+  plotOptions: {
+    pie: {
+      innerSize: '58%',
+      borderWidth: 0,
+      dataLabels: {
+        enabled: true,
+        format: '<b>{point.name}</b><br>{point.y} persona{point.y|{0:s:s}}',
+        style: { fontSize: '12px', fontWeight: '600', color: '#1A1A18', textOutline: 'none' }
+      }
+    }
+  },
+  series: [{
+    name: 'Staff activo',
+    data: []
+  }]
+});
+
+// ── Grafica 3: Actividad por hora (area spline) ───────────────────────────────
+const chartPorHora = Highcharts.chart('chart-por-hora', {
+  chart: { type: 'areaspline' },
+  xAxis: {
+    min: 0, max: 23,
+    tickInterval: 2,
+    title: { text: 'Hora del dia', style: { color: '#7A8070', fontSize: '11px' } },
+    labels: {
+      formatter() { return this.value + ':00'; },
+      style: { fontSize: '11px', color: '#7A8070' }
+    }
+  },
+  yAxis: {
+    min: 0,
+    allowDecimals: false,
+    title: { text: 'Detecciones' }
+  },
+  tooltip: {
+    formatter() {
+      return `<b>${this.x}:00 – ${this.x + 1}:00</b><br>${this.y} deteccion${this.y !== 1 ? 'es' : ''}`;
+    }
+  },
+  plotOptions: {
+    areaspline: {
+      fillOpacity: 0.12,
+      lineWidth: 2.5,
+      marker: {
+        enabled: true, radius: 4,
+        fillColor: '#fff',
+        lineWidth: 2,
+        lineColor: '#1B4D3E'
+      }
+    }
+  },
+  series: [{
+    name: 'Detecciones',
+    color: '#1B4D3E',
+    fillColor: {
+      linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+      stops: [[0, 'rgba(27,77,62,0.25)'], [1, 'rgba(27,77,62,0)']]
+    },
+    data: buildHoraData([])
+  }]
+});
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function buildHoraData(rows) {
+  const map = {};
+  rows.forEach(r => { map[parseInt(r.hora)] = parseInt(r.total); });
+  return Array.from({ length: 24 }, (_, h) => [h, map[h] || 0]);
+}
+
+// ── Fetch y actualizacion ─────────────────────────────────────────────────────
+function fetchStats() {
+  fetch('/admin/iot/stats', { credentials: 'same-origin' })
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(data => {
+      if (!data.ok) return;
+
+      // Grafica 1 — por ala
+      chartPorAla.series[0].setData(
+        data.por_ala.map(r => ({ name: r.ala, y: parseInt(r.total) })),
+        true, { duration: 500 }
+      );
+
+      // Grafica 2 — staff activo (donut)
+      chartStaffAla.series[0].setData(
+        data.staff_activo.length
+          ? data.staff_activo.map(r => ({ name: r.ala, y: parseInt(r.staff) }))
+          : [{ name: 'Sin actividad', y: 1, color: '#E3DDD5' }],
+        true, { duration: 500 }
+      );
+
+      // Grafica 3 — por hora
+      chartPorHora.series[0].setData(
+        buildHoraData(data.por_hora),
+        true, { duration: 500 }
+      );
+
+      // KPIs dinamicos
+      document.getElementById('kpi-total-hoy').textContent    = data.total_hoy;
+      document.getElementById('kpi-staff-activo').textContent =
+        data.staff_activo.reduce((s, r) => s + parseInt(r.staff), 0) || 0;
+
+      // Timestamp
+      document.getElementById('ts-update').textContent =
+        new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    })
+    .catch(err => console.warn('Stats fetch error:', err));
+}
+
+fetchStats();
+setInterval(fetchStats, 10000);
+</script>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Reportar Incidente{% endblock %}
+{% block page_title %}Reportar Incidente{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><h1>Reportar Incidente</h1><p>El registro queda en el historial del residente</p></div>
+  <a href="{{ url_for('cuidador_residentes') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-arrow-left"></i> Volver</a>
+</div>
+
+<div style="max-width:560px;margin:0 auto">
+  <div class="card">
+    <div class="card-header"><span class="card-title">Nuevo Incidente</span></div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('cuidador_incidente') }}">
+        <div class="form-grid" style="margin-bottom:16px">
+          <div class="form-group">
+            <label>Residente *</label>
+            <select name="id_residente" required>
+              <option value="">Seleccionar…</option>
+              {% for r in residentes %}
+              <option value="{{ r.id_residente }}">{{ r.nombre }} {{ r.apellidos }} — Hab. {{ r.habitacion or '—' }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Tipo de incidente *</label>
+            <select name="tipo_incidente" required>
+              <option value="Caida">Caida</option>
+              <option value="Deambulacion">Deambulacion</option>
+              <option value="Agitacion">Agitacion</option>
+              <option value="Animo_bajo">Animo bajo</option>
+              <option value="Medicacion">Medicacion</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Severidad *</label>
+            <select name="severidad" required>
+              <option value="Baja">Baja</option>
+              <option value="Media" selected>Media</option>
+              <option value="Alta">Alta</option>
+            </select>
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Descripcion</label>
+            <textarea name="descripcion" rows="3" placeholder="Describe detalladamente lo que ocurrio…"></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <a href="{{ url_for('cuidador_residentes') }}" class="btn btn-outline">Cancelar</a>
+          <button type="submit" class="btn btn-danger"><i class="fa-solid fa-triangle-exclamation"></i> Reportar incidente</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

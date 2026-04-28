@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+{% block title %}Tags NFC — ElderCare{% endblock %}
+{% block page_title %}Tags NFC{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Tags NFC</h1>
+    <p>Tarjetas y llaveros NFC asignados a residentes &middot; Lecturas via iPhone</p>
+  </div>
+  <button class="btn btn-primary btn-sm" onclick="document.getElementById('modal-nuevo').style.display='flex'">
+    <i class="fa-solid fa-plus"></i> Asignar tag
+  </button>
+</div>
+
+<!-- KPIs -->
+<div class="grid-3" style="margin-bottom:18px">
+  <div class="card">
+    <div class="card-body" style="display:flex;align-items:center;gap:14px">
+      <div class="stat-icon blue"><i class="fa-solid fa-tags"></i></div>
+      <div>
+        <div class="stat-label">Tags registrados</div>
+        <div class="stat-value">{{ tags|length }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body" style="display:flex;align-items:center;gap:14px">
+      <div class="stat-icon green"><i class="fa-solid fa-mobile-screen-button"></i></div>
+      <div>
+        <div class="stat-label">Escaneos totales</div>
+        <div class="stat-value">{{ tags|sum(attribute='total_escaneos') }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body" style="display:flex;align-items:center;gap:14px">
+      <div class="stat-icon amber"><i class="fa-solid fa-users"></i></div>
+      <div>
+        <div class="stat-label">Residentes con tag</div>
+        <div class="stat-value">{{ tags|length }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Instruction banner -->
+<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:var(--radius-sm);padding:14px 18px;display:flex;align-items:flex-start;gap:12px;margin-bottom:18px">
+  <i class="fa-solid fa-circle-info" style="color:#1D4ED8;font-size:18px;flex-shrink:0;margin-top:1px"></i>
+  <div style="font-size:13px;color:#1E3A5F">
+    <strong>Como programar un tag NFC:</strong>
+    Copia la URL del tag que quieres programar, abre <strong>NFC Tools</strong> en tu iPhone,
+    ve a <em>Write &rarr; Add a record &rarr; URL</em>, pega la URL y acerca el tag al iPhone para escribirlo.
+    El iPhone abrira esa URL automaticamente al leer el tag.
+  </div>
+</div>
+
+<!-- Tags table -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title"><i class="fa-solid fa-tags" style="color:var(--primary);margin-right:8px"></i>Tags Registrados</span>
+    <span style="font-size:11px;color:var(--text-sm)">{{ tags|length }} tag{{ 's' if tags|length != 1 }}</span>
+  </div>
+  <div class="card-body" style="padding-top:14px">
+    {% if tags %}
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Residente</th>
+            <th>Hab.</th>
+            <th>Codigo tag</th>
+            <th>Descripcion</th>
+            <th>Escaneos</th>
+            <th>Ultimo escaneo</th>
+            <th>URL del tag</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for t in tags %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#1B4D3E,#2D7A50);display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:700;flex-shrink:0">{{ t.residente[0] }}</div>
+              <span style="font-weight:600;font-size:13px">{{ t.residente }}</span>
+            </div>
+          </td>
+          <td><span class="badge badge-neutral" style="font-size:10px">{{ t.habitacion or '—' }}</span></td>
+          <td><code style="font-size:12px;background:var(--bg);padding:3px 8px;border-radius:6px;font-family:monospace">{{ t.codigo_tag }}</code></td>
+          <td style="font-size:12.5px;color:var(--text-sm)">{{ t.descripcion or '—' }}</td>
+          <td style="font-variant-numeric:tabular-nums;font-size:13px;font-weight:600;color:var(--primary)">{{ t.total_escaneos }}</td>
+          <td style="font-size:11.5px;color:var(--text-sm);font-variant-numeric:tabular-nums">
+            {{ t.ultimo_escaneo.strftime('%d/%m/%Y %H:%M') if t.ultimo_escaneo else '—' }}
+          </td>
+          <td>
+            {% set nfc_url = 'http://' ~ host ~ '/nfc/' ~ t.codigo_tag %}
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="text" id="url-{{ t.id_tag }}" value="{{ nfc_url }}" readonly
+                     style="font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:7px;width:200px;background:var(--bg);color:var(--text-sm);font-family:monospace;cursor:pointer"
+                     onclick="this.select()">
+              <button onclick="copyUrl('url-{{ t.id_tag }}', this)"
+                      class="btn btn-outline btn-sm" title="Copiar URL">
+                <i class="fa-solid fa-copy"></i>
+              </button>
+            </div>
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('admin_nfc_eliminar', id_tag=t.id_tag) }}"
+                  onsubmit="return confirm('Eliminar tag de {{ t.residente }}?')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--danger)" title="Eliminar tag">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="fa-solid fa-tags"></i>
+      <p>Sin tags NFC registrados aun</p>
+      <button class="btn btn-primary btn-sm" style="margin-top:12px"
+              onclick="document.getElementById('modal-nuevo').style.display='flex'">
+        <i class="fa-solid fa-plus"></i> Asignar primer tag
+      </button>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Modal asignar tag -->
+<div id="modal-nuevo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;align-items:center;justify-content:center;padding:20px">
+  <div class="card" style="width:100%;max-width:480px">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-tag" style="margin-right:8px;color:var(--primary)"></i>Asignar Tag NFC</span>
+      <button onclick="document.getElementById('modal-nuevo').style.display='none'" class="btn btn-ghost btn-sm">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('admin_nfc_asignar') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:20px">
+          <div class="form-group">
+            <label>Codigo del tag *</label>
+            <input type="text" name="codigo_tag" required maxlength="64"
+                   placeholder="Ej: TAG001, A1B2C3…"
+                   style="text-transform:uppercase"
+                   oninput="this.value=this.value.toUpperCase()">
+            <small style="font-size:11px;color:var(--text-sm);margin-top:4px;display:block">
+              Puedes usar cualquier texto unico. El sistema lo convierte a mayusculas.
+            </small>
+          </div>
+          <div class="form-group">
+            <label>Residente *</label>
+            <select name="id_residente" required>
+              <option value="">Seleccionar residente…</option>
+              {% for r in residentes %}
+              <option value="{{ r.id_residente }}">{{ r.nombre }} — Hab. {{ r.habitacion or '—' }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Descripcion (opcional)</label>
+            <input type="text" name="descripcion" maxlength="120"
+                   placeholder="Ej: Tarjeta blanca muñeca izquierda">
+          </div>
+        </div>
+
+        <div style="background:var(--bg);border-radius:9px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:var(--text-sm)">
+          <i class="fa-solid fa-lightbulb" style="color:var(--warning);margin-right:6px"></i>
+          Despues de registrar el tag, copia su URL desde la tabla y escribe el enlace en el tag fisico usando <strong>NFC Tools</strong> en iPhone.
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button type="button" onclick="document.getElementById('modal-nuevo').style.display='none'"
+                  class="btn btn-outline">Cancelar</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-tag"></i> Registrar tag
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% block scripts %}
+<script>
+document.getElementById('modal-nuevo').addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+
+function copyUrl(inputId, btn) {
+  const input = document.getElementById(inputId);
+  input.select();
+  input.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(input.value).then(() => {
+    const icon = btn.querySelector('i');
+    icon.className = 'fa-solid fa-check';
+    btn.style.color = 'var(--success)';
+    setTimeout(() => {
+      icon.className = 'fa-solid fa-copy';
+      btn.style.color = '';
+    }, 1800);
+  }).catch(() => {
+    document.execCommand('copy');
+  });
+}
+</script>
+{% endblock %}
+{% endblock %}

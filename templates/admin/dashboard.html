@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard Admin{% endblock %}
+{% block page_title %}Panel de Control{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fa-solid fa-users"></i></div>
+    <div><div class="stat-label">Residentes Activos</div><div class="stat-value">{{ total_residentes }}</div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="fa-solid fa-user-nurse"></i></div>
+    <div><div class="stat-label">Personal Activo</div><div class="stat-value">{{ total_staff }}</div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <div><div class="stat-label">Incidentes Alta (7d)</div><div class="stat-value">{{ incidentes_alta }}</div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon gold"><i class="fa-solid fa-pills"></i></div>
+    <div><div class="stat-label">Medicamentos Pendientes</div><div class="stat-value">{{ medicamentos_pendientes }}</div></div>
+  </div>
+</div>
+
+<div class="grid-2" style="gap:18px;margin-bottom:18px">
+
+  <!-- Incidentes recientes -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Incidentes Recientes</span>
+      <span class="badge badge-neutral">Ultimos 7 dias</span>
+    </div>
+    <div class="card-body" style="padding-top:14px">
+      {% if incidentes_recientes %}
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Residente</th><th>Tipo</th><th>Severidad</th><th>Fecha</th></tr></thead>
+          <tbody>
+          {% for i in incidentes_recientes %}
+          <tr>
+            <td><strong>{{ i.residente }}</strong><br><small style="color:var(--text-sm)">Hab. {{ i.habitacion }}</small></td>
+            <td>{{ i.tipo.replace('_',' ') }}</td>
+            <td>
+              <span class="badge {% if i.severidad=='Alta' %}badge-danger{% elif i.severidad=='Media' %}badge-warning{% else %}badge-success{% endif %}">
+                {{ i.severidad }}
+              </span>
+            </td>
+            <td style="color:var(--text-sm);font-size:12px">{{ i.fecha }}</td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state"><i class="fa-solid fa-circle-check"></i><p>Sin incidentes recientes</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Staff en turno hoy -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Staff en Turno Hoy</span>
+      <span class="badge badge-info">{{ staff_turno|length }} personas</span>
+    </div>
+    <div class="card-body" style="padding-top:14px">
+      {% if staff_turno %}
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Personal</th><th>Ala</th><th>Horario</th></tr></thead>
+          <tbody>
+          {% for s in staff_turno %}
+          <tr>
+            <td><strong>{{ s.staff }}</strong><br><small style="color:var(--text-sm)">{{ s.rol }}</small></td>
+            <td>{{ s.ala }}</td>
+            <td style="font-size:12px;color:var(--text-sm)">{{ s.hora_inicio }} – {{ s.hora_fin }}</td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state"><i class="fa-solid fa-moon"></i><p>Sin turnos registrados hoy</p></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Sesiones hoy -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Sesiones de Terapia — Hoy</span>
+    <a href="{{ url_for('terapeuta_sesiones') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver todas</a>
+  </div>
+  <div class="card-body" style="padding-top:14px">
+    {% if sesiones_hoy %}
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Residente</th><th>Terapeuta</th><th>Sala</th><th>Tipo</th><th>Hora</th><th>Asistio</th></tr></thead>
+        <tbody>
+        {% for s in sesiones_hoy %}
+        <tr>
+          <td><strong>{{ s.residente }}</strong></td>
+          <td>{{ s.terapeuta }}</td>
+          <td>{{ s.sala }}</td>
+          <td><span class="badge badge-info">{{ s.tipo_sesion }}</span></td>
+          <td style="color:var(--text-sm);font-size:12px">{{ s.hora }}</td>
+          <td>
+            <span class="badge {% if s.asistio %}badge-success{% else %}badge-danger{% endif %}">
+              {{ 'Si' if s.asistio else 'No' }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="fa-solid fa-calendar-xmark"></i><p>No hay sesiones programadas para hoy</p></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

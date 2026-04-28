@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}Panel Terapeuta{% endblock %}
+{% block page_title %}Panel del Terapeuta{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Bienvenido, {{ current_user.nombre }}</h1>
+    <p>{{ current_date_str }} · Portal de Terapia</p>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid" style="margin-bottom:22px">
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="fa-solid fa-calendar-check"></i></div>
+    <div class="stat-label">Sesiones hoy</div>
+    <div class="stat-value">{{ sesiones_hoy|length }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fa-solid fa-users"></i></div>
+    <div class="stat-label">Residentes asignados</div>
+    <div class="stat-value">{{ total_residentes }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon {% if incidentes_activos %}red{% else %}green{% endif %}">
+      <i class="fa-solid {% if incidentes_activos %}fa-triangle-exclamation{% else %}fa-shield-halved{% endif %}"></i>
+    </div>
+    <div class="stat-label">Incidentes activos</div>
+    <div class="stat-value">{{ incidentes_activos }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fa-solid fa-face-smile"></i></div>
+    <div class="stat-label">Animo promedio</div>
+    <div class="stat-value">{{ "%.1f"|format(animo_promedio) if animo_promedio else '—' }}</div>
+  </div>
+</div>
+
+<div class="grid-2">
+
+  <!-- Sesiones de hoy -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-calendar-day" style="color:var(--info);margin-right:8px"></i>Sesiones de Hoy</span>
+      <a href="{{ url_for('terapeuta_sesion_nueva') }}" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Nueva</a>
+    </div>
+    <div class="card-body" style="padding-top:14px">
+      {% if sesiones_hoy %}
+      <div style="display:flex;flex-direction:column;gap:8px">
+        {% for s in sesiones_hoy %}
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg);border-radius:10px;border-left:3px solid var(--info)">
+          <div style="text-align:center;min-width:40px">
+            <div style="font-size:13px;font-weight:700;color:var(--primary)">{{ s.hora_inicio }}</div>
+            <div style="font-size:10px;color:var(--text-sm)">{{ s.duracion_min }}m</div>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:13px">{{ s.residente }}</div>
+            <div style="font-size:11px;color:var(--text-sm)">{{ s.tipo_sesion }} · {{ s.sala }}</div>
+          </div>
+          <span class="badge badge-info" style="font-size:10px">{{ s.tipo_sesion }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state"><i class="fa-solid fa-calendar"></i><p>Sin sesiones programadas para hoy</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Incidentes recientes -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);margin-right:8px"></i>Incidentes Recientes</span>
+      <a href="{{ url_for('terapeuta_incidentes') }}" class="btn btn-ghost btn-sm">Ver todos <i class="fa-solid fa-arrow-right"></i></a>
+    </div>
+    <div class="card-body" style="padding-top:14px">
+      {% if incidentes %}
+      <div style="display:flex;flex-direction:column;gap:8px">
+        {% for i in incidentes %}
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg);border-radius:10px;border-left:3px solid {% if i.severidad=='Alta' %}var(--danger){% elif i.severidad=='Media' %}var(--warning){% else %}var(--success){% endif %}">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:13px">{{ i.residente }}</div>
+            <div style="font-size:11px;color:var(--text-sm)">{{ i.tipo.replace('_',' ') }} · {{ i.fecha }}</div>
+          </div>
+          <span class="badge {% if i.severidad=='Alta' %}badge-danger{% elif i.severidad=='Media' %}badge-warning{% else %}badge-success{% endif %}" style="font-size:10px">
+            {{ i.severidad }}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state"><i class="fa-solid fa-circle-check"></i><p>Sin incidentes recientes</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

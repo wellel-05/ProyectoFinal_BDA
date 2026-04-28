@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% block title %}Personal{% endblock %}
+{% block page_title %}Personal del Asilo{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><h1>Gestion de Personal</h1><p>{{ staff|length }} miembros registrados</p></div>
+  <button class="btn btn-primary btn-sm" onclick="document.getElementById('modal-nuevo').style.display='flex'">
+    <i class="fa-solid fa-user-plus"></i> Nuevo personal
+  </button>
+</div>
+
+<div class="card">
+  <div class="card-header" style="padding-bottom:16px">
+    <div class="flex gap-2 flex-wrap">
+      {% for r in roles %}
+      <span class="badge badge-neutral">{{ r.nombre_rol }}: {{ staff|selectattr('nombre_rol','eq',r.nombre_rol)|list|length }}</span>
+      {% endfor %}
+    </div>
+    <input type="text" placeholder="Buscar personal…" style="max-width:260px;margin:0" oninput="filterTable(this.value,'staff-table')">
+  </div>
+  <div class="tbl-wrap">
+    <table id="staff-table">
+      <thead>
+        <tr><th>Personal</th><th>Rol</th><th>Especialidad</th><th>Email</th><th>Alta</th><th>Estado</th><th>Acciones</th></tr>
+      </thead>
+      <tbody>
+      {% for s in staff %}
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,{% if s.nivel_acceso==1 %}#D4714A,#B85A36{% elif s.nivel_acceso==2 %}#52B788,#2D8A5E{% else %}#6B9FD4,#4A7FB5{% endif %});display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:700;flex-shrink:0">{{ s.nombre[0] }}</div>
+            <div>
+              <div style="font-weight:600">{{ s.nombre }} {{ s.apellidos }}</div>
+              <div style="font-size:11px;color:var(--text-sm)">ID #{{ s.id_staff }}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <span class="badge {% if s.nivel_acceso==1 %}badge-danger{% elif s.nivel_acceso==2 %}badge-success{% else %}badge-info{% endif %}">
+            {{ s.nombre_rol }}
+          </span>
+        </td>
+        <td style="font-size:13px">{{ s.especialidad }}</td>
+        <td style="font-size:12.5px;color:var(--text-sm)">{{ s.email }}</td>
+        <td style="font-size:12px;color:var(--text-sm)">{{ s.fecha_alta_fmt }}</td>
+        <td>
+          <span class="badge {% if s.activo %}badge-success{% else %}badge-neutral{% endif %}">
+            {{ 'Activo' if s.activo else 'Inactivo' }}
+          </span>
+        </td>
+        <td style="display:flex;gap:6px;align-items:center">
+          <button class="btn btn-ghost btn-sm" title="Editar"
+            onclick="openEdit({{ s.id_staff }},'{{ s.nombre|e }}','{{ s.apellidos|e }}','{{ s.especialidad|e }}','{{ s.email|e }}',{{ s.id_rol }})">
+            <i class="fa-solid fa-pen-to-square" style="color:var(--primary)"></i>
+          </button>
+          <form method="POST" action="{{ url_for('admin_staff_toggle', id_staff=s.id_staff) }}">
+            <button type="submit" class="btn btn-ghost btn-sm" title="{{ 'Desactivar' if s.activo else 'Activar' }}">
+              <i class="fa-solid {% if s.activo %}fa-toggle-on{% else %}fa-toggle-off{% endif %}" style="color:{% if s.activo %}var(--success){% else %}var(--text-sm){% endif %}"></i>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-user-group"></i><p>Sin personal registrado</p></div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal nuevo personal -->
+<div id="modal-nuevo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;align-items:center;justify-content:center;padding:20px">
+  <div class="card" style="width:100%;max-width:560px;max-height:90vh;overflow-y:auto">
+    <div class="card-header" style="padding-bottom:0">
+      <span class="card-title">Registrar Personal</span>
+      <button onclick="document.getElementById('modal-nuevo').style.display='none'" class="btn btn-ghost btn-sm"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('admin_staff_nuevo') }}">
+        <div class="form-grid" style="margin-bottom:16px">
+          <div class="form-group"><label>Nombre *</label><input type="text" name="nombre" required></div>
+          <div class="form-group"><label>Apellidos *</label><input type="text" name="apellidos" required></div>
+          <div class="form-group"><label>Especialidad *</label><input type="text" name="especialidad" required placeholder="Cuidadora, Psicologo…"></div>
+          <div class="form-group"><label>Email *</label><input type="email" name="email" required></div>
+          <div class="form-group"><label>Rol *</label>
+            <select name="id_rol" required>
+              {% for r in roles %}<option value="{{ r.id_rol }}">{{ r.nombre_rol }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-group"><label>Username *</label><input type="text" name="username" required placeholder="usuario.sistema"></div>
+          <div class="form-group"><label>Contraseña *</label><input type="password" name="password" required placeholder="minimo 8 caracteres"></div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button type="button" onclick="document.getElementById('modal-nuevo').style.display='none'" class="btn btn-outline">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-user-plus"></i> Registrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal editar personal -->
+<div id="modal-editar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;align-items:center;justify-content:center;padding:20px">
+  <div class="card" style="width:100%;max-width:560px;max-height:90vh;overflow-y:auto">
+    <div class="card-header" style="padding-bottom:0">
+      <span class="card-title">Editar Personal</span>
+      <button onclick="document.getElementById('modal-editar').style.display='none'" class="btn btn-ghost btn-sm"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="card-body">
+      <form method="POST" id="form-editar" action="">
+        <div class="form-grid" style="margin-bottom:16px">
+          <div class="form-group"><label>Nombre *</label><input type="text" name="nombre" id="edit-nombre" required></div>
+          <div class="form-group"><label>Apellidos *</label><input type="text" name="apellidos" id="edit-apellidos" required></div>
+          <div class="form-group"><label>Especialidad *</label><input type="text" name="especialidad" id="edit-especialidad" required></div>
+          <div class="form-group"><label>Email *</label><input type="email" name="email" id="edit-email" required></div>
+          <div class="form-group"><label>Rol *</label>
+            <select name="id_rol" id="edit-rol" required>
+              {% for r in roles %}<option value="{{ r.id_rol }}">{{ r.nombre_rol }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button type="button" onclick="document.getElementById('modal-editar').style.display='none'" class="btn btn-outline">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% block scripts %}
+<script>
+function filterTable(q,id){
+  q=q.toLowerCase();
+  document.querySelectorAll('#'+id+' tbody tr').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q)?'':'none'});
+}
+function openEdit(id,nombre,apellidos,especialidad,email,idRol){
+  document.getElementById('form-editar').action='/admin/staff/'+id+'/editar';
+  document.getElementById('edit-nombre').value=nombre;
+  document.getElementById('edit-apellidos').value=apellidos;
+  document.getElementById('edit-especialidad').value=especialidad;
+  document.getElementById('edit-email').value=email;
+  document.getElementById('edit-rol').value=idRol;
+  document.getElementById('modal-editar').style.display='flex';
+}
+['modal-nuevo','modal-editar'].forEach(function(mid){
+  document.getElementById(mid).addEventListener('click',function(e){if(e.target===this)this.style.display='none'});
+});
+</script>
+{% endblock %}
+{% endblock %}

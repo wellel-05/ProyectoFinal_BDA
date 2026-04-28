@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% block title %}Mis Residentes — Cuidador{% endblock %}
+{% block page_title %}Mis Residentes{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><h1>Mis Residentes</h1><p>{{ residentes|length }} residentes asignados a tu cuidado</p></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:14px">
+  {% for r in residentes %}
+  <div class="card">
+    <div class="card-body" style="display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:start">
+
+      <!-- Avatar + info basica -->
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#52B788,#1B4D3E);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;color:#fff;font-weight:700;flex-shrink:0">{{ r.residente[0] }}</div>
+        <div>
+          <div style="font-weight:700;font-size:15px">{{ r.residente }}</div>
+          <div style="font-size:11px;color:var(--text-sm)">Hab. {{ r.habitacion or '—' }} · {{ r.edad }} años</div>
+          <span class="badge {% if r.nivel_movilidad=='Autonomo' %}badge-success{% elif r.nivel_movilidad=='Asistido' %}badge-warning{% else %}badge-danger{% endif %}" style="font-size:10px;margin-top:4px">{{ r.nivel_movilidad }}</span>
+        </div>
+      </div>
+
+      <!-- Diagnostico + animo -->
+      <div style="padding:0 16px;border-left:1px solid var(--border);border-right:1px solid var(--border)">
+        <div style="font-size:12px;color:var(--text-sm);margin-bottom:4px">Diagnostico</div>
+        <div style="font-size:13px;margin-bottom:10px">{{ r.diagnostico_principal or 'Sin registrar' }}</div>
+        <div style="font-size:12px;color:var(--text-sm);margin-bottom:4px">Ultimo animo</div>
+        {% if r.ultimo_puntaje_animo %}
+        <div style="display:flex;align-items:center;gap:5px">
+          <div style="display:flex;gap:2px">
+            {% for i in range(1,6) %}<div style="width:9px;height:9px;border-radius:50%;background:{% if i<=r.ultimo_puntaje_animo %}{% if r.ultimo_puntaje_animo<=2 %}var(--danger){% elif r.ultimo_puntaje_animo<=3 %}var(--warning){% else %}var(--success){% endif %}{% else %}#E3DDD5{% endif %}"></div>{% endfor %}
+          </div>
+          <span style="font-size:12px;font-weight:600">{{ r.ultimo_puntaje_animo }}/5</span>
+        </div>
+        {% else %}
+        <span style="font-size:12px;color:var(--text-sm)">Sin registro</span>
+        {% endif %}
+      </div>
+
+      <!-- Acciones -->
+      <div style="display:flex;flex-direction:column;gap:8px;min-width:160px">
+        <button class="btn btn-outline btn-sm" style="justify-content:flex-start;gap:8px"
+          onclick="openCheckin({{ r.id_residente }}, '{{ r.residente }}')">
+          <i class="fa-solid fa-face-smile" style="color:var(--info)"></i> Check-in animo
+        </button>
+        <button class="btn btn-outline btn-sm" style="justify-content:flex-start;gap:8px"
+          onclick="openIncidente({{ r.id_residente }}, '{{ r.residente }}')">
+          <i class="fa-solid fa-triangle-exclamation" style="color:var(--warning)"></i> Reportar incidente
+        </button>
+      </div>
+
+    </div>
+  </div>
+  {% else %}
+  <div class="card"><div class="card-body"><div class="empty-state"><i class="fa-solid fa-users"></i><p>Sin residentes asignados</p></div></div></div>
+  {% endfor %}
+</div>
+
+<!-- Modal check-in -->
+<div id="modal-checkin" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;align-items:center;justify-content:center;padding:20px">
+  <div class="card" style="width:100%;max-width:420px">
+    <div class="card-header">
+      <span class="card-title">Registrar Estado de Animo</span>
+      <button onclick="document.getElementById('modal-checkin').style.display='none'" class="btn btn-ghost btn-sm"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('cuidador_checkin') }}">
+        <input type="hidden" name="id_residente" id="ci-residente">
+        <div style="font-size:13px;color:var(--text-sm);margin-bottom:14px">Residente: <strong id="ci-nombre"></strong></div>
+        <div class="form-group" style="margin-bottom:14px">
+          <label>Puntaje de animo (1–5) *</label>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            {% for v in [1,2,3,4,5] %}
+            <label style="flex:1;text-align:center;cursor:pointer">
+              <input type="radio" name="puntaje" value="{{ v }}" required style="display:none" onchange="updateDots()">
+              <div class="mood-btn" data-val="{{ v }}" style="padding:8px 0;border-radius:8px;border:2px solid var(--border);font-weight:700;font-size:15px;color:var(--text-sm);transition:all .15s">{{ v }}</div>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>Notas (opcional)</label>
+          <textarea name="notas" rows="2" placeholder="Observaciones sobre el estado del residente…"></textarea>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button type="button" onclick="document.getElementById('modal-checkin').style.display='none'" class="btn btn-outline">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Registrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal incidente -->
+<div id="modal-incidente" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;align-items:center;justify-content:center;padding:20px">
+  <div class="card" style="width:100%;max-width:480px">
+    <div class="card-header">
+      <span class="card-title">Reportar Incidente</span>
+      <button onclick="document.getElementById('modal-incidente').style.display='none'" class="btn btn-ghost btn-sm"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('cuidador_incidente') }}">
+        <input type="hidden" name="id_residente" id="inc-residente">
+        <div style="font-size:13px;color:var(--text-sm);margin-bottom:14px">Residente: <strong id="inc-nombre"></strong></div>
+        <div class="form-grid" style="margin-bottom:16px">
+          <div class="form-group">
+            <label>Tipo de incidente *</label>
+            <select name="tipo_incidente" required>
+              <option value="Caida">Caida</option>
+              <option value="Deambulacion">Deambulacion</option>
+              <option value="Agitacion">Agitacion</option>
+              <option value="Animo_bajo">Animo bajo</option>
+              <option value="Medicacion">Medicacion</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Severidad *</label>
+            <select name="severidad" required>
+              <option value="Baja">Baja</option>
+              <option value="Media">Media</option>
+              <option value="Alta">Alta</option>
+            </select>
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Descripcion</label>
+            <textarea name="descripcion" rows="2" placeholder="Describe lo ocurrido…"></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button type="button" onclick="document.getElementById('modal-incidente').style.display='none'" class="btn btn-outline">Cancelar</button>
+          <button type="submit" class="btn btn-danger"><i class="fa-solid fa-triangle-exclamation"></i> Reportar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% block scripts %}
+<script>
+function openCheckin(id, nombre){
+  document.getElementById('ci-residente').value=id;
+  document.getElementById('ci-nombre').textContent=nombre;
+  document.getElementById('modal-checkin').style.display='flex';
+}
+function openIncidente(id, nombre){
+  document.getElementById('inc-residente').value=id;
+  document.getElementById('inc-nombre').textContent=nombre;
+  document.getElementById('modal-incidente').style.display='flex';
+}
+document.querySelectorAll('.mood-btn').forEach(btn=>{
+  btn.closest('label').querySelector('input').addEventListener('change',function(){
+    document.querySelectorAll('.mood-btn').forEach(b=>{
+      b.style.background='';b.style.borderColor='var(--border)';b.style.color='var(--text-sm)';
+    });
+    const v=parseInt(this.value);
+    btn.style.borderColor=v<=2?'var(--danger)':v<=3?'var(--warning)':'var(--success)';
+    btn.style.background=v<=2?'var(--danger-bg)':v<=3?'rgba(245,158,11,0.1)':'rgba(82,183,136,0.12)';
+    btn.style.color=v<=2?'var(--danger)':v<=3?'var(--warning)':'var(--success)';
+  });
+});
+['modal-checkin','modal-incidente'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',function(e){if(e.target===this)this.style.display='none'});
+});
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Sesiones Terapeuticas{% endblock %}
+{% block page_title %}Sesiones Terapeuticas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><h1>Sesiones Terapeuticas</h1><p>{{ sesiones|length }} sesiones registradas</p></div>
+  <a href="{{ url_for('terapeuta_sesion_nueva') }}" class="btn btn-primary btn-sm">
+    <i class="fa-solid fa-calendar-plus"></i> Nueva sesion
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-header" style="padding-bottom:16px">
+    <div class="flex gap-2">
+      <span class="badge badge-neutral">Todas</span>
+      <span class="badge badge-success">{{ sesiones|selectattr('asistio')|list|length }} Asistidas</span>
+      <span class="badge badge-danger">{{ sesiones|rejectattr('asistio')|list|length }} Inasistencias</span>
+    </div>
+    <input type="text" placeholder="Buscar sesion…" style="max-width:260px;margin:0" oninput="filterTable(this.value,'ses-table')">
+  </div>
+  <div class="tbl-wrap">
+    <table id="ses-table">
+      <thead>
+        <tr><th>Residente</th><th>Fecha</th><th>Sala</th><th>Tipo</th><th>Duracion</th><th>Asistencia</th><th>Acciones</th></tr>
+      </thead>
+      <tbody>
+      {% for s in sesiones %}
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#52B788,#2D8A5E);display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:700;flex-shrink:0">{{ s.residente[0] }}</div>
+            <span style="font-weight:600;font-size:13px">{{ s.residente }}</span>
+          </div>
+        </td>
+        <td style="font-size:12px;color:var(--text-sm)">{{ s.fecha_sesion.strftime('%d %b %Y %H:%M') if s.fecha_sesion else '—' }}</td>
+        <td style="font-size:12.5px">{{ s.sala }}</td>
+        <td><span class="badge badge-info" style="font-size:10px">{{ s.tipo_sesion }}</span></td>
+        <td style="font-size:12.5px">{{ s.duracion_min }} min</td>
+        <td>
+          <span class="badge {% if s.asistio %}badge-success{% else %}badge-danger{% endif %}" style="font-size:10px">
+            {{ 'Asistio' if s.asistio else 'No asistio' }}
+          </span>
+        </td>
+        <td>
+          <div class="flex gap-2">
+            <button class="btn btn-ghost btn-sm" title="Editar" onclick="openEdit({{ s.id_sesion }}, '{{ s.tipo_sesion }}', {{ s.duracion_min }}, {{ 'true' if s.asistio else 'false' }})">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <form method="POST" action="{{ url_for('terapeuta_sesion_eliminar', id_sesion=s.id_sesion) }}"
+                  onsubmit="return confirm('¿Eliminar esta sesion?')">
+              <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--danger)" title="Eliminar">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-calendar"></i><p>Sin sesiones registradas</p></div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal editar sesion -->
+<div id="modal-edit" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;align-items:center;justify-content:center;padding:20px">
+  <div class="card" style="width:100%;max-width:440px">
+    <div class="card-header">
+      <span class="card-title">Editar Sesion</span>
+      <button onclick="document.getElementById('modal-edit').style.display='none'" class="btn btn-ghost btn-sm"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="card-body">
+      <form method="POST" id="edit-form">
+        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+          <div class="form-group">
+            <label>Tipo de sesion</label>
+            <select name="tipo_sesion" id="edit-tipo">
+              <option value="Individual">Individual</option>
+              <option value="Grupal">Grupal</option>
+              <option value="Cognitiva">Cognitiva</option>
+              <option value="Ocupacional">Ocupacional</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Duracion (min)</label>
+            <input type="number" name="duracion_min" id="edit-duracion" min="15" max="180">
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:10px">
+            <input type="checkbox" name="asistio" id="edit-asistio" value="1" style="width:auto;margin:0">
+            <label for="edit-asistio" style="margin:0;cursor:pointer">¿Asistio?</label>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button type="button" onclick="document.getElementById('modal-edit').style.display='none'" class="btn btn-outline">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% block scripts %}
+<script>
+function filterTable(q,id){
+  q=q.toLowerCase();
+  document.querySelectorAll('#'+id+' tbody tr').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q)?'':'none'});
+}
+function openEdit(id, tipo, duracion, asistio){
+  document.getElementById('edit-form').action = '/terapeuta/sesiones/'+id+'/editar';
+  document.getElementById('edit-tipo').value = tipo;
+  document.getElementById('edit-duracion').value = duracion;
+  document.getElementById('edit-asistio').checked = asistio;
+  document.getElementById('modal-edit').style.display = 'flex';
+}
+document.getElementById('modal-edit').addEventListener('click',function(e){if(e.target===this)this.style.display='none'});
+</script>
+{% endblock %}
+{% endblock %}

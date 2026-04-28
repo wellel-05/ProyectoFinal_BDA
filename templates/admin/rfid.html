@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% block title %}RFID — Control de Acceso{% endblock %}
+{% block page_title %}RFID — Control de Acceso{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><h1>Control de Acceso RFID</h1><p>Registro de accesos · Zonas restringidas · Trazabilidad</p></div>
+  <button class="btn btn-primary btn-sm" onclick="document.getElementById('modal-acceso').style.display='flex'">
+    <i class="fa-solid fa-id-card"></i> Registrar acceso
+  </button>
+</div>
+
+<!-- Stats row -->
+<div class="grid-3" style="margin-bottom:18px">
+  <div class="card">
+    <div class="card-body" style="display:flex;align-items:center;gap:14px">
+      <div class="stat-icon blue"><i class="fa-solid fa-door-open"></i></div>
+      <div>
+        <div class="stat-label">Accesos hoy</div>
+        <div class="stat-value">{{ accesos_hoy|length }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body" style="display:flex;align-items:center;gap:14px">
+      <div class="stat-icon {% if no_autorizados %}red{% else %}green{% endif %}">
+        <i class="fa-solid {% if no_autorizados %}fa-ban{% else %}fa-shield-halved{% endif %}"></i>
+      </div>
+      <div>
+        <div class="stat-label">No autorizados (hoy)</div>
+        <div class="stat-value">{{ no_autorizados|length }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body" style="display:flex;align-items:center;gap:14px">
+      <div class="stat-icon green"><i class="fa-solid fa-network-wired"></i></div>
+      <div>
+        <div class="stat-label">Lectores activos</div>
+        <div class="stat-value">{{ lectores|length }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if no_autorizados %}
+<div style="background:var(--danger-bg);border:1px solid #FECACA;border-radius:var(--radius-sm);padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:18px">
+  <i class="fa-solid fa-ban" style="color:var(--danger);font-size:18px;flex-shrink:0"></i>
+  <div>
+    <strong style="color:var(--danger)">Accesos no autorizados detectados hoy</strong>
+    <div style="font-size:13px;color:#7F1D1D;margin-top:2px">
+      {% for a in no_autorizados %}{{ a.staff }}{% if not loop.last %}, {% endif %}{% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+
+  <!-- Accesos hoy -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--info);margin-right:8px"></i>Registro de Accesos — Hoy</span>
+    </div>
+    <div class="card-body" style="padding-top:14px">
+      {% if accesos_hoy %}
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Hora</th><th>Personal</th><th>Lector / Sala</th><th>Ala</th><th>Estado</th></tr></thead>
+          <tbody>
+          {% for a in accesos_hoy %}
+          <tr>
+            <td style="font-size:12px;color:var(--text-sm);font-family:monospace">{{ a.hora }}</td>
+            <td><strong style="font-size:13px">{{ a.staff }}</strong></td>
+            <td style="font-size:12.5px">{{ a.lector }}<div style="font-size:11px;color:var(--text-sm)">{{ a.sala or '' }}</div></td>
+            <td><span class="badge badge-neutral" style="font-size:10px">{{ a.ala or '—' }}</span></td>
+            <td>
+              <span class="badge {% if a.autorizado %}badge-success{% else %}badge-danger{% endif %}">
+                <i class="fa-solid {% if a.autorizado %}fa-check{% else %}fa-ban{% endif %}"></i>
+                {{ 'Autorizado' if a.autorizado else 'DENEGADO' }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state"><i class="fa-solid fa-id-card"></i><p>Sin accesos RFID registrados hoy</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Panel derecho: No autorizados + Lectores -->
+  <div style="display:flex;flex-direction:column;gap:18px">
+
+    <!-- No autorizados -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-triangle-exclamation" style="color:var(--danger);margin-right:8px"></i>Accesos No Autorizados</span>
+      </div>
+      <div class="card-body" style="padding-top:14px">
+        {% if no_autorizados %}
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Personal</th><th>Rol</th><th>Lector</th><th>Ala</th><th>Hora</th></tr></thead>
+            <tbody>
+            {% for a in no_autorizados %}
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#D4714A,#B85A36);display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:700;flex-shrink:0">{{ a.staff[0] }}</div>
+                  <span style="font-weight:600;font-size:13px">{{ a.staff }}</span>
+                </div>
+              </td>
+              <td><span class="badge badge-neutral" style="font-size:10px">{{ a.rol }}</span></td>
+              <td style="font-size:12px">{{ a.lector }}</td>
+              <td style="font-size:12px">{{ a.ala or '—' }}</td>
+              <td style="font-size:11px;color:var(--text-sm);font-family:monospace">{{ a.hora }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:24px 0">
+          <i class="fa-solid fa-shield-halved" style="color:var(--success)"></i>
+          <p>Sin accesos denegados hoy</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Lectores -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-network-wired" style="color:var(--info);margin-right:8px"></i>Lectores Instalados</span>
+      </div>
+      <div class="card-body" style="padding-top:14px">
+        {% if lectores %}
+        <div style="display:flex;flex-direction:column;gap:8px">
+          {% for l in lectores %}
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg);border-radius:9px">
+            <div>
+              <div style="font-weight:600;font-size:13px">{{ l.nombre_lector }}</div>
+              <div style="font-size:11px;color:var(--text-sm)">{{ l.sala or '—' }} · {{ l.ala or '—' }}</div>
+            </div>
+            <span class="badge {% if l.zona_restringida %}badge-danger{% else %}badge-neutral{% endif %}" style="font-size:10px">
+              {{ 'Restringida' if l.zona_restringida else 'General' }}
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state"><i class="fa-solid fa-network-wired"></i><p>Sin lectores configurados</p></div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal registrar acceso -->
+<div id="modal-acceso" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;align-items:center;justify-content:center;padding:20px">
+  <div class="card" style="width:100%;max-width:480px">
+    <div class="card-header">
+      <span class="card-title">Registrar Acceso RFID</span>
+      <button onclick="document.getElementById('modal-acceso').style.display='none'" class="btn btn-ghost btn-sm"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('admin_rfid_registrar') }}">
+        <div class="form-grid" style="margin-bottom:16px">
+          <div class="form-group">
+            <label>Personal *</label>
+            <select name="id_staff" required>
+              <option value="">Seleccionar…</option>
+              {% for s in staff_list %}
+              <option value="{{ s.id_staff }}">{{ s.nombre }} {{ s.apellidos }} — {{ s.nombre_rol }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Lector RFID *</label>
+            <select name="id_lector" required>
+              <option value="">Seleccionar…</option>
+              {% for l in lectores %}
+              <option value="{{ l.id_lector }}">{{ l.nombre_lector }}{% if l.zona_restringida %} ⚠ Restringida{% endif %}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button type="button" onclick="document.getElementById('modal-acceso').style.display='none'" class="btn btn-outline">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-id-card"></i> Registrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% block scripts %}
+<script>
+document.getElementById('modal-acceso').addEventListener('click',function(e){if(e.target===this)this.style.display='none'});
+</script>
+{% endblock %}
+{% endblock %}

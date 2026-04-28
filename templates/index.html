@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ElderCare — Asilo Salud Mental</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'IBM Plex Sans',sans-serif;background:#F4F0E8;color:#1A1A18;min-height:100vh;display:flex;flex-direction:column}
+    nav{background:#0D1F17;padding:18px 48px;display:flex;align-items:center;justify-content:space-between}
+    .nav-brand{display:flex;align-items:center;gap:12px}
+    .nav-icon{width:36px;height:36px;background:linear-gradient(135deg,#52B788,#2D8A5E);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff}
+    .nav-name{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:#fff;letter-spacing:.06em}
+    .nav-link{color:rgba(255,255,255,.55);text-decoration:none;font-size:13px;padding:8px 18px;border-radius:7px;border:1px solid rgba(255,255,255,.15);transition:all .15s}
+    .nav-link:hover{color:#fff;border-color:rgba(255,255,255,.35)}
+
+    .hero{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:80px 24px;position:relative;overflow:hidden}
+    .hero::before{content:'';position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(82,183,136,0.08) 0%,transparent 65%);pointer-events:none}
+    .hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:#52B788;background:rgba(82,183,136,0.1);padding:6px 16px;border-radius:20px;margin-bottom:24px;border:1px solid rgba(82,183,136,0.2)}
+    .hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(42px,7vw,80px);font-weight:700;line-height:1.05;color:#1A1A18;margin-bottom:20px}
+    .hero h1 em{color:#1B4D3E;font-style:italic}
+    .hero p{font-size:16px;color:#7A8070;max-width:520px;margin:0 auto 36px;line-height:1.7}
+    .hero-cta{display:inline-flex;align-items:center;gap:9px;background:#1B4D3E;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:14px;font-weight:600;transition:background .16s,transform .12s;box-shadow:0 4px 20px rgba(27,77,62,0.3)}
+    .hero-cta:hover{background:#2D6A4F;transform:translateY(-1px)}
+
+    .features{background:#fff;padding:64px 48px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:32px;border-top:1px solid #E3DDD5}
+    .feat{display:flex;flex-direction:column;gap:12px}
+    .feat-icon{width:44px;height:44px;background:#EBF5EF;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#2D7A50}
+    .feat h3{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:#1A1A18}
+    .feat p{font-size:13px;color:#7A8070;line-height:1.6}
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-brand">
+    <div class="nav-icon"><i class="fa-solid fa-hands-holding-circle"></i></div>
+    <div class="nav-name">ELDERCARE</div>
+  </div>
+  <a href="{{ url_for('login') }}" class="nav-link"><i class="fa-solid fa-arrow-right-to-bracket" style="margin-right:7px"></i>Ingresar al sistema</a>
+</nav>
+
+<section class="hero">
+  <div>
+    <div class="hero-eyebrow"><i class="fa-solid fa-circle-dot"></i> Sistema activo — Asilo Salud Mental</div>
+    <h1>Cuidado integral<br>para el <em>adulto mayor</em></h1>
+    <p>Plataforma de gestion clinica con monitoreo IoT en tiempo real. Administra residentes, sesiones terapeuticas, medicamentos y seguridad desde un solo lugar.</p>
+    <a href="{{ url_for('login') }}" class="hero-cta"><i class="fa-solid fa-arrow-right-to-bracket"></i>Iniciar sesion</a>
+  </div>
+</section>
+
+<section class="features">
+  <div class="feat">
+    <div class="feat-icon"><i class="fa-solid fa-users"></i></div>
+    <h3>Gestion de Residentes</h3>
+    <p>Expediente completo, asignacion de cuidadores (N:M) y seguimiento de estado de animo diario.</p>
+  </div>
+  <div class="feat">
+    <div class="feat-icon"><i class="fa-solid fa-pills"></i></div>
+    <h3>Medicamentos NFC</h3>
+    <p>Confirma la administracion de dosis con escaneo NFC. Registro transaccional e inmutable.</p>
+  </div>
+  <div class="feat">
+    <div class="feat-icon"><i class="fa-solid fa-map-location-dot"></i></div>
+    <h3>Monitoreo IoT</h3>
+    <p>GPS para el jardin, Beacons por ala, RFID en accesos restringidos. Alertas automaticas.</p>
+  </div>
+  <div class="feat">
+    <div class="feat-icon"><i class="fa-solid fa-shield-halved"></i></div>
+    <h3>Auditoria Completa</h3>
+    <p>Registro de accesos RFID, cambios en expedientes y deteccion de accesos no autorizados.</p>
+  </div>
+</section>
+</body>
+</html>

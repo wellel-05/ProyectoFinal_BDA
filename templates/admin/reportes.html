@@ -1,0 +1,433 @@
+{% extends 'base.html' %}
+{% block title %}Reportes{% endblock %}
+{% block page_title %}Reportes y Analisis{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Reportes y Analisis</h1>
+    <p>Ultimos <strong>{{ dias }}</strong> dias · Actualizado {{ current_date_str }}</p>
+  </div>
+  <form method="GET" style="display:flex;gap:8px;align-items:center">
+    <input type="hidden" name="tab" value="{{ tab }}">
+    <select name="dias" class="btn btn-outline btn-sm" style="padding:0 12px;height:34px" onchange="this.form.submit()">
+      {% for d in [14,30,60,90] %}
+      <option value="{{ d }}" {% if dias==d %}selected{% endif %}>Ultimos {{ d }} dias</option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+
+{# ── Tab Navigation ───────────────────────────────────────────────────────── #}
+<div style="display:flex;gap:4px;margin-bottom:20px;overflow-x:auto;padding-bottom:2px">
+  {% set tabs = [
+    ('cuidadores', 'fa-user-nurse',        'Cuidadores'),
+    ('animo',      'fa-face-smile',         'Evolucion Animo'),
+    ('incidentes', 'fa-triangle-exclamation','Incidentes'),
+    ('terapia',    'fa-calendar-check',     'Adherencia Terapeutica'),
+    ('iot',        'fa-map-location-dot',   'IoT'),
+    ('carga',      'fa-chart-bar',          'Carga Operativa'),
+  ] %}
+  {% for tid, icon, label in tabs %}
+  <a href="?tab={{ tid }}&dias={{ dias }}"
+     style="display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:9px;font-size:12.5px;font-weight:600;text-decoration:none;white-space:nowrap;transition:all .15s;
+            {% if tab==tid %}background:var(--primary);color:#fff{% else %}background:var(--card);color:var(--text-md);border:1px solid var(--border){% endif %}">
+    <i class="fa-solid {{ icon }}" style="font-size:12px"></i> {{ label }}
+  </a>
+  {% endfor %}
+</div>
+
+
+{# ════════════════════════════════════════════════════════════════════════════
+   TAB 1 — CUIDADORES
+   ════════════════════════════════════════════════════════════════════════════ #}
+{% if tab == 'cuidadores' %}
+<div class="page-header" style="margin-bottom:16px;margin-top:0">
+  <span></span>
+  <form method="GET" style="display:flex;gap:8px;align-items:center">
+    <input type="hidden" name="tab" value="cuidadores">
+    <input type="hidden" name="dias" value="{{ dias }}">
+    <input type="date" name="semana" value="{{ semana_inicio }}" class="btn btn-outline btn-sm" style="padding:0 10px;height:34px">
+    <select name="id_cuidador" class="btn btn-outline btn-sm" style="padding:0 12px;height:34px">
+      <option value="">Todos</option>
+      {% for c in cuidadores %}<option value="{{ c.id_staff }}" {% if selected_cuidador==c.id_staff|string %}selected{% endif %}>{{ c.nombre }}</option>{% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Filtrar</button>
+  </form>
+</div>
+
+{% if resumen %}
+{% for r in resumen %}
+<div class="card" style="margin-bottom:16px">
+  <div class="card-header">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#52B788,#1B4D3E);display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;font-weight:700;flex-shrink:0">{{ r.cuidador[0] }}</div>
+      <div>
+        <div style="font-weight:700;font-size:15px">{{ r.cuidador }}</div>
+        <div style="font-size:11px;color:var(--text-sm)">Semana del {{ r.semana_inicio }} al {{ r.semana_fin }}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <span class="badge badge-neutral">{{ r.residentes_atendidos }} residentes</span>
+      <span class="badge badge-info">{{ r.total_checkins }} check-ins</span>
+      <span class="badge badge-success">{{ r.meds_administrados }} medicamentos</span>
+      {% if r.dosis_perdidas > 0 %}<span class="badge badge-warning">{{ r.dosis_perdidas }} dosis perdidas</span>{% endif %}
+      {% if r.incidentes_reportados > 0 %}<span class="badge badge-danger">{{ r.incidentes_reportados }} incidentes</span>{% endif %}
+    </div>
+  </div>
+  <div class="card-body" style="padding-top:14px">
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
+      {% set stats = [
+        (r.residentes_atendidos, 'Residentes',   'var(--primary)', 'fa-users'),
+        (r.total_checkins,       'Check-ins',     'var(--info)',    'fa-face-smile'),
+        (r.puntaje_animo_promedio, 'Animo prom.', 'var(--success)', 'fa-heart-pulse'),
+        (r.meds_administrados,   'Medicamentos',  '#7B5EA7',        'fa-pills'),
+        (r.incidentes_reportados,'Incidentes',    'var(--danger)',  'fa-triangle-exclamation'),
+      ] %}
+      {% for val, label, color, icon in stats %}
+      <div style="background:var(--bg);border-radius:10px;padding:12px;text-align:center">
+        <i class="fa-solid {{ icon }}" style="color:{{ color }};font-size:14px;margin-bottom:6px;display:block;opacity:.7"></i>
+        <div style="font-size:22px;font-weight:700;font-family:'Cormorant Garamond',serif;color:{{ color }}">{{ val if val is not none else '—' }}</div>
+        <div style="font-size:10.5px;color:var(--text-sm);margin-top:2px">{{ label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="card"><div class="card-body"><div class="empty-state"><i class="fa-solid fa-chart-bar"></i><p>Sin datos para el filtro seleccionado</p></div></div></div>
+{% endif %}
+{% endif %}
+
+
+{# ════════════════════════════════════════════════════════════════════════════
+   TAB 2 — EVOLUCION ANIMO (linea)
+   ════════════════════════════════════════════════════════════════════════════ #}
+{% if tab == 'animo' %}
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Evolucion de Estado de Animo</span>
+    <span class="badge badge-neutral">Promedio diario · todos los residentes</span>
+  </div>
+  <div class="card-body">
+    {% if animo_labels %}
+    <canvas id="chartAnimo" style="max-height:340px"></canvas>
+    {% else %}
+    <div class="empty-state"><i class="fa-solid fa-face-smile"></i><p>Sin check-ins en el periodo seleccionado</p></div>
+    {% endif %}
+  </div>
+</div>
+
+{% if animo_labels %}
+<script>
+(function(){
+  const labels  = {{ animo_labels | tojson }};
+  const data    = {{ animo_data   | tojson }};
+  const counts  = {{ animo_counts | tojson }};
+  const ctx = document.getElementById('chartAnimo').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Puntaje promedio',
+        data,
+        borderColor: '#52B788',
+        backgroundColor: 'rgba(82,183,136,0.12)',
+        pointBackgroundColor: data.map(v => v <= 2 ? '#B91C1C' : v <= 3 ? '#B45309' : '#2D7A50'),
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        fill: true,
+        tension: 0.35,
+        borderWidth: 2.5,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            afterLabel: ctx => `Check-ins: ${counts[ctx.dataIndex]}`
+          }
+        }
+      },
+      scales: {
+        y: {
+          min: 1, max: 5,
+          ticks: { stepSize: 1, callback: v => ['','Muy bajo','Bajo','Regular','Bueno','Excelente'][v] || v },
+          grid: { color: '#F0EDE8' }
+        },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+})();
+</script>
+{% endif %}
+{% endif %}
+
+
+{# ════════════════════════════════════════════════════════════════════════════
+   TAB 3 — INCIDENTES (barras apiladas)
+   ════════════════════════════════════════════════════════════════════════════ #}
+{% if tab == 'incidentes' %}
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Incidentes por Tipo y Severidad</span>
+    <span class="badge badge-neutral">Ultimos {{ dias }} dias</span>
+  </div>
+  <div class="card-body">
+    {% if tipos %}
+    <canvas id="chartInc" style="max-height:340px"></canvas>
+    {% else %}
+    <div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i><p>Sin incidentes en el periodo</p></div>
+    {% endif %}
+  </div>
+</div>
+
+{% if tipos %}
+<script>
+(function(){
+  const ctx = document.getElementById('chartInc').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: {{ tipos | tojson }},
+      datasets: [
+        { label: 'Alta',  data: {{ inc_alta  | tojson }}, backgroundColor: '#EF4444', borderRadius: 3 },
+        { label: 'Media', data: {{ inc_media | tojson }}, backgroundColor: '#F59E0B', borderRadius: 3 },
+        { label: 'Baja',  data: {{ inc_baja  | tojson }}, backgroundColor: '#6EE7B7', borderRadius: 3 },
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } },
+      scales: {
+        x: { stacked: true, grid: { display: false } },
+        y: { stacked: true, beginAtZero: true, grid: { color: '#F0EDE8' },
+             ticks: { stepSize: 1 } }
+      }
+    }
+  });
+})();
+</script>
+{% endif %}
+{% endif %}
+
+
+{# ════════════════════════════════════════════════════════════════════════════
+   TAB 4 — ADHERENCIA TERAPEUTICA (barras agrupadas)
+   ════════════════════════════════════════════════════════════════════════════ #}
+{% if tab == 'terapia' %}
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Adherencia Terapeutica</span>
+    <span class="badge badge-neutral">Sesiones programadas vs. realizadas · {{ dias }} dias</span>
+  </div>
+  <div class="card-body">
+    {% if adh_labels %}
+    <canvas id="chartAdh" style="max-height:340px"></canvas>
+    {% else %}
+    <div class="empty-state"><i class="fa-solid fa-calendar-check"></i><p>Sin sesiones en el periodo</p></div>
+    {% endif %}
+  </div>
+</div>
+
+{% if adh_labels %}
+<div class="card" style="margin-top:16px">
+  <div class="card-body" style="padding:0">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Terapeuta</th><th>Programadas</th><th>Realizadas</th><th>Adherencia</th></tr></thead>
+        <tbody>
+        {% for i in range(adh_labels|length) %}
+        <tr>
+          <td style="font-weight:600">{{ adh_labels[i] }}</td>
+          <td>{{ adh_programadas[i] }}</td>
+          <td>{{ adh_realizadas[i] }}</td>
+          <td>
+            {% set pct = (adh_realizadas[i] / adh_programadas[i] * 100)|int if adh_programadas[i] > 0 else 0 %}
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="flex:1;height:6px;background:#F0EDE8;border-radius:3px">
+                <div style="width:{{ pct }}%;height:6px;border-radius:3px;background:{% if pct>=80 %}var(--success){% elif pct>=50 %}var(--warning){% else %}var(--danger){% endif %}"></div>
+              </div>
+              <span style="font-size:12px;font-weight:600;color:var(--text-md)">{{ pct }}%</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const ctx = document.getElementById('chartAdh').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: {{ adh_labels | tojson }},
+      datasets: [
+        { label: 'Programadas', data: {{ adh_programadas | tojson }}, backgroundColor: '#93C5FD', borderRadius: 4 },
+        { label: 'Realizadas',  data: {{ adh_realizadas  | tojson }}, backgroundColor: '#2D7A50', borderRadius: 4 },
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#F0EDE8' } }
+      }
+    }
+  });
+})();
+</script>
+{% endif %}
+{% endif %}
+
+
+{# ════════════════════════════════════════════════════════════════════════════
+   TAB 5 — IoT (barras + totales)
+   ════════════════════════════════════════════════════════════════════════════ #}
+{% if tab == 'iot' %}
+{% set iot_colors = {'GPS':'#F59E0B','NFC':'#52B788','RFID':'#6366F1','Beacon':'#0EA5E9'} %}
+<div class="stats-grid" style="margin-bottom:18px">
+  {% for i in range(iot_labels|length) %}
+  <div class="stat-card">
+    <div class="stat-icon" style="background:{{ {'GPS':'#FEF3C7','NFC':'#EBF5EF','RFID':'#EEF2FF','Beacon':'#E0F2FE'}[iot_labels[i]] }};color:{{ iot_colors[iot_labels[i]] }}">
+      <i class="fa-solid {{ {'GPS':'fa-satellite','NFC':'fa-mobile-screen','RFID':'fa-id-badge','Beacon':'fa-wifi'}[iot_labels[i]] }}"></i>
+    </div>
+    <div>
+      <div class="stat-label">Eventos {{ iot_labels[i] }}</div>
+      <div class="stat-value">{{ iot_data[i] }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Distribucion de Eventos IoT</span>
+    <span class="badge badge-neutral">Ultimos {{ dias }} dias</span>
+  </div>
+  <div class="card-body">
+    {% if iot_labels %}
+    <div style="max-width:400px;margin:0 auto">
+      <canvas id="chartIot" style="max-height:300px"></canvas>
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="fa-solid fa-map-location-dot"></i><p>Sin eventos IoT en el periodo</p></div>
+    {% endif %}
+  </div>
+</div>
+
+{% if iot_labels %}
+<script>
+(function(){
+  const ctx = document.getElementById('chartIot').getContext('2d');
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: {{ iot_labels | tojson }},
+      datasets: [{
+        data: {{ iot_data | tojson }},
+        backgroundColor: ['#F59E0B','#52B788','#6366F1','#0EA5E9'],
+        borderWidth: 2,
+        borderColor: '#fff',
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} eventos` } }
+      },
+      cutout: '62%'
+    }
+  });
+})();
+</script>
+{% endif %}
+{% endif %}
+
+
+{# ════════════════════════════════════════════════════════════════════════════
+   TAB 6 — CARGA OPERATIVA (barras horizontales)
+   ════════════════════════════════════════════════════════════════════════════ #}
+{% if tab == 'carga' %}
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Carga Operativa por Profesional</span>
+    <span class="badge badge-neutral">Ultimos {{ dias }} dias</span>
+  </div>
+  <div class="card-body">
+    {% if car_labels %}
+    <canvas id="chartCarga" style="max-height:{{ car_labels|length * 50 + 60 }}px"></canvas>
+    {% else %}
+    <div class="empty-state"><i class="fa-solid fa-user-gear"></i><p>Sin actividad en el periodo</p></div>
+    {% endif %}
+  </div>
+</div>
+
+{% if car_labels %}
+<div class="card" style="margin-top:16px">
+  <div class="card-body" style="padding:0">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Profesional</th><th>Rol</th><th>Sesiones</th><th>Check-ins</th><th>Incidentes</th><th>Total</th></tr></thead>
+        <tbody>
+        {% for i in range(car_labels|length) %}
+        <tr>
+          <td style="font-weight:600">{{ car_labels[i] }}</td>
+          <td><span class="badge badge-neutral">{{ car_roles[i] }}</span></td>
+          <td>{{ car_sesiones[i] }}</td>
+          <td>{{ car_checkins[i] }}</td>
+          <td>{{ car_incidentes[i] }}</td>
+          <td style="font-weight:700">{{ car_sesiones[i] + car_checkins[i] + car_incidentes[i] }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const ctx = document.getElementById('chartCarga').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: {{ car_labels | tojson }},
+      datasets: [
+        { label: 'Sesiones',   data: {{ car_sesiones   | tojson }}, backgroundColor: '#2D7A50', borderRadius: 3 },
+        { label: 'Check-ins',  data: {{ car_checkins   | tojson }}, backgroundColor: '#0EA5E9', borderRadius: 3 },
+        { label: 'Incidentes', data: {{ car_incidentes | tojson }}, backgroundColor: '#F59E0B', borderRadius: 3 },
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } },
+      scales: {
+        x: { stacked: true, beginAtZero: true, grid: { color: '#F0EDE8' }, ticks: { stepSize: 1 } },
+        y: { stacked: true, grid: { display: false } }
+      }
+    }
+  });
+})();
+</script>
+{% endif %}
+{% endif %}
+
+{% endblock %}

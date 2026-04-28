@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Log de Auditoria{% endblock %}
+{% block page_title %}Auditoria del Sistema{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><h1>Log de Auditoria</h1><p>Trazabilidad completa · Acciones del sistema · Eventos de seguridad</p></div>
+  <span class="badge badge-neutral" style="font-size:12px">{{ logs|length }} registros</span>
+</div>
+
+<div class="card">
+  <div class="card-header" style="padding-bottom:16px">
+    <div class="flex gap-2">
+      <span class="badge badge-neutral" style="cursor:pointer" onclick="filterAudit('')">Todos</span>
+      <span class="badge badge-info" style="cursor:pointer" onclick="filterAudit('INSERT')">INSERT</span>
+      <span class="badge badge-warning" style="cursor:pointer" onclick="filterAudit('UPDATE')">UPDATE</span>
+      <span class="badge badge-danger" style="cursor:pointer" onclick="filterAudit('DELETE')">DELETE</span>
+      <span class="badge badge-danger" style="cursor:pointer" onclick="filterAudit('ACCESO_NO_AUTORIZADO')">RFID Denegado</span>
+    </div>
+    <input type="text" placeholder="Buscar en el log…" style="max-width:260px;margin:0" oninput="searchAudit(this.value)">
+  </div>
+  <div class="tbl-wrap">
+    <table id="audit-table">
+      <thead>
+        <tr>
+          <th>Fecha / Hora</th>
+          <th>Usuario</th>
+          <th>Accion</th>
+          <th>Tabla</th>
+          <th>Detalle</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for l in logs %}
+      <tr data-accion="{{ l.accion }}">
+        <td style="font-size:11.5px;color:var(--text-sm);font-family:monospace;white-space:nowrap">{{ l.fecha_hora }}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:7px">
+            <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#6B9FD4,#4A7FB5);display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:700;flex-shrink:0">{{ (l.username or '?')[0] }}</div>
+            <span style="font-size:12.5px">{{ l.username or '—' }}</span>
+          </div>
+        </td>
+        <td>
+          <span class="badge {% if l.accion=='INSERT' %}badge-info{% elif l.accion=='UPDATE' %}badge-warning{% elif l.accion in ('DELETE','ACCESO_NO_AUTORIZADO') %}badge-danger{% else %}badge-neutral{% endif %}" style="font-size:10px">
+            {{ l.accion }}
+          </span>
+        </td>
+        <td style="font-size:12px;font-family:monospace;color:var(--text-sm)">{{ l.tabla_afectada or '—' }}</td>
+        <td style="font-size:12px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ l.detalle or '' }}">{{ l.detalle or '—' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-clipboard-list"></i><p>Sin registros en el log de auditoria</p></div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% block scripts %}
+<script>
+function filterAudit(accion){
+  document.querySelectorAll('#audit-table tbody tr[data-accion]').forEach(r=>{
+    r.style.display=(!accion||r.dataset.accion===accion)?'':'none';
+  });
+}
+function searchAudit(q){
+  q=q.toLowerCase();
+  document.querySelectorAll('#audit-table tbody tr').forEach(r=>{
+    r.style.display=r.textContent.toLowerCase().includes(q)?'':'none';
+  });
+}
+</script>
+{% endblock %}
+{% endblock %}

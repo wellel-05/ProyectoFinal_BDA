@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}NFC — Confirmacion de Medicamentos{% endblock %}
+{% block page_title %}NFC — Medicamentos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><h1>Confirmacion por NFC</h1><p>Escenario 3 — Simulacion de lectura de etiqueta NFC en medicamento</p></div>
+</div>
+
+<!-- Info banner -->
+<div style="background:linear-gradient(135deg,rgba(82,183,136,0.1),rgba(27,77,62,0.08));border:1px solid rgba(82,183,136,0.3);border-radius:var(--radius-sm);padding:16px 20px;display:flex;align-items:flex-start;gap:14px;margin-bottom:20px">
+  <i class="fa-solid fa-mobile-screen" style="color:var(--success);font-size:20px;flex-shrink:0;margin-top:2px"></i>
+  <div>
+    <strong style="color:var(--primary)">¿Como funciona el NFC?</strong>
+    <p style="font-size:13px;color:var(--text-sm);margin-top:4px;line-height:1.6">
+      Cada medicamento tiene una etiqueta NFC con un ID unico. Al acercar el dispositivo, el sistema verifica la identidad del medicamento, registra la administracion en el log y actualiza el estado del horario. Este formulario simula esa lectura.
+    </p>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+
+  <!-- Formulario simulacion NFC -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-mobile-screen" style="color:var(--success);margin-right:8px"></i>Simular Lectura NFC</span>
+    </div>
+    <div class="card-body">
+      {% if resultado %}
+      <div style="background:{% if resultado.ok %}rgba(82,183,136,0.1){% else %}var(--danger-bg){% endif %};border:1px solid {% if resultado.ok %}rgba(82,183,136,0.4){% else %}#FECACA{% endif %};border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+        <i class="fa-solid {% if resultado.ok %}fa-circle-check{% else %}fa-circle-xmark{% endif %}" style="color:{% if resultado.ok %}var(--success){% else %}var(--danger){% endif %};font-size:18px;flex-shrink:0"></i>
+        <span style="font-size:13px;font-weight:600;color:{% if resultado.ok %}var(--success){% else %}var(--danger){% endif %}">{{ resultado.msg }}</span>
+      </div>
+      {% endif %}
+
+      <form method="POST" action="{{ url_for('cuidador_nfc') }}">
+        <div style="display:flex;flex-direction:column;gap:14px">
+
+          <!-- Visualizacion del "scan" -->
+          <div style="text-align:center;padding:24px 0;border:2px dashed var(--border);border-radius:12px;background:var(--bg);position:relative;overflow:hidden">
+            <div id="nfc-anim" style="width:60px;height:60px;border-radius:50%;border:3px solid var(--success);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;transition:all .3s">
+              <i class="fa-solid fa-mobile-screen" style="font-size:24px;color:var(--success)"></i>
+            </div>
+            <div style="font-size:13px;color:var(--text-sm)">Selecciona la etiqueta NFC del medicamento</div>
+          </div>
+
+          <div class="form-group">
+            <label>Etiqueta NFC *</label>
+            <select name="codigo_tag" required onchange="updateTag(this)">
+              <option value="">Seleccionar etiqueta…</option>
+              {% for t in tags_nfc %}
+              <option value="{{ t.codigo_tag }}" data-residente="{{ t.residente }}" data-med="{{ t.medicamento }}">
+                {{ t.codigo_tag }} — {{ t.residente }} · {{ t.medicamento }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div id="tag-preview" style="display:none;padding:12px 14px;background:rgba(82,183,136,0.1);border-radius:10px;border-left:3px solid var(--success)">
+            <div style="font-size:11px;color:var(--text-sm);margin-bottom:2px">Residente</div>
+            <div id="tag-residente" style="font-weight:600;font-size:13px;margin-bottom:6px"></div>
+            <div style="font-size:11px;color:var(--text-sm);margin-bottom:2px">Medicamento</div>
+            <div id="tag-med" style="font-weight:600;font-size:13px"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Observaciones (opcional)</label>
+            <textarea name="observaciones" rows="2" placeholder="Notas sobre la administracion…"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center" onclick="pulseNfc()">
+            <i class="fa-solid fa-mobile-screen"></i> Confirmar administracion
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Log de confirmaciones recientes -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--info);margin-right:8px"></i>Log NFC — Hoy</span>
+    </div>
+    <div class="card-body" style="padding-top:14px">
+      {% if log_nfc %}
+      <div style="display:flex;flex-direction:column;gap:8px">
+        {% for l in log_nfc %}
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg);border-radius:10px">
+          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#52B788,#2D8A5E);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:700;flex-shrink:0">
+            <i class="fa-solid fa-check" style="font-size:10px"></i>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:13px">{{ l.residente }}</div>
+            <div style="font-size:11px;color:var(--text-sm)">{{ l.medicamento }} · {{ l.dosis }}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:12px;font-family:monospace;color:var(--text-sm)">{{ l.hora }}</div>
+            <span class="badge badge-success" style="font-size:9px">NFC</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state"><i class="fa-solid fa-mobile-screen"></i><p>Sin confirmaciones NFC hoy</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+{% block scripts %}
+<script>
+function updateTag(sel){
+  const opt = sel.options[sel.selectedIndex];
+  const preview = document.getElementById('tag-preview');
+  if(sel.value){
+    document.getElementById('tag-residente').textContent = opt.dataset.residente || '';
+    document.getElementById('tag-med').textContent = opt.dataset.med || '';
+    preview.style.display='block';
+  } else {
+    preview.style.display='none';
+  }
+}
+function pulseNfc(){
+  const el = document.getElementById('nfc-anim');
+  el.style.borderColor='var(--accent)';
+  el.style.transform='scale(1.15)';
+  setTimeout(()=>{el.style.borderColor='var(--success)';el.style.transform='scale(1)'},500);
+}
+</script>
+{% endblock %}
+{% endblock %}
