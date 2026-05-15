@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% block title %}Familiares{% endblock %}
+{% block page_title %}Gestion de Familiares{% endblock %}
+
+{% block content %}
+<div class="page-header" style="margin-bottom:20px">
+  <div>
+    <h1>Familiares Vinculados</h1>
+    <p>Administra las cuentas de acceso para familiares de los residentes.</p>
+  </div>
+  <button class="btn btn-primary" onclick="document.getElementById('modal-nuevo').style.display='flex'">
+    <i class="fa-solid fa-plus"></i> Nuevo Familiar
+  </button>
+</div>
+
+{# ── Lista de familiares ───────────────────────────────────────────────────── #}
+{% if familiares %}
+<div class="card">
+  <div class="card-body" style="padding:0">
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Familiar</th>
+            <th>Email</th>
+            <th>Telefono</th>
+            <th>Usuario</th>
+            <th>Residentes</th>
+            <th>Registro</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for f in familiares %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#7B5EA7,#4C3575);
+                          display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0">
+                {{ f.familiar[0] }}
+              </div>
+              <span style="font-weight:600">{{ f.familiar }}</span>
+            </div>
+          </td>
+          <td style="font-size:13px">{{ f.email }}</td>
+          <td style="font-size:13px">{{ f.telefono or '—' }}</td>
+          <td><code style="font-size:12px">{{ f.username or '—' }}</code></td>
+          <td style="text-align:center">
+            <span class="badge badge-neutral">{{ f.residentes_vinculados }}</span>
+          </td>
+          <td style="font-size:12px;color:var(--text-sm)">{{ f.fecha_registro }}</td>
+          <td>
+            {% if f.activo %}
+            <span class="badge badge-success">Activo</span>
+            {% else %}
+            <span class="badge badge-danger">Inactivo</span>
+            {% endif %}
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('admin_familiar_toggle', id_familiar=f.id_familiar) }}" style="display:inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-outline btn-sm" title="{% if f.activo %}Desactivar{% else %}Activar{% endif %}">
+                <i class="fa-solid {% if f.activo %}fa-ban{% else %}fa-circle-check{% endif %}"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card">
+  <div class="card-body">
+    <div class="empty-state">
+      <i class="fa-solid fa-people-roof"></i>
+      <p>No hay familiares registrados. Crea el primero con el boton "Nuevo Familiar".</p>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# ── Modal: nuevo familiar ─────────────────────────────────────────────────── #}
+<div id="modal-nuevo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+     z-index:1000;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;padding:28px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px">
+      <h3 style="margin:0;font-size:18px;font-weight:700">Registrar Familiar</h3>
+      <button onclick="document.getElementById('modal-nuevo').style.display='none'"
+              style="background:none;border:none;font-size:20px;cursor:pointer;color:#888">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin_familiares_nuevo') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div>
+          <label class="form-label">Nombre *</label>
+          <input type="text" name="nombre" class="form-control" required placeholder="Maria">
+        </div>
+        <div>
+          <label class="form-label">Apellidos *</label>
+          <input type="text" name="apellidos" class="form-control" required placeholder="Lopez Garcia">
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div>
+          <label class="form-label">Email *</label>
+          <input type="email" name="email" class="form-control" required placeholder="email@ejemplo.com">
+        </div>
+        <div>
+          <label class="form-label">Telefono</label>
+          <input type="text" name="telefono" class="form-control" placeholder="8112345678">
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div>
+          <label class="form-label">Parentesco *</label>
+          <select name="parentesco" class="form-control" required>
+            <option value="">Seleccionar...</option>
+            {% for p in ['Hijo/a','Conyuge','Hermano/a','Nieto/a','Sobrino/a','Otro'] %}
+            <option value="{{ p }}">{{ p }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Residente vinculado *</label>
+          <select name="id_residente" class="form-control" required>
+            <option value="">Seleccionar...</option>
+            {% for r in residentes %}
+            <option value="{{ r.id_residente }}">{{ r.nombre_completo }} (Hab. {{ r.habitacion or '—' }})</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13.5px">
+          <input type="checkbox" name="es_principal" style="width:15px;height:15px">
+          Designar como contacto principal del residente
+        </label>
+      </div>
+
+      <div style="border-top:1px solid var(--border);padding-top:16px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:var(--text-sm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">
+          Credenciales de acceso
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div>
+            <label class="form-label">Usuario *</label>
+            <input type="text" name="username" class="form-control" required placeholder="familiar1" autocomplete="off">
+          </div>
+          <div>
+            <label class="form-label">Contrasena *</label>
+            <input type="password" name="password" class="form-control" required placeholder="Min. 8 caracteres" autocomplete="new-password">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button type="button" onclick="document.getElementById('modal-nuevo').style.display='none'"
+                class="btn btn-outline">Cancelar</button>
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-plus"></i> Registrar Familiar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

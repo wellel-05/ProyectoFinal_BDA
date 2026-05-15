@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% block title %}Tags NFC{% endblock %}
+{% block page_title %}Tags NFC — Actividades{% endblock %}
+
+{% block head %}
+<style>
+  .nfc-grid { display: grid; grid-template-columns: 360px 1fr; gap: 24px; align-items: start; }
+  .panel    { background: var(--card); border-radius: var(--radius); padding: 22px;
+              box-shadow: var(--shadow); }
+  .panel-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 16px;
+                 display: flex; align-items: center; gap: 8px; }
+  .form-row  { margin-bottom: 14px; }
+  .form-row label { display: block; font-size: 12px; font-weight: 600; color: var(--text-sm);
+                    margin-bottom: 5px; text-transform: uppercase; letter-spacing: .4px; }
+  .form-row input, .form-row select, .form-row textarea {
+    width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px;
+    font-size: 13.5px; color: var(--text); background: var(--bg); font-family: inherit;
+    transition: border-color .15s;
+  }
+  .form-row input:focus, .form-row select:focus, .form-row textarea:focus {
+    outline: none; border-color: var(--primary);
+  }
+  .form-row textarea { resize: none; height: 64px; }
+  .btn-add { width: 100%; background: linear-gradient(135deg,var(--primary),var(--primary-lt));
+             color: #fff; border: none; border-radius: 8px; padding: 11px; font-size: 14px;
+             font-weight: 700; cursor: pointer; font-family: inherit; transition: opacity .15s; }
+  .btn-add:hover { opacity: .9; }
+
+  .act-row { display: flex; align-items: center; gap: 12px; padding: 13px 0;
+             border-bottom: 1px solid var(--border); }
+  .act-row:last-child { border-bottom: none; }
+  .act-icon { width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+              display: flex; align-items: center; justify-content: center; font-size: 17px; }
+  .act-icon.grupal     { background: #DCFCE7; color: #166534; }
+  .act-icon.individual { background: #DBEAFE; color: #1D4ED8; }
+  .act-icon.terapia    { background: #F3E8FF; color: #7E22CE; }
+  .act-icon.recreativa { background: #FEF9C3; color: #854D0E; }
+  .act-name  { font-weight: 600; font-size: 13.5px; color: var(--text); }
+  .act-meta  { font-size: 11.5px; color: var(--text-sm); margin-top: 2px; }
+  .badge     { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-on  { background: #DCFCE7; color: #166534; }
+  .badge-off { background: #F3F4F6; color: #9CA3AF; }
+  .act-actions { margin-left: auto; display: flex; gap: 6px; }
+  .btn-sm { border: 1px solid var(--border); background: var(--bg); border-radius: 7px;
+            padding: 5px 10px; font-size: 12px; cursor: pointer; font-family: inherit;
+            transition: all .15s; }
+  .btn-sm:hover { border-color: var(--primary); color: var(--primary); }
+  .btn-sm.danger:hover { border-color: #EF4444; color: #EF4444; }
+
+  .url-box { background: var(--bg); border-radius: 8px; padding: 10px 12px; font-size: 12px;
+             color: var(--text-sm); margin-top: 6px; word-break: break-all; font-family: monospace;
+             border: 1px dashed var(--border); cursor: pointer; }
+  .url-box:hover { border-color: var(--primary); }
+
+  .tab-bar { display: flex; gap: 4px; margin-bottom: 20px; }
+  .tab { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+         cursor: pointer; border: 1px solid var(--border); background: var(--bg);
+         color: var(--text-sm); transition: all .15s; }
+  .tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  @media (max-width: 700px) { .nfc-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="nfc-grid">
+
+  <!-- Panel izquierdo: formulario nueva actividad -->
+  <div>
+    <div class="panel">
+      <div class="panel-title">
+        <i class="fa-solid fa-plus-circle" style="color:var(--primary)"></i>
+        Nueva actividad
+      </div>
+      <form method="POST" action="{{ url_for('admin_actividad_nueva') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-row">
+          <label>Nombre</label>
+          <input type="text" name="nombre" placeholder="Ej. Terapia física grupal" required>
+        </div>
+        <div class="form-row">
+          <label>Tipo</label>
+          <select name="tipo">
+            <option value="grupal">Grupal</option>
+            <option value="individual">Individual</option>
+            <option value="terapia">Terapia</option>
+            <option value="recreativa">Recreativa</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Descripción (opcional)</label>
+          <textarea name="descripcion" placeholder="Descripción breve de la actividad…"></textarea>
+        </div>
+        <button type="submit" class="btn-add">
+          <i class="fa-solid fa-plus" style="margin-right:6px"></i>Crear actividad
+        </button>
+      </form>
+    </div>
+
+    <!-- Instrucciones NFC Tools -->
+    <div class="panel" style="margin-top:20px">
+      <div class="panel-title">
+        <i class="fa-solid fa-mobile-screen" style="color:var(--primary)"></i>
+        Configurar NFC Tools
+      </div>
+      <ol style="font-size:13px;color:var(--text-sm);line-height:1.9;padding-left:18px">
+        <li>Abre <b>NFC Tools</b> en Android</li>
+        <li>Toca <b>"Escribir"</b> → <b>"Agregar registro"</b></li>
+        <li>Selecciona <b>"URL / URI"</b></li>
+        <li>Escribe la URL del residente (ver lista)</li>
+        <li>Toca <b>"Escribir"</b> y acerca el llavero NFC</li>
+      </ol>
+      <div style="font-size:12px;color:var(--text-sm);margin-top:12px;background:#FEF9C3;
+                  border-radius:8px;padding:10px;border-left:3px solid #D97706">
+        <i class="fa-solid fa-lightbulb" style="color:#D97706;margin-right:5px"></i>
+        El celular debe estar en la misma red WiFi que el servidor para que las URLs funcionen.
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel derecho: lista de actividades + URLs NFC -->
+  <div>
+    <div class="panel">
+      <div class="tab-bar">
+        <div class="tab active" onclick="setTab('actividades',this)">
+          <i class="fa-solid fa-list-check" style="margin-right:5px"></i>Actividades ({{ actividades|length }})
+        </div>
+        <div class="tab" onclick="setTab('urls',this)">
+          <i class="fa-solid fa-nfc-symbol" style="margin-right:5px"></i>URLs para Tags
+        </div>
+        <div class="tab" onclick="window.location='{{ url_for('admin_asistencias') }}'">
+          <i class="fa-solid fa-clock-rotate-left" style="margin-right:5px"></i>Historial
+        </div>
+      </div>
+
+      <!-- Tab actividades -->
+      <div id="tab-actividades" class="tab-content active">
+        {% if actividades %}
+          {% set tipo_icons = {'grupal':'fa-users','individual':'fa-user','terapia':'fa-heart-pulse','recreativa':'fa-puzzle-piece'} %}
+          {% for act in actividades %}
+          <div class="act-row">
+            <div class="act-icon {{ act.tipo }}">
+              <i class="fa-solid {{ tipo_icons.get(act.tipo,'fa-calendar') }}"></i>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div class="act-name">{{ act.nombre }}</div>
+              <div class="act-meta">
+                {{ act.tipo|capitalize }} ·
+                <span class="badge {{ 'badge-on' if act.activo else 'badge-off' }}">
+                  {{ 'Activa' if act.activo else 'Inactiva' }}
+                </span>
+                · {{ act.total_asistencias }} asistencias
+              </div>
+            </div>
+            <div class="act-actions">
+              <form method="POST" action="{{ url_for('admin_actividad_toggle', id_act=act.id_actividad) }}" style="display:inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-sm">
+                  {{ 'Desactivar' if act.activo else 'Activar' }}
+                </button>
+              </form>
+              <form method="POST" action="{{ url_for('admin_actividad_delete', id_act=act.id_actividad) }}"
+                    onsubmit="return confirm('¿Eliminar actividad? Solo funciona si no tiene asistencias.')" style="display:inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-sm danger">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="text-align:center;padding:30px;color:var(--text-sm);font-size:13px">
+            <i class="fa-solid fa-calendar-xmark fa-lg" style="opacity:.3;display:block;margin-bottom:8px"></i>
+            Sin actividades. Crea la primera usando el formulario.
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Tab URLs para NFC Tags -->
+      <div id="tab-urls" class="tab-content">
+        <div style="font-size:13px;color:var(--text-sm);margin-bottom:14px">
+          Copia la URL de cada residente y escríbela en el tag NFC con la app <b>NFC Tools</b>.
+          Al escanear el tag, se abrirá la página de registro de asistencia.
+        </div>
+        <div id="url-list">
+          <div style="text-align:center;padding:24px;color:var(--text-sm)">
+            <i class="fa-solid fa-spinner fa-spin" style="margin-right:6px"></i>Cargando residentes…
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE = window.location.origin;
+
+function setTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'urls') cargarResidentes();
+}
+
+function cargarResidentes() {
+  fetch('/api/residentes/lista').then(r => r.json()).then(data => {
+    if (!data.length) {
+      document.getElementById('url-list').innerHTML =
+        '<div style="text-align:center;padding:24px;color:var(--text-sm)">Sin residentes activos.</div>';
+      return;
+    }
+    let html = '';
+    data.forEach(r => {
+      const url = `${BASE}/nfc/${r.id_residente}`;
+      html += `<div style="margin-bottom:14px">
+        <div style="font-weight:700;font-size:13.5px;color:var(--text)">
+          ${r.nombre} ${r.apellidos}
+          <span style="font-size:11.5px;color:var(--text-sm);font-weight:400;margin-left:6px">Hab. ${r.habitacion||'—'}</span>
+        </div>
+        <div class="url-box" onclick="copiar(this,'${url}')">
+          ${url}
+          <i class="fa-solid fa-copy" style="margin-left:6px;opacity:.5"></i>
+        </div>
+      </div>`;
+    });
+    document.getElementById('url-list').innerHTML = html;
+  }).catch(() => {
+    document.getElementById('url-list').innerHTML =
+      '<div style="color:#EF4444;font-size:13px;padding:16px">Error al cargar residentes.</div>';
+  });
+}
+
+function copiar(el, url) {
+  navigator.clipboard.writeText(url).then(() => {
+    el.style.borderColor = 'var(--primary)';
+    el.style.color = 'var(--primary)';
+    setTimeout(() => { el.style.borderColor = ''; el.style.color = ''; }, 1500);
+  });
+}
+</script>
+{% endblock %}

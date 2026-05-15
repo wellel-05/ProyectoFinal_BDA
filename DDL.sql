@@ -348,7 +348,7 @@ CREATE INDEX idx_deteccion_staff  ON deteccion_beacon (id_staff, detectado_en DE
 
 CREATE TABLE log_auditoria (
     id_log              BIGSERIAL PRIMARY KEY,
-    id_usuario          INT          NOT NULL,
+    id_usuario          INT,
     tabla_afectada      VARCHAR(80)  NOT NULL,
     operacion           VARCHAR(10)  NOT NULL CHECK (operacion IN ('INSERT', 'UPDATE', 'DELETE')),
     id_registro         INT,

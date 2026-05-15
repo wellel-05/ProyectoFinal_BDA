@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}ElderCare{% endblock %} — Asilo Salud Mental</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   {% block head %}{% endblock %}
@@ -39,11 +39,11 @@
     body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:14px;line-height:1.6}
 
     /* Sidebar */
-    .sidebar{width:var(--sidebar-w);background:var(--sidebar);min-height:100vh;position:fixed;top:0;left:0;display:flex;flex-direction:column;z-index:100}
+    .sidebar{width:var(--sidebar-w);background:var(--sidebar);height:100vh;position:fixed;top:0;left:0;display:flex;flex-direction:column;z-index:100;overflow:hidden}
     .sidebar::before{content:'';position:absolute;top:-60px;right:-60px;width:180px;height:180px;background:radial-gradient(circle,rgba(82,183,136,0.12) 0%,transparent 70%);pointer-events:none}
     .sb-logo{padding:26px 22px 18px;border-bottom:1px solid rgba(255,255,255,0.07)}
     .sb-logo .ico{width:38px;height:38px;background:linear-gradient(135deg,var(--sidebar-accent),#2D8A5E);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#fff;margin-bottom:11px;box-shadow:0 4px 12px rgba(82,183,136,0.3)}
-    .sb-logo .title{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:#fff;letter-spacing:0.08em;line-height:1.2}
+    .sb-logo .title{font-family:'Plus Jakarta Sans',sans-serif;font-size:17px;font-weight:700;color:#fff;letter-spacing:0.08em;line-height:1.2}
     .sb-logo .sub{font-size:9px;font-weight:600;color:var(--sidebar-accent);letter-spacing:0.15em;text-transform:uppercase;margin-top:2px}
     .sb-nav{flex:1;padding:14px 10px;overflow-y:auto}
     .nav-label{font-size:9px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.22);padding:8px 12px 5px}
@@ -62,9 +62,9 @@
     .logout-btn:hover{color:var(--accent-lt)}
 
     /* Main */
-    .main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+    .main{margin-left:var(--sidebar-w);flex:1;min-width:0;display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden}
     .topbar{height:var(--topbar-h);background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 26px;gap:14px;position:sticky;top:0;z-index:90}
-    .topbar-title{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;color:var(--text);flex:1}
+    .topbar-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:21px;font-weight:600;color:var(--text);flex:1}
     .topbar-date{font-size:12px;color:var(--text-sm);padding:4px 12px;background:var(--bg);border-radius:20px;border:1px solid var(--border)}
     .content{padding:26px;flex:1}
 
@@ -80,7 +80,7 @@
     /* Cards */
     .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border)}
     .card-header{padding:20px 22px 0;display:flex;align-items:center;justify-content:space-between}
-    .card-title{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--text)}
+    .card-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:600;color:var(--text)}
     .card-body{padding:20px 22px}
 
     /* Stats */
@@ -94,7 +94,7 @@
     .stat-icon.blue{background:var(--info-bg);color:var(--info)}
     .stat-icon.gold{background:#FEF9EC;color:var(--warning)}
     .stat-label{font-size:11px;color:var(--text-sm);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
-    .stat-value{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;line-height:1;color:var(--text);font-variant-numeric:tabular-nums}
+    .stat-value{font-family:'Plus Jakarta Sans',sans-serif;font-size:32px;font-weight:700;line-height:1;color:var(--text);font-variant-numeric:tabular-nums}
 
     /* Table */
     .tbl-wrap{overflow-x:auto}
@@ -134,7 +134,7 @@
 
     /* Page header */
     .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:11px}
-    .page-header h1{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--text);line-height:1.1}
+    .page-header h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:26px;font-weight:700;color:var(--text);line-height:1.1}
     .page-header p{font-size:12.5px;color:var(--text-sm);margin-top:3px}
 
     /* Layouts */
@@ -155,6 +155,22 @@
     ::-webkit-scrollbar{width:5px;height:5px}
     ::-webkit-scrollbar-track{background:transparent}
     ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+    {% if current_user.nivel == 4 %}
+    :root{
+      --sidebar:#150C27;
+      --sidebar-hover:rgba(255,255,255,0.07);
+      --sidebar-active:#2D1B5E;
+      --sidebar-accent:#A78BCC;
+      --primary:#7B5EA7;
+      --primary-lt:#6246A3;
+    }
+    .sidebar::before{background:radial-gradient(circle,rgba(167,139,204,0.18) 0%,transparent 70%)}
+    .sb-logo .ico{background:linear-gradient(135deg,#A78BCC,#7B5EA7);box-shadow:0 4px 12px rgba(123,94,167,.35)}
+    .u-avatar{background:linear-gradient(135deg,#A78BCC,#7B5EA7)}
+    input:focus,select:focus,textarea:focus{border-color:#7B5EA7;box-shadow:0 0 0 3px rgba(123,94,167,.12)}
+    .nav-item.active::before{background:#A78BCC}
+    {% endif %}
   </style>
 </head>
 <body>
@@ -182,7 +198,7 @@
       <div class="u-name">{{ current_user.name }}</div>
       <div class="u-role">{{ current_user.role }}</div>
     </div>
-    <a href="{{ url_for('logout') }}" class="logout-btn" title="Cerrar sesion">
+    <a href="{{ url_for('logout') }}" class="logout-btn" title="Cerrar sesión">
       <i class="fa-solid fa-arrow-right-from-bracket"></i>
     </a>
   </div>

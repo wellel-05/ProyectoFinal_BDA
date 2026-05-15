@@ -379,11 +379,14 @@ BEGIN
         ar.id_acceso,
         s.nombre || ' ' || s.apellidos  AS staff,
         s.especialidad,
+        r.nombre_rol                     AS rol,
         lr.ubicacion,
+        lr.ubicacion                     AS lector,
         a.nombre                         AS ala,
         TO_CHAR(ar.accedido_en, 'HH12:MI AM') AS hora
     FROM acceso_rfid ar
     JOIN staff       s   ON ar.id_staff   = s.id_staff
+    JOIN rol         r   ON s.id_rol      = r.id_rol
     JOIN lector_rfid lr  ON ar.id_lector  = lr.id_lector
     LEFT JOIN ala    a   ON lr.id_ala     = a.id_ala
     WHERE ar.accedido_en::DATE = p_fecha
@@ -552,6 +555,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS trg_after_residente ON residente;
 CREATE TRIGGER trg_after_residente
 AFTER UPDATE OR DELETE ON residente
 FOR EACH ROW EXECUTE FUNCTION trg_auditoria_residente();
@@ -861,5 +865,567 @@ BEGIN
     WHERE s.activo = TRUE
     GROUP BY s.id_staff, s.nombre, s.apellidos, r.nombre_rol
     ORDER BY (COUNT(DISTINCT st.id_sesion) + COUNT(DISTINCT c.id_checkin)) DESC;
+END;
+$$;
+
+
+-- ============================================================
+-- LISTAS DE CATALOGOS (usadas por los dropdowns del frontend)
+-- ============================================================
+
+CREATE OR REPLACE PROCEDURE sp_lista_residentes_activos(p_cursor REFCURSOR)
+LANGUAGE plpgsql AS $$
+BEGIN
+    OPEN p_cursor FOR
+    SELECT id_residente,
+           nombre || ' ' || apellidos AS nombre,
+           habitacion
+    FROM residente
+    WHERE activo = TRUE
+    ORDER BY apellidos;
+END;
+$$;
+
+
+CREATE OR REPLACE PROCEDURE sp_lista_roles(p_cursor REFCURSOR)
+LANGUAGE plpgsql AS $$
+BEGIN
+    OPEN p_cursor FOR
+    SELECT id_rol, nombre_rol, nivel_acceso
+    FROM rol
+    ORDER BY nivel_acceso;
+END;
+$$;
+
+
+CREATE OR REPLACE PROCEDURE sp_lista_cuidadores(p_cursor REFCURSOR)
+LANGUAGE plpgsql AS $$
+BEGIN
+    OPEN p_cursor FOR
+    SELECT s.id_staff,
+           s.nombre || ' ' || s.apellidos AS nombre,
+           s.especialidad
+    FROM staff s
+    JOIN rol r ON s.id_rol = r.id_rol
+    WHERE r.nombre_rol = 'Cuidador' AND s.activo = TRUE
+    ORDER BY s.apellidos;
+END;
+$$;
+
+
+CREATE OR REPLACE PROCEDURE sp_lista_staff(p_cursor REFCURSOR)
+LANGUAGE plpgsql AS $$
+BEGIN
+    OPEN p_cursor FOR
+    SELECT s.id_staff,
+           s.nombre,
+           s.apellidos,
+           s.especialidad,
+           s.email,
+           s.activo,
+           s.fecha_alta,
+           r.id_rol,
+           r.nombre_rol,
+           r.nivel_acceso,
+           TO_CHAR(s.fecha_alta, 'DD Mon YYYY') AS fecha_alta_fmt
+    FROM staff s
+    JOIN rol r ON s.id_rol = r.id_rol
+    ORDER BY s.activo DESC, s.apellidos;
+END;
+$$;
+
+
+CREATE OR REPLACE PROCEDURE sp_lista_staff_activo(p_cursor REFCURSOR)
+LANGUAGE plpgsql AS $$
+BEGIN
+    OPEN p_cursor FOR
+    SELECT s.id_staff,
+           s.nombre || ' ' || s.apellidos AS nombre,
+           s.apellidos,
+           s.especialidad,
+           r.nombre_rol,
+           r.nivel_acceso
+    FROM staff s
+    JOIN rol r ON s.id_rol = r.id_rol
+    WHERE s.activo = TRUE
+    ORDER BY s.apellidos;
+END;
+$$;
+
+
+-- Devuelve todos los lectores RFID instalados con su ala y tipo de zona.
+DROP PROCEDURE IF EXISTS sp_lectores_rfid(refcursor);
+CREATE OR REPLACE PROCEDURE sp_lectores_rfid(p_cursor REFCURSOR)
+LANGUAGE plpgsql AS $$
+BEGIN
+    OPEN p_cursor FOR
+    SELECT
+        lr.id_lector,
+        lr.ubicacion                    AS nombre_lector,
+        NULL::TEXT                      AS sala,
+        a.nombre                        AS ala,
+        lr.es_restringido               AS zona_restringida
+    FROM lector_rfid lr
+    LEFT JOIN ala a ON a.id_ala = lr.id_ala
+    ORDER BY lr.ubicacion;
+END;
+$$;
+
+
+-- ============================================================
+-- MEDICAMENTOS — horarios y catalogos
+-- ============================================================
+
+CREATE OR REPLACE PROCEDURE sp_lista_medicamentos(p_cursor REFCURSOR)
+LANGUAGE plpgsql AS $$
+BEGIN
+    OPEN p_cursor FOR
+    SELECT id_medicamento, nombre, descripcion, unidad
+    FROM medicamento
+    ORDER BY nombre;
+END;
+$$;
+
+
+CREATE OR REPLACE PROCEDURE sp_lista_horarios_medicamento(p_cursor REFCURSOR)
+LANGUAGE plpgsql AS $$
+BEGIN
+    OPEN p_cursor FOR
+    SELECT hm.id_horario,
+           hm.id_residente,
+           r.nombre || ' ' || r.apellidos                      AS residente,
+           hm.id_medicamento,
+           m.nombre                                             AS medicamento,
+           m.unidad,
+           hm.hora_programada,
+           hm.dosis,
+           hm.frecuencia,
+           hm.activo,
+           TO_CHAR(hm.hora_programada, 'HH24:MI')              AS hora_fmt
+    FROM horario_medicamento hm
+    JOIN residente   r ON r.id_residente    = hm.id_residente
+    JOIN medicamento m ON m.id_medicamento  = hm.id_medicamento
+    ORDER BY r.apellidos, hm.hora_programada;
+END;
+$$;
+
+
+DROP PROCEDURE IF EXISTS sp_registrar_horario_medicamento(integer,integer,time,varchar,varchar,integer,boolean,text);
+DROP PROCEDURE IF EXISTS sp_registrar_horario_medicamento(integer,integer,time,varchar,varchar,boolean,text,integer);
+CREATE OR REPLACE PROCEDURE sp_registrar_horario_medicamento(
+    p_id_residente   INT,
+    p_id_medicamento INT,
+    p_hora           TIME,
+    p_dosis          VARCHAR,
+    p_frecuencia     VARCHAR,
+    OUT p_ok         BOOLEAN,
+    OUT p_msg        TEXT,
+    OUT p_id_horario INT
+)
+LANGUAGE plpgsql AS $$
+BEGIN
+    INSERT INTO horario_medicamento
+        (id_residente, id_medicamento, hora_programada, dosis, frecuencia, activo)
+    VALUES
+        (p_id_residente, p_id_medicamento, p_hora, p_dosis, p_frecuencia, TRUE)
+    RETURNING id_horario INTO p_id_horario;
+
+    p_ok  := TRUE;
+    p_msg := 'Horario registrado correctamente.';
+EXCEPTION WHEN OTHERS THEN
+    p_ok  := FALSE;
+    p_msg := SQLERRM;
+    p_id_horario := NULL;
+END;
+$$;
+
+
+CREATE OR REPLACE PROCEDURE sp_toggle_horario_medicamento(
+    p_id_horario INT,
+    OUT p_ok     BOOLEAN,
+    OUT p_msg    TEXT,
+    OUT p_activo BOOLEAN
+)
+LANGUAGE plpgsql AS $$
+BEGIN
+    UPDATE horario_medicamento
+    SET activo = NOT activo
+    WHERE id_horario = p_id_horario
+    RETURNING activo INTO p_activo;
+
+    IF NOT FOUND THEN
+        p_ok  := FALSE;
+        p_msg := 'Horario no encontrado.';
+    ELSE
+        p_ok  := TRUE;
+        p_msg := CASE WHEN p_activo THEN 'Horario activado.' ELSE 'Horario desactivado.' END;
+    END IF;
+EXCEPTION WHEN OTHERS THEN
+    p_ok  := FALSE;
+    p_msg := SQLERRM;
+END;
+$$;
+
+
+-- ============================================================
+-- CATALOGO DE MEDICAMENTOS
+-- ============================================================
+
+DROP PROCEDURE IF EXISTS sp_registrar_medicamento(varchar,text,varchar,integer,boolean,text);
+DROP PROCEDURE IF EXISTS sp_registrar_medicamento(varchar,text,varchar,boolean,text,integer);
+CREATE OR REPLACE PROCEDURE sp_registrar_medicamento(
+    p_nombre      VARCHAR,
+    p_descripcion TEXT,
+    p_unidad      VARCHAR,
+    OUT p_ok  BOOLEAN,
+    OUT p_msg TEXT,
+    OUT p_id  INT
+)
+LANGUAGE plpgsql AS $$
+BEGIN
+    INSERT INTO medicamento (nombre, descripcion, unidad)
+    VALUES (p_nombre, p_descripcion, p_unidad)
+    RETURNING id_medicamento INTO p_id;
+    p_ok  := TRUE;
+    p_msg := 'Medicamento registrado.';
+EXCEPTION
+    WHEN unique_violation THEN
+        p_ok := FALSE; p_id := NULL;
+        p_msg := 'Ya existe un medicamento con ese nombre.';
+    WHEN OTHERS THEN
+        p_ok := FALSE; p_msg := SQLERRM; p_id := NULL;
+END;
+$$;
+
+
+CREATE OR REPLACE PROCEDURE sp_actualizar_medicamento(
+    p_id          INT,
+    p_nombre      VARCHAR,
+    p_descripcion TEXT,
+    p_unidad      VARCHAR,
+    OUT p_ok  BOOLEAN,
+    OUT p_msg TEXT
+)
+LANGUAGE plpgsql AS $$
+BEGIN
+    UPDATE medicamento
+    SET nombre = p_nombre, descripcion = p_descripcion, unidad = p_unidad
+    WHERE id_medicamento = p_id;
+    p_ok  := TRUE;
+    p_msg := 'Medicamento actualizado.';
+EXCEPTION
+    WHEN unique_violation THEN
+        p_ok := FALSE;
+        p_msg := 'Ya existe un medicamento con ese nombre.';
+    WHEN OTHERS THEN
+        p_ok := FALSE; p_msg := SQLERRM;
+END;
+$$;
+
+
+CREATE OR REPLACE PROCEDURE sp_eliminar_medicamento(
+    p_id  INT,
+    OUT p_ok  BOOLEAN,
+    OUT p_msg TEXT
+)
+LANGUAGE plpgsql AS $$
+DECLARE v_uso INT;
+BEGIN
+    SELECT COUNT(*) INTO v_uso FROM horario_medicamento WHERE id_medicamento = p_id;
+    IF v_uso > 0 THEN
+        p_ok  := FALSE;
+        p_msg := 'No se puede eliminar: tiene ' || v_uso || ' horario(s) asociado(s).';
+        RETURN;
+    END IF;
+    DELETE FROM medicamento WHERE id_medicamento = p_id;
+    p_ok  := TRUE;
+    p_msg := 'Medicamento eliminado.';
+EXCEPTION WHEN OTHERS THEN
+    p_ok := FALSE; p_msg := SQLERRM;
+END;
+$$;
+
+
+-- ============================================================
+-- TURNOS DE PERSONAL
+-- ============================================================
+
+CREATE OR REPLACE PROCEDURE sp_lista_alas(p_cursor REFCURSOR)
+LANGUAGE plpgsql AS $$
+BEGIN
+    OPEN p_cursor FOR
+    SELECT id_ala, nombre, piso FROM ala WHERE activa = TRUE ORDER BY piso, nombre;
+END;
+$$;
+
+
+CREATE OR REPLACE PROCEDURE sp_lista_turnos(p_cursor REFCURSOR)
+LANGUAGE plpgsql AS $$
+BEGIN
+    OPEN p_cursor FOR
+    SELECT t.id_turno,
+           t.fecha,
+           TO_CHAR(t.fecha, 'DD Mon YYYY')          AS fecha_fmt,
+           t.hora_inicio,
+           t.hora_fin,
+           TO_CHAR(t.hora_inicio, 'HH24:MI')        AS inicio_fmt,
+           TO_CHAR(t.hora_fin,    'HH24:MI')        AS fin_fmt,
+           s.nombre || ' ' || s.apellidos           AS staff,
+           s.especialidad,
+           r.nombre_rol                              AS rol,
+           a.nombre                                  AS ala
+    FROM turno t
+    JOIN staff s ON s.id_staff = t.id_staff
+    JOIN rol   r ON r.id_rol   = s.id_rol
+    JOIN ala   a ON a.id_ala   = t.id_ala
+    WHERE t.fecha >= CURRENT_DATE - INTERVAL '7 days'
+    ORDER BY t.fecha DESC, t.hora_inicio;
+END;
+$$;
+
+
+DROP PROCEDURE IF EXISTS sp_registrar_turno(integer,integer,date,time,time,integer,boolean,text);
+DROP PROCEDURE IF EXISTS sp_registrar_turno(integer,integer,date,time,time,boolean,text,integer);
+CREATE OR REPLACE PROCEDURE sp_registrar_turno(
+    p_id_staff    INT,
+    p_id_ala      INT,
+    p_fecha       DATE,
+    p_hora_inicio TIME,
+    p_hora_fin    TIME,
+    OUT p_ok  BOOLEAN,
+    OUT p_msg TEXT,
+    OUT p_id  INT
+)
+LANGUAGE plpgsql AS $$
+BEGIN
+    INSERT INTO turno (id_staff, id_ala, fecha, hora_inicio, hora_fin)
+    VALUES (p_id_staff, p_id_ala, p_fecha, p_hora_inicio, p_hora_fin)
+    RETURNING id_turno INTO p_id;
+    p_ok  := TRUE;
+    p_msg := 'Turno agregado correctamente.';
+EXCEPTION WHEN OTHERS THEN
+    p_ok := FALSE; p_msg := SQLERRM; p_id := NULL;
+END;
+$$;
+
+
+CREATE OR REPLACE PROCEDURE sp_eliminar_turno(
+    p_id  INT,
+    OUT p_ok  BOOLEAN,
+    OUT p_msg TEXT
+)
+LANGUAGE plpgsql AS $$
+BEGIN
+    DELETE FROM turno WHERE id_turno = p_id;
+    IF NOT FOUND THEN
+        p_ok := FALSE; p_msg := 'Turno no encontrado.';
+    ELSE
+        p_ok := TRUE; p_msg := 'Turno eliminado.';
+    END IF;
+EXCEPTION WHEN OTHERS THEN
+    p_ok := FALSE; p_msg := SQLERRM;
+END;
+$$;
+
+
+-- ============================================================
+-- DASHBOARDS — estadísticas resumen por rol
+-- ============================================================
+
+DROP PROCEDURE IF EXISTS sp_dashboard_admin(refcursor);
+CREATE OR REPLACE PROCEDURE sp_dashboard_admin(p_cursor REFCURSOR)
+LANGUAGE plpgsql AS $$
+BEGIN
+    OPEN p_cursor FOR
+    SELECT
+        (SELECT COUNT(*) FROM residente WHERE activo = TRUE)::INT              AS total_residentes,
+        (SELECT COUNT(*) FROM staff    WHERE activo = TRUE)::INT              AS total_staff,
+        (SELECT COUNT(*) FROM reporte_incidente
+          WHERE severidad = 'Alta'
+            AND fecha >= NOW() - INTERVAL '7 days')::INT                      AS incidentes_alta,
+        (SELECT COUNT(*) FROM v_medicamentos_pendientes_hoy)::INT             AS meds_pendientes;
+END;
+$$;
+
+
+DROP PROCEDURE IF EXISTS sp_dashboard_terapeuta(integer,refcursor);
+CREATE OR REPLACE PROCEDURE sp_dashboard_terapeuta(
+    p_id_staff  INT,
+    p_cursor    REFCURSOR
+)
+LANGUAGE plpgsql AS $$
+BEGIN
+    OPEN p_cursor FOR
+    SELECT
+        (SELECT COUNT(DISTINCT a.id_residente)
+           FROM asignacion a
+          WHERE a.id_staff  = p_id_staff
+            AND a.fecha_fin IS NULL)::INT                                      AS total_residentes,
+        (SELECT COUNT(*) FROM reporte_incidente ri
+           JOIN asignacion a ON a.id_residente = ri.id_residente
+                             AND a.id_staff    = p_id_staff
+                             AND a.fecha_fin  IS NULL
+          WHERE ri.fecha >= NOW() - INTERVAL '7 days')::INT                   AS incidentes_activos,
+        (SELECT ROUND(AVG(cea.puntaje)::NUMERIC, 1)
+           FROM checkin_estado_animo cea
+           JOIN asignacion a ON a.id_residente = cea.id_residente
+                             AND a.id_staff    = p_id_staff
+                             AND a.fecha_fin  IS NULL
+          WHERE cea.fecha_registro >= NOW() - INTERVAL '7 days')             AS animo_promedio;
+END;
+$$;
+
+
+DROP PROCEDURE IF EXISTS sp_dashboard_cuidador(integer,refcursor);
+CREATE OR REPLACE PROCEDURE sp_dashboard_cuidador(
+    p_id_staff  INT,
+    p_cursor    REFCURSOR
+)
+LANGUAGE plpgsql AS $$
+BEGIN
+    OPEN p_cursor FOR
+    SELECT
+        (SELECT COUNT(*) FROM checkin_estado_animo cea
+           JOIN asignacion a ON a.id_residente = cea.id_residente
+                             AND a.id_staff    = p_id_staff
+                             AND a.fecha_fin  IS NULL
+          WHERE cea.fecha_registro::DATE = CURRENT_DATE)::INT                 AS checkins_hoy,
+        (SELECT COUNT(*) FROM reporte_incidente ri
+           JOIN asignacion a ON a.id_residente = ri.id_residente
+                             AND a.id_staff    = p_id_staff
+                             AND a.fecha_fin  IS NULL
+          WHERE ri.fecha::DATE = CURRENT_DATE)::INT                          AS incidentes_hoy;
+END;
+$$;
+
+
+-- ─── IDs de residentes asignados a un cuidador ───────────────────────────────
+DROP PROCEDURE IF EXISTS sp_ids_residentes_cuidador(integer,refcursor);
+CREATE OR REPLACE PROCEDURE sp_ids_residentes_cuidador(
+    p_id_staff  INT,
+    p_cursor    REFCURSOR
+)
+LANGUAGE plpgsql AS $$
+BEGIN
+    OPEN p_cursor FOR
+    SELECT a.id_residente
+    FROM asignacion a
+    WHERE a.id_staff  = p_id_staff
+      AND a.tipo_rol  = 'Cuidador'
+      AND a.fecha_fin IS NULL;
+END;
+$$;
+
+
+-- ─── Medicamentos pendientes hoy para los residentes de un cuidador ──────────
+DROP PROCEDURE IF EXISTS sp_meds_pendientes_cuidador(integer,refcursor);
+CREATE OR REPLACE PROCEDURE sp_meds_pendientes_cuidador(
+    p_id_staff  INT,
+    p_cursor    REFCURSOR
+)
+LANGUAGE plpgsql AS $$
+BEGIN
+    OPEN p_cursor FOR
+    SELECT
+        r.nombre || ' ' || r.apellidos          AS residente,
+        r.habitacion,
+        m.nombre                                 AS medicamento,
+        hm.dosis,
+        TO_CHAR(hm.hora_programada, 'HH12:MI AM') AS hora_programada,
+        NULL::TEXT                               AS via_administracion
+    FROM horario_medicamento hm
+    JOIN residente   r  ON hm.id_residente   = r.id_residente
+    JOIN medicamento m  ON hm.id_medicamento = m.id_medicamento
+    JOIN asignacion  a  ON a.id_residente    = hm.id_residente
+                       AND a.id_staff        = p_id_staff
+                       AND a.tipo_rol        = 'Cuidador'
+                       AND a.fecha_fin       IS NULL
+    WHERE hm.activo = TRUE
+      AND NOT EXISTS (
+          SELECT 1 FROM log_medicamento lm
+          WHERE lm.id_horario = hm.id_horario
+            AND lm.fecha_administracion::DATE = CURRENT_DATE
+      )
+    ORDER BY hm.hora_programada;
+END;
+$$;
+
+
+-- ─── Medicamentos ya administrados hoy para los residentes de un cuidador ────
+DROP PROCEDURE IF EXISTS sp_medicamentos_admin_hoy(integer,refcursor);
+CREATE OR REPLACE PROCEDURE sp_medicamentos_admin_hoy(
+    p_id_staff  INT,
+    p_cursor    REFCURSOR
+)
+LANGUAGE plpgsql AS $$
+BEGIN
+    OPEN p_cursor FOR
+    SELECT
+        r.nombre || ' ' || r.apellidos                  AS residente,
+        m.nombre                                         AS medicamento,
+        hm.dosis,
+        TO_CHAR(lm.fecha_administracion, 'HH12:MI AM')  AS hora_administrado,
+        sf.nombre || ' ' || sf.apellidos                AS confirmado_por,
+        NULL::TEXT                                       AS metodo
+    FROM log_medicamento      lm
+    JOIN horario_medicamento  hm ON lm.id_horario       = hm.id_horario
+    JOIN medicamento          m  ON hm.id_medicamento   = m.id_medicamento
+    JOIN residente            r  ON hm.id_residente     = r.id_residente
+    JOIN staff                sf ON lm.id_cuidador      = sf.id_staff
+    JOIN asignacion           a  ON a.id_residente      = hm.id_residente
+                                AND a.id_staff          = p_id_staff
+                                AND a.tipo_rol          = 'Cuidador'
+                                AND a.fecha_fin         IS NULL
+    WHERE lm.fecha_administracion::DATE = CURRENT_DATE
+    ORDER BY lm.fecha_administracion DESC;
+END;
+$$;
+
+
+-- ─── Checkins de ánimo recientes de los residentes de un cuidador ────────────
+DROP PROCEDURE IF EXISTS sp_animo_bajo_cuidador(integer,refcursor);
+CREATE OR REPLACE PROCEDURE sp_animo_bajo_cuidador(
+    p_id_staff  INT,
+    p_cursor    REFCURSOR
+)
+LANGUAGE plpgsql AS $$
+BEGIN
+    OPEN p_cursor FOR
+    SELECT DISTINCT ON (cea.id_residente)
+        r.nombre || ' ' || r.apellidos AS residente,
+        cea.puntaje
+    FROM checkin_estado_animo cea
+    JOIN residente  r ON cea.id_residente = r.id_residente
+    JOIN asignacion a ON a.id_residente   = cea.id_residente
+                     AND a.id_staff       = p_id_staff
+                     AND a.tipo_rol       = 'Cuidador'
+                     AND a.fecha_fin      IS NULL
+    WHERE cea.fecha_registro >= NOW() - INTERVAL '7 days'
+    ORDER BY cea.id_residente, cea.fecha_registro DESC;
+END;
+$$;
+
+
+-- ─── Sesiones de hoy para un terapeuta ───────────────────────────────────────
+DROP PROCEDURE IF EXISTS sp_sesiones_hoy_terapeuta(integer,refcursor);
+CREATE OR REPLACE PROCEDURE sp_sesiones_hoy_terapeuta(
+    p_id_staff  INT,
+    p_cursor    REFCURSOR
+)
+LANGUAGE plpgsql AS $$
+BEGIN
+    OPEN p_cursor FOR
+    SELECT
+        TO_CHAR(st.fecha_sesion, 'HH12:MI AM') AS hora_inicio,
+        st.duracion_min,
+        r.nombre || ' ' || r.apellidos          AS residente,
+        st.tipo_sesion,
+        s.nombre                                 AS sala
+    FROM sesion_terapia st
+    JOIN residente r ON st.id_residente = r.id_residente
+    JOIN sala      s ON st.id_sala      = s.id_sala
+    WHERE st.id_terapeuta       = p_id_staff
+      AND st.fecha_sesion::DATE = CURRENT_DATE
+    ORDER BY st.fecha_sesion;
 END;
 $$;

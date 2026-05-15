@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+{% block title %}{{ info.residente }} — Detalle{% endblock %}
+{% block page_title %}{{ info.residente }}{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header" style="margin-bottom:20px">
+  <a href="{{ url_for('familiar_dashboard') }}" class="btn btn-outline btn-sm">
+    <i class="fa-solid fa-arrow-left"></i> Mis residentes
+  </a>
+  <a href="{{ url_for('familiar_logout') }}" class="btn btn-outline btn-sm">
+    <i class="fa-solid fa-right-from-bracket"></i> Cerrar sesion
+  </a>
+</div>
+
+{# ── Info general ──────────────────────────────────────────────────────────── #}
+<div class="card" style="margin-bottom:18px;border-top:4px solid #7B5EA7">
+  <div class="card-body">
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start">
+      <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#7B5EA7,#4C3575);
+                  display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;
+                  font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;flex-shrink:0">
+        {{ info.residente[0] }}
+      </div>
+      <div>
+        <h2 style="margin:0 0 4px;font-size:22px;font-weight:800">{{ info.residente }}</h2>
+        <div style="font-size:12.5px;color:var(--text-sm);margin-bottom:10px">
+          {{ info.parentesco }} &nbsp;·&nbsp; {{ info.edad }} años &nbsp;·&nbsp;
+          Hab. {{ info.habitacion or '—' }} &nbsp;·&nbsp;
+          Ingreso: {{ info.fecha_ingreso }}
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <span class="badge badge-neutral">{{ info.nivel_movilidad }}</span>
+          {% if info.diagnostico_principal %}
+          <span class="badge badge-neutral">{{ info.diagnostico_principal[:60] }}{% if info.diagnostico_principal|length > 60 %}…{% endif %}</span>
+          {% endif %}
+          {% if info.cuidador_principal %}
+          <span class="badge badge-success"><i class="fa-solid fa-user-nurse" style="margin-right:4px"></i>{{ info.cuidador_principal }}</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ── Grid de 2 columnas ────────────────────────────────────────────────────── #}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+
+  {# Estado de animo — grafica #}
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Estado de Animo (30 dias)</span>
+      {% if info.ultimo_puntaje_animo %}
+      {% set p = info.ultimo_puntaje_animo %}
+      <span class="badge" style="background:{% if p <= 2 %}#FEF2F2;color:#B91C1C{% elif p <= 3 %}#FFFBEB;color:#92400E{% else %}#EBF5EF;color:#2D7A50{% endif %}">
+        {{ ['','Muy bajo','Bajo','Regular','Bueno','Excelente'][p] }}
+      </span>
+      {% endif %}
+    </div>
+    <div class="card-body">
+      {% if animo_labels %}
+      <canvas id="chartAnimo" style="max-height:220px"></canvas>
+      {% else %}
+      <div class="empty-state" style="padding:20px 0"><i class="fa-solid fa-face-smile"></i><p>Sin check-ins en los ultimos 30 dias</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# Medicamentos hoy #}
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Medicamentos de Hoy</span>
+      {% set admin_hoy = medicamentos | selectattr('administrado_hoy') | list | length %}
+      {% set total_meds = medicamentos | length %}
+      {% if total_meds > 0 %}
+      <span class="badge {% if admin_hoy == total_meds %}badge-success{% elif admin_hoy > 0 %}badge-warning{% else %}badge-danger{% endif %}">
+        {{ admin_hoy }}/{{ total_meds }} administrados
+      </span>
+      {% endif %}
+    </div>
+    <div class="card-body" style="padding:0">
+      {% if medicamentos %}
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Medicamento</th><th>Hora</th><th>Dosis</th><th>Estado</th></tr></thead>
+          <tbody>
+          {% for m in medicamentos %}
+          <tr>
+            <td style="font-weight:600">{{ m.medicamento }}</td>
+            <td>{{ m.hora_programada.strftime('%H:%M') if m.hora_programada else '—' }}</td>
+            <td>{{ m.dosis }}</td>
+            <td>
+              {% if m.administrado_hoy %}
+              <span class="badge badge-success"><i class="fa-solid fa-check"></i> Administrado</span>
+              {% else %}
+              <span class="badge badge-warning"><i class="fa-solid fa-clock"></i> Pendiente</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:20px 0"><i class="fa-solid fa-pills"></i><p>Sin medicamentos programados</p></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{# ── Sesiones de terapia ───────────────────────────────────────────────────── #}
+<div class="card" style="margin-bottom:18px">
+  <div class="card-header">
+    <span class="card-title">Sesiones de Terapia Recientes</span>
+    <span class="badge badge-neutral">Ultimas 10 sesiones</span>
+  </div>
+  <div class="card-body" style="padding:0">
+    {% if sesiones %}
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Fecha y Hora</th><th>Tipo</th><th>Terapeuta</th><th>Sala</th><th>Duracion</th><th>Asistencia</th></tr></thead>
+        <tbody>
+        {% for s in sesiones %}
+        <tr>
+          <td style="white-space:nowrap">{{ s.fecha_hora }}</td>
+          <td><span class="badge badge-neutral">{{ s.tipo_sesion }}</span></td>
+          <td>{{ s.terapeuta }}</td>
+          <td>{{ s.sala }}</td>
+          <td>{{ s.duracion_min }} min</td>
+          <td>
+            {% if s.asistio %}
+            <span class="badge badge-success"><i class="fa-solid fa-check"></i> Asistio</span>
+            {% else %}
+            <span class="badge badge-danger"><i class="fa-solid fa-xmark"></i> No asistio</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:20px 0"><i class="fa-solid fa-calendar-check"></i><p>Sin sesiones registradas</p></div>
+    {% endif %}
+  </div>
+</div>
+
+{# ── Incidentes recientes ──────────────────────────────────────────────────── #}
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Incidentes Recientes (30 dias)</span>
+    {% set alta_count = incidentes | selectattr('severidad','equalto','Alta') | list | length %}
+    {% if alta_count > 0 %}
+    <span class="badge badge-danger"><i class="fa-solid fa-triangle-exclamation"></i> {{ alta_count }} de alta severidad</span>
+    {% else %}
+    <span class="badge badge-success">Sin incidentes criticos</span>
+    {% endif %}
+  </div>
+  <div class="card-body" style="padding:0">
+    {% if incidentes %}
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Severidad</th><th>Descripcion</th></tr></thead>
+        <tbody>
+        {% for i in incidentes %}
+        <tr>
+          <td style="white-space:nowrap;font-size:12px">{{ i.fecha }}</td>
+          <td><span class="badge badge-neutral">{{ i.tipo }}</span></td>
+          <td>
+            <span class="badge {% if i.severidad=='Alta' %}badge-danger{% elif i.severidad=='Media' %}badge-warning{% else %}badge-success{% endif %}">
+              {{ i.severidad }}
+            </span>
+          </td>
+          <td style="font-size:12px;color:var(--text-md)">{{ i.descripcion_visible }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:20px 0"><i class="fa-solid fa-shield-halved"></i><p>Sin incidentes en los ultimos 30 dias</p></div>
+    {% endif %}
+  </div>
+</div>
+
+{% if animo_labels %}
+<script>
+(function(){
+  const labels = {{ animo_labels | tojson }};
+  const data   = {{ animo_data   | tojson }};
+  new Chart(document.getElementById('chartAnimo').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Puntaje de animo',
+        data,
+        borderColor: '#7B5EA7',
+        backgroundColor: 'rgba(123,94,167,0.1)',
+        pointBackgroundColor: data.map(v => v<=2?'#EF4444':v<=3?'#F59E0B':'#52B788'),
+        pointRadius: 5,
+        fill: true,
+        tension: 0.35,
+        borderWidth: 2.5,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { min:1, max:5, ticks: { stepSize:1, callback: v=>['','Muy bajo','Bajo','Regular','Bueno','Excelente'][v]||v }, grid:{ color:'#F0EDE8' } },
+        x: { grid: { display:false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

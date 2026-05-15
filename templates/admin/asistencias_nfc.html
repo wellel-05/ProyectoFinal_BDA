@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Historial Asistencias NFC{% endblock %}
+{% block page_title %}Historial de Asistencias NFC{% endblock %}
+
+{% block head %}
+<style>
+  .table-wrap { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: var(--bg); color: var(--text-sm); font-size: 11.5px; text-transform: uppercase;
+       letter-spacing: .4px; padding: 11px 14px; text-align: left; border-bottom: 2px solid var(--border); }
+  td { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .tipo-grupal     { background: #DCFCE7; color: #166534; }
+  .tipo-individual { background: #DBEAFE; color: #1D4ED8; }
+  .tipo-terapia    { background: #F3E8FF; color: #7E22CE; }
+  .tipo-recreativa { background: #FEF9C3; color: #854D0E; }
+  .metodo-nfc    { background: #F0FDF4; color: #166534; }
+  .metodo-manual { background: #F3F4F6; color: #6B7280; }
+  .empty { text-align: center; padding: 48px; color: var(--text-sm); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+  <div style="font-size:13px;color:var(--text-sm)">Últimos 200 registros</div>
+  <a href="{{ url_for('admin_actividades') }}" class="btn-outline" style="font-size:13px;padding:7px 14px;border-radius:8px;
+     border:1px solid var(--border);color:var(--text-sm);text-decoration:none;display:inline-flex;align-items:center;gap:6px">
+    <i class="fa-solid fa-arrow-left"></i> Volver a actividades
+  </a>
+</div>
+
+<div class="table-wrap">
+  {% if rows %}
+  <table>
+    <thead>
+      <tr>
+        <th>Fecha / Hora</th>
+        <th>Residente</th>
+        <th>Habitación</th>
+        <th>Actividad</th>
+        <th>Tipo</th>
+        <th>Método</th>
+        <th>Registrado por</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td style="white-space:nowrap">{{ r.ts_registro.strftime('%d/%m/%Y %H:%M') if r.ts_registro else '—' }}</td>
+        <td style="font-weight:600">{{ r.residente }}</td>
+        <td>{{ r.habitacion or '—' }}</td>
+        <td>{{ r.actividad }}</td>
+        <td><span class="badge tipo-{{ r.tipo }}">{{ r.tipo|capitalize }}</span></td>
+        <td><span class="badge metodo-{{ r.metodo }}">{{ r.metodo|upper }}</span></td>
+        <td style="color:var(--text-sm)">{{ r.registrado_por or '(sin login)' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">
+    <i class="fa-solid fa-clock-rotate-left fa-2x" style="opacity:.2;display:block;margin-bottom:10px"></i>
+    No hay asistencias registradas aún.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro NFC — {{ residente.nombre }}</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #F0F4F8; min-height: 100vh; }
+
+  .header {
+    background: linear-gradient(135deg, #1B4D3E, #2D6A4F);
+    color: #fff; padding: 16px 20px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .header .logo { font-size: 22px; }
+  .header h1 { font-size: 17px; font-weight: 700; }
+  .header p  { font-size: 12px; opacity: .75; margin-top: 2px; }
+
+  .container { max-width: 480px; margin: 0 auto; padding: 20px 16px 40px; }
+
+  .res-card {
+    background: #fff; border-radius: 16px; padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+    display: flex; align-items: center; gap: 16px; margin-bottom: 20px;
+  }
+  .avatar {
+    width: 60px; height: 60px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, #1B4D3E, #2D6A4F);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 22px; font-weight: 700;
+  }
+  .res-name  { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+  .res-meta  { font-size: 13px; color: #666; margin-top: 4px; }
+  .res-meta span { margin-right: 12px; }
+
+  .section-title {
+    font-size: 13px; font-weight: 700; color: #444;
+    text-transform: uppercase; letter-spacing: .5px;
+    margin-bottom: 12px;
+  }
+
+  .act-btn {
+    display: flex; align-items: center; gap: 12px;
+    background: #fff; border: 2px solid #E5EAE7; border-radius: 12px;
+    padding: 14px 16px; margin-bottom: 10px; cursor: pointer;
+    transition: all .15s; width: 100%; text-align: left;
+    font-family: inherit;
+  }
+  .act-btn:hover { border-color: #1B4D3E; background: #F0F7F4; }
+  .act-btn.selected { border-color: #1B4D3E; background: #E8F5EF; }
+  .act-icon {
+    width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .act-icon.grupal      { background: #DCFCE7; color: #166534; }
+  .act-icon.individual  { background: #DBEAFE; color: #1D4ED8; }
+  .act-icon.terapia     { background: #F3E8FF; color: #7E22CE; }
+  .act-icon.recreativa  { background: #FEF9C3; color: #854D0E; }
+  .act-name { font-weight: 600; font-size: 14px; color: #1a1a1a; }
+  .act-tipo { font-size: 11.5px; color: #888; margin-top: 2px; }
+
+  .confirm-panel {
+    display: none; background: #fff; border-radius: 16px;
+    padding: 18px; box-shadow: 0 2px 12px rgba(0,0,0,.08);
+    margin-top: 16px;
+  }
+  .confirm-panel.visible { display: block; }
+  .confirm-panel label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
+  .confirm-panel textarea {
+    width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px;
+    font-family: inherit; font-size: 13px; resize: none; height: 64px;
+  }
+  .btn-confirmar {
+    display: block; width: 100%; background: linear-gradient(135deg, #1B4D3E, #2D6A4F);
+    color: #fff; border: none; border-radius: 10px; padding: 14px;
+    font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 14px;
+    font-family: inherit; transition: opacity .15s;
+  }
+  .btn-confirmar:hover { opacity: .9; }
+
+  .ultimas-title { font-size: 13px; font-weight: 700; color: #444; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+  .ult-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid #F0F0F0; font-size: 12.5px;
+  }
+  .ult-row:last-child { border-bottom: none; }
+  .ult-name { font-weight: 600; color: #1a1a1a; }
+  .ult-ts   { color: #888; font-size: 11.5px; }
+  .empty-msg { text-align: center; color: #aaa; font-size: 13px; padding: 16px 0; }
+
+  .no-act { text-align: center; padding: 30px; color: #888; background: #fff; border-radius: 16px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo"><i class="fa-solid fa-nfc-symbol"></i></div>
+  <div>
+    <h1>ElderCare — Registro NFC</h1>
+    <p>Selecciona la actividad para registrar asistencia</p>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Info del residente -->
+  <div class="res-card">
+    <div class="avatar">{{ residente.nombre[0] }}</div>
+    <div>
+      <div class="res-name">{{ residente.nombre }} {{ residente.apellidos }}</div>
+      <div class="res-meta">
+        <span><i class="fa-solid fa-bed" style="margin-right:4px;opacity:.6"></i>Hab. {{ residente.habitacion or '—' }}</span>
+        <span><i class="fa-solid fa-wheelchair" style="margin-right:4px;opacity:.6"></i>{{ residente.nivel_movilidad }}</span>
+      </div>
+    </div>
+  </div>
+
+  {% if actividades %}
+  <!-- Lista de actividades -->
+  <div class="section-title"><i class="fa-solid fa-list-check" style="margin-right:6px"></i>Actividad a registrar</div>
+
+  <form method="POST" action="{{ url_for('nfc_confirmar') }}" id="form-nfc">
+    <input type="hidden" name="id_residente" value="{{ residente.id_residente }}">
+    <input type="hidden" name="id_actividad" id="hidden-act" value="">
+
+    {% for act in actividades %}
+    {% set icons = {'grupal': 'fa-users', 'individual': 'fa-user', 'terapia': 'fa-heart-pulse', 'recreativa': 'fa-puzzle-piece'} %}
+    <button type="button" class="act-btn" onclick="seleccionar(this, {{ act.id_actividad }})">
+      <div class="act-icon {{ act.tipo }}">
+        <i class="fa-solid {{ icons.get(act.tipo, 'fa-calendar') }}"></i>
+      </div>
+      <div>
+        <div class="act-name">{{ act.nombre }}</div>
+        <div class="act-tipo">{{ act.tipo|capitalize }}</div>
+      </div>
+    </button>
+    {% endfor %}
+
+    <div class="confirm-panel" id="confirm-panel">
+      <label><i class="fa-solid fa-pen-to-square" style="margin-right:5px;opacity:.6"></i>Notas (opcional)</label>
+      <textarea name="notas" placeholder="Observaciones de la sesión…"></textarea>
+      <button type="submit" class="btn-confirmar">
+        <i class="fa-solid fa-circle-check" style="margin-right:8px"></i>Confirmar asistencia
+      </button>
+    </div>
+  </form>
+
+  {% else %}
+  <div class="no-act">
+    <i class="fa-solid fa-calendar-xmark fa-2x" style="opacity:.3;display:block;margin-bottom:10px"></i>
+    No hay actividades activas.<br>
+    <span style="font-size:12px">El administrador debe crear actividades primero.</span>
+  </div>
+  {% endif %}
+
+  <!-- Últimas asistencias -->
+  {% if ultimas %}
+  <div style="background:#fff;border-radius:16px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-top:20px">
+    <div class="ultimas-title"><i class="fa-solid fa-clock-rotate-left" style="margin-right:6px"></i>Últimas asistencias</div>
+    {% for u in ultimas %}
+    <div class="ult-row">
+      <div>
+        <div class="ult-name">{{ u.nombre }}</div>
+        <div class="ult-ts">{{ u.tipo|capitalize }}</div>
+      </div>
+      <div class="ult-ts">{{ u.ts_registro.strftime('%d/%m %H:%M') if u.ts_registro else '—' }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<script>
+function seleccionar(btn, id) {
+  document.querySelectorAll('.act-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('hidden-act').value = id;
+  document.getElementById('confirm-panel').classList.add('visible');
+  document.getElementById('confirm-panel').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+</script>
+</body>
+</html>

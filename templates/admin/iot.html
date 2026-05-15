@@ -8,7 +8,7 @@
 <style>
   .chart-card { background:var(--card);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow) }
   .chart-header { padding:18px 22px 0;display:flex;align-items:center;justify-content:space-between }
-  .chart-title  { font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--text) }
+  .chart-title  { font-family:'Plus Jakarta Sans',sans-serif;font-size:17px;font-weight:600;color:var(--text) }
   .chart-sub    { font-size:11px;color:var(--text-sm);margin-top:2px }
   .chart-body   { padding:12px 8px 16px }
   .live-dot     { width:7px;height:7px;border-radius:50%;background:var(--success);display:inline-block;margin-right:5px;animation:pulse-dot 2s infinite }
@@ -284,7 +284,10 @@ const chartStaffAla = Highcharts.chart('chart-staff-ala', {
       borderWidth: 0,
       dataLabels: {
         enabled: true,
-        format: '<b>{point.name}</b><br>{point.y} persona{point.y|{0:s:s}}',
+        formatter: function() {
+          var s = this.y === 1 ? 'persona' : 'personas';
+          return '<b>' + this.point.name + '</b><br>' + this.y + ' ' + s;
+        },
         style: { fontSize: '12px', fontWeight: '600', color: '#1A1A18', textOutline: 'none' }
       }
     }

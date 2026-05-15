@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% block title %}Turnos{% endblock %}
+{% block page_title %}Turnos de Personal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Turnos de Personal</h1>
+    <p>Últimos 7 días y próximos turnos registrados</p>
+  </div>
+  <button class="btn btn-primary" onclick="document.getElementById('modal-turno').style.display='flex'">
+    <i class="fa-solid fa-plus"></i> Nuevo Turno
+  </button>
+</div>
+
+{# ── Tabla de turnos ───────────────────────────────────────────────────────── #}
+<div class="card">
+  <div class="card-body" style="padding:0">
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Personal</th>
+            <th>Rol</th>
+            <th>Ala</th>
+            <th>Horario</th>
+            <th>Horas</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for t in turnos %}
+        {% set hoy = t.fecha.isoformat() if t.fecha else '' %}
+        <tr>
+          <td>
+            <span style="font-weight:600">{{ t.fecha_fmt }}</span>
+            {% if t.fecha and t.fecha.isoformat() == current_date_str.split(' ')[0] %}
+            <span class="badge badge-info" style="margin-left:4px;font-size:10px">Hoy</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="font-weight:600;font-size:13px">{{ t.staff }}</div>
+            <div style="font-size:11px;color:var(--text-sm)">{{ t.especialidad }}</div>
+          </td>
+          <td><span class="badge badge-neutral">{{ t.rol }}</span></td>
+          <td style="font-weight:600">{{ t.ala }}</td>
+          <td style="font-variant-numeric:tabular-nums">{{ t.inicio_fmt }} — {{ t.fin_fmt }}</td>
+          <td>
+            {% if t.hora_inicio and t.hora_fin %}
+            {% set duracion = (t.hora_fin.hour * 60 + t.hora_fin.minute) - (t.hora_inicio.hour * 60 + t.hora_inicio.minute) %}
+            <span class="badge badge-neutral">{{ duracion // 60 }}h {{ duracion % 60 }}min</span>
+            {% endif %}
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('admin_turno_eliminar', id_turno=t.id_turno) }}"
+                  onsubmit="return confirm('¿Eliminar este turno?')">
+              <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--danger)" title="Eliminar">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+              <p>Sin turnos registrados. Agrega el primero.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+{# ── Modal: nuevo turno ────────────────────────────────────────────────────── #}
+<div id="modal-turno" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center">
+  <div class="card" style="width:500px;max-width:95vw;max-height:90vh;overflow-y:auto">
+    <div class="card-header" style="padding-bottom:14px">
+      <span class="card-title">Nuevo Turno</span>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('modal-turno').style.display='none'">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('admin_turno_nuevo') }}">
+        <div class="form-grid" style="grid-template-columns:1fr">
+
+          <div class="form-group">
+            <label>Personal</label>
+            <select name="id_staff" required>
+              <option value="">Selecciona un miembro del personal…</option>
+              {% for s in staff %}
+              <option value="{{ s.id_staff }}">{{ s.nombre }} — {{ s.nombre_rol }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Ala asignada</label>
+            <select name="id_ala" required>
+              <option value="">Selecciona un ala…</option>
+              {% for a in alas %}
+              <option value="{{ a.id_ala }}">{{ a.nombre }} (Piso {{ a.piso }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Fecha</label>
+            <input type="date" name="fecha" required
+                   value="{{ today_iso }}"
+                   min="{{ today_iso }}">
+          </div>
+
+          <div class="form-grid" style="grid-template-columns:1fr 1fr">
+            <div class="form-group">
+              <label>Hora inicio</label>
+              <input type="time" name="hora_inicio" value="07:00" required>
+            </div>
+            <div class="form-group">
+              <label>Hora fin</label>
+              <input type="time" name="hora_fin" value="15:00" required>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+          <button type="button" class="btn btn-outline"
+                  onclick="document.getElementById('modal-turno').style.display='none'">Cancelar</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-floppy-disk"></i> Registrar Turno
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

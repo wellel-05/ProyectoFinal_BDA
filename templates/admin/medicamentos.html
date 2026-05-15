@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% block title %}Medicamentos{% endblock %}
+{% block page_title %}Medicamentos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Medicamentos</h1>
+    <p>Catálogo y horarios de administración por residente</p>
+  </div>
+  {% if tab == 'horarios' %}
+  <button class="btn btn-primary" onclick="document.getElementById('modal-horario').style.display='flex'">
+    <i class="fa-solid fa-plus"></i> Nuevo Horario
+  </button>
+  {% else %}
+  <button class="btn btn-primary" onclick="document.getElementById('modal-med').style.display='flex'">
+    <i class="fa-solid fa-plus"></i> Nuevo Medicamento
+  </button>
+  {% endif %}
+</div>
+
+{# ── Tabs ──────────────────────────────────────────────────────────────────── #}
+<div style="display:flex;gap:4px;margin-bottom:20px">
+  <a href="?tab=horarios" style="display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:9px;font-size:12.5px;font-weight:600;text-decoration:none;transition:all .15s;
+    {% if tab=='horarios' %}background:var(--primary);color:#fff{% else %}background:var(--card);color:var(--text-md);border:1px solid var(--border){% endif %}">
+    <i class="fa-solid fa-clock" style="font-size:12px"></i> Horarios
+  </a>
+  <a href="?tab=catalogo" style="display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:9px;font-size:12.5px;font-weight:600;text-decoration:none;transition:all .15s;
+    {% if tab=='catalogo' %}background:var(--primary);color:#fff{% else %}background:var(--card);color:var(--text-md);border:1px solid var(--border){% endif %}">
+    <i class="fa-solid fa-list" style="font-size:12px"></i> Catálogo ({{ medicamentos|length }})
+  </a>
+</div>
+
+
+{# ════ TAB: HORARIOS ════════════════════════════════════════════════════════ #}
+{% if tab == 'horarios' %}
+<div class="card">
+  <div class="card-body" style="padding:0">
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>Residente</th><th>Medicamento</th><th>Hora</th><th>Dosis</th><th>Frecuencia</th><th>Estado</th><th></th></tr>
+        </thead>
+        <tbody>
+        {% for h in horarios %}
+        <tr>
+          <td style="font-weight:600">{{ h.residente }}</td>
+          <td>
+            <span style="font-weight:600">{{ h.medicamento }}</span>
+            <span style="font-size:11px;color:var(--text-sm)"> · {{ h.unidad }}</span>
+          </td>
+          <td style="font-variant-numeric:tabular-nums">{{ h.hora_fmt }}</td>
+          <td>{{ h.dosis }}</td>
+          <td><span class="badge badge-neutral">{{ h.frecuencia }}</span></td>
+          <td>
+            {% if h.activo %}
+            <span class="badge badge-success"><i class="fa-solid fa-circle" style="font-size:8px"></i> Activo</span>
+            {% else %}
+            <span class="badge badge-neutral"><i class="fa-solid fa-circle" style="font-size:8px"></i> Inactivo</span>
+            {% endif %}
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('admin_medicamento_toggle', id_horario=h.id_horario) }}" style="display:inline">
+              <button type="submit" class="btn btn-sm {{ 'btn-outline' if h.activo else 'btn-primary' }}" style="font-size:11px;gap:5px">
+                <i class="fa-solid {{ 'fa-ban' if h.activo else 'fa-circle-play' }}"></i>
+                {{ 'Suspender' if h.activo else 'Reactivar' }}
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-pills"></i><p>Sin horarios. Agrega el primero.</p></div></td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+
+{# ════ TAB: CATÁLOGO ════════════════════════════════════════════════════════ #}
+{% if tab == 'catalogo' %}
+<div class="card">
+  <div class="card-body" style="padding:0">
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Nombre</th><th>Descripción</th><th>Unidad</th><th>Horarios</th><th></th></tr>
+        </thead>
+        <tbody>
+        {% for m in medicamentos %}
+        <tr>
+          <td style="color:var(--text-sm);font-size:12px">{{ m.id_medicamento }}</td>
+          <td style="font-weight:600">{{ m.nombre }}</td>
+          <td style="font-size:12.5px;color:var(--text-md)">{{ m.descripcion or '—' }}</td>
+          <td><span class="badge badge-neutral">{{ m.unidad }}</span></td>
+          <td>
+            {% set uso = horarios | selectattr('id_medicamento', 'equalto', m.id_medicamento) | list | length %}
+            <span class="badge {{ 'badge-info' if uso > 0 else 'badge-neutral' }}">{{ uso }} horario{{ 's' if uso != 1 else '' }}</span>
+          </td>
+          <td style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm" title="Editar"
+              onclick="openEditMed({{ m.id_medicamento }}, '{{ m.nombre }}', '{{ (m.descripcion or '')|replace("'","\\'")|replace('"','\\"') }}', '{{ m.unidad }}')">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <form method="POST" action="{{ url_for('admin_medicamento_catalogo_eliminar', id_med=m.id_medicamento) }}"
+                  onsubmit="return confirm('¿Eliminar {{ m.nombre }}? Solo es posible si no tiene horarios activos.')">
+              <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--danger)" title="Eliminar">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-pills"></i><p>Sin medicamentos en el catálogo.</p></div></td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+
+{# ── Modal: nuevo horario ──────────────────────────────────────────────────── #}
+<div id="modal-horario" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center">
+  <div class="card" style="width:480px;max-width:95vw;max-height:90vh;overflow-y:auto">
+    <div class="card-header" style="padding-bottom:14px">
+      <span class="card-title">Nuevo Horario de Medicamento</span>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('modal-horario').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('admin_medicamento_nuevo') }}">
+        <div class="form-grid" style="grid-template-columns:1fr">
+          <div class="form-group">
+            <label>Residente</label>
+            <select name="id_residente" required>
+              <option value="">Selecciona un residente…</option>
+              {% for r in residentes %}<option value="{{ r.id_residente }}">{{ r.nombre }}{% if r.habitacion %} — Hab. {{ r.habitacion }}{% endif %}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Medicamento</label>
+            <select name="id_medicamento" required>
+              <option value="">Selecciona un medicamento…</option>
+              {% for m in medicamentos %}<option value="{{ m.id_medicamento }}">{{ m.nombre }} ({{ m.unidad }})</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-grid" style="grid-template-columns:1fr 1fr">
+            <div class="form-group">
+              <label>Hora programada</label>
+              <input type="time" name="hora_programada" required>
+            </div>
+            <div class="form-group">
+              <label>Frecuencia</label>
+              <select name="frecuencia" required>
+                <option value="Diaria">Diaria</option>
+                <option value="Semanal">Semanal</option>
+                <option value="Mensual">Mensual</option>
+                <option value="Condicional">Condicional</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Dosis</label>
+            <input type="text" name="dosis" placeholder="Ej: 500mg, 1 tableta, 5ml" required>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+          <button type="button" class="btn btn-outline" onclick="document.getElementById('modal-horario').style.display='none'">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+{# ── Modal: nuevo medicamento ──────────────────────────────────────────────── #}
+<div id="modal-med" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center">
+  <div class="card" style="width:440px;max-width:95vw">
+    <div class="card-header" style="padding-bottom:14px">
+      <span class="card-title" id="modal-med-title">Nuevo Medicamento</span>
+      <button class="btn btn-ghost btn-sm" onclick="closeMedModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="card-body">
+      <form id="form-med" method="POST" action="{{ url_for('admin_medicamento_catalogo_nuevo') }}">
+        <input type="hidden" name="id_med" id="med-id">
+        <div class="form-grid" style="grid-template-columns:1fr">
+          <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" name="nombre" id="med-nombre" placeholder="Ej: Paracetamol" required>
+          </div>
+          <div class="form-group">
+            <label>Unidad</label>
+            <select name="unidad" id="med-unidad" required>
+              <option value="mg">mg</option>
+              <option value="ml">ml</option>
+              <option value="tableta">tableta</option>
+              <option value="capsula">cápsula</option>
+              <option value="gotas">gotas</option>
+              <option value="UI">UI</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Descripción (opcional)</label>
+            <textarea name="descripcion" id="med-desc" placeholder="Indicaciones, presentación…" style="height:60px"></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+          <button type="button" class="btn btn-outline" onclick="closeMedModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+{# ── Modal: editar medicamento ─────────────────────────────────────────────── #}
+<div id="modal-med-edit" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center">
+  <div class="card" style="width:440px;max-width:95vw">
+    <div class="card-header" style="padding-bottom:14px">
+      <span class="card-title">Editar Medicamento</span>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('modal-med-edit').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="card-body">
+      <form id="form-med-edit" method="POST">
+        <div class="form-grid" style="grid-template-columns:1fr">
+          <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" name="nombre" id="edit-nombre" required>
+          </div>
+          <div class="form-group">
+            <label>Unidad</label>
+            <select name="unidad" id="edit-unidad" required>
+              <option value="mg">mg</option>
+              <option value="ml">ml</option>
+              <option value="tableta">tableta</option>
+              <option value="capsula">cápsula</option>
+              <option value="gotas">gotas</option>
+              <option value="UI">UI</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Descripción</label>
+            <textarea name="descripcion" id="edit-desc" style="height:60px"></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+          <button type="button" class="btn btn-outline" onclick="document.getElementById('modal-med-edit').style.display='none'">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Actualizar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openEditMed(id, nombre, desc, unidad) {
+  document.getElementById('edit-nombre').value = nombre;
+  document.getElementById('edit-desc').value   = desc;
+  const sel = document.getElementById('edit-unidad');
+  for (let o of sel.options) o.selected = (o.value === unidad);
+  document.getElementById('form-med-edit').action =
+    '/admin/medicamentos/catalogo/' + id + '/editar';
+  document.getElementById('modal-med-edit').style.display = 'flex';
+}
+function closeMedModal() {
+  document.getElementById('modal-med').style.display = 'none';
+}
+{% if tab == 'catalogo' %}
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('a[href="?tab=horarios"]')[0] && null;
+});
+{% endif %}
+</script>
+{% endblock %}

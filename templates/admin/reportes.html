@@ -4,6 +4,9 @@
 
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/highcharts-more.js"></script>
+<script src="https://code.highcharts.com/modules/solid-gauge.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -25,12 +28,15 @@
 {# ── Tab Navigation ───────────────────────────────────────────────────────── #}
 <div style="display:flex;gap:4px;margin-bottom:20px;overflow-x:auto;padding-bottom:2px">
   {% set tabs = [
-    ('cuidadores', 'fa-user-nurse',        'Cuidadores'),
-    ('animo',      'fa-face-smile',         'Evolucion Animo'),
-    ('incidentes', 'fa-triangle-exclamation','Incidentes'),
-    ('terapia',    'fa-calendar-check',     'Adherencia Terapeutica'),
-    ('iot',        'fa-map-location-dot',   'IoT'),
-    ('carga',      'fa-chart-bar',          'Carga Operativa'),
+    ('cuidadores',      'fa-user-nurse',          'Cuidadores'),
+    ('animo',           'fa-face-smile',           'Evolucion Animo'),
+    ('incidentes',      'fa-triangle-exclamation', 'Incidentes'),
+    ('terapia',         'fa-calendar-check',       'Adherencia Terapeutica'),
+    ('iot',             'fa-map-location-dot',     'IoT'),
+    ('carga',           'fa-chart-bar',            'Carga Operativa'),
+    ('mongo_iot',       'fa-database',             'IoT Tiempo Real'),
+    ('mongo_animo',     'fa-brain',                'Animo Historico'),
+    ('mongo_seguridad', 'fa-shield-halved',        'Seguridad'),
   ] %}
   {% for tid, icon, label in tabs %}
   <a href="?tab={{ tid }}&dias={{ dias }}"
@@ -80,7 +86,7 @@
     </div>
   </div>
   <div class="card-body" style="padding-top:14px">
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px">
       {% set stats = [
         (r.residentes_atendidos, 'Residentes',   'var(--primary)', 'fa-users'),
         (r.total_checkins,       'Check-ins',     'var(--info)',    'fa-face-smile'),
@@ -91,7 +97,7 @@
       {% for val, label, color, icon in stats %}
       <div style="background:var(--bg);border-radius:10px;padding:12px;text-align:center">
         <i class="fa-solid {{ icon }}" style="color:{{ color }};font-size:14px;margin-bottom:6px;display:block;opacity:.7"></i>
-        <div style="font-size:22px;font-weight:700;font-family:'Cormorant Garamond',serif;color:{{ color }}">{{ val if val is not none else '—' }}</div>
+        <div style="font-size:22px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;color:{{ color }}">{{ val if val is not none else '—' }}</div>
         <div style="font-size:10.5px;color:var(--text-sm);margin-top:2px">{{ label }}</div>
       </div>
       {% endfor %}
@@ -428,6 +434,318 @@
 })();
 </script>
 {% endif %}
+{% endif %}
+
+
+{# ════════════════════════════════════════════════════════════════════════════
+   TAB 7 — IoT EN TIEMPO REAL (Highcharts · Serie de tiempo · MongoDB)
+   Fuente: colección eventos_iot en MongoDB (eldercare_nosql)
+   Consulta Flask: GET /api/mongo/eventos_iot?limit=200
+   ════════════════════════════════════════════════════════════════════════════ #}
+{% if tab == 'mongo_iot' %}
+<div class="card" style="margin-bottom:16px">
+  <div class="card-header">
+    <span class="card-title">Actividad IoT en Tiempo Real</span>
+    <span class="badge" style="background:#e0f2fe;color:#0369a1">
+      <i class="fa-solid fa-database" style="margin-right:5px"></i>Fuente: MongoDB · eventos_iot
+    </span>
+  </div>
+  <div class="card-body">
+    <p style="font-size:12.5px;color:var(--text-sm);margin-bottom:16px">
+      Serie de tiempo con el volumen diario de eventos IoT agrupados por tipo (Beacon BLE,
+      RFID y NFC Medicamento). Los datos provienen de la coleccion <code>eventos_iot</code>
+      en MongoDB, relacionados con la tabla <code>deteccion_beacon</code> y
+      <code>acceso_rfid</code> de PostgreSQL mediante campos <code>pg_*_id</code>.
+    </p>
+    <div id="hc-iot" style="height:360px"></div>
+    <div id="hc-iot-empty" class="empty-state" style="display:none">
+      <i class="fa-solid fa-database"></i><p>Sin eventos IoT en MongoDB. Ejecuta scripts/seed_mongodb.py</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="card-title" style="font-size:12.5px">Codigo de consulta (Flask → MongoDB)</span></div>
+  <div class="card-body" style="padding:0">
+    <pre style="margin:0;padding:16px;font-size:11.5px;background:var(--bg);border-radius:0 0 12px 12px;overflow-x:auto;color:var(--text-md)">GET /api/mongo/eventos_iot?limit=200
+
+# mongo_find() en app.py:
+db['eventos_iot'].find({}, {'_id': 0}).sort('timestamp', DESCENDING).limit(200)
+
+# Documento ejemplo:
+{ "tipo": "beacon", "timestamp": "2026-05-13T10:00:00Z",
+  "id_beacon": 2, "id_staff": 3,   # FK lógica → PostgreSQL
+  "pg_deteccion_id": 87, "rssi": -72 }</pre>
+  </div>
+</div>
+
+<script>
+(function () {
+  fetch('/api/mongo/eventos_iot?limit=200')
+    .then(r => r.json())
+    .then(res => {
+      if (!res.ok || !res.data.length) {
+        document.getElementById('hc-iot').style.display = 'none';
+        document.getElementById('hc-iot-empty').style.display = 'flex';
+        return;
+      }
+      const grupos = { beacon: {}, rfid: {}, nfc_medicamento: {} };
+      const fechas = new Set();
+      res.data.forEach(d => {
+        const f = d.timestamp.substring(0, 10);
+        fechas.add(f);
+        if (grupos[d.tipo] !== undefined)
+          grupos[d.tipo][f] = (grupos[d.tipo][f] || 0) + 1;
+      });
+      const cats = [...fechas].sort();
+      Highcharts.chart('hc-iot', {
+        chart: { type: 'spline', backgroundColor: 'transparent', style: { fontFamily: 'inherit' } },
+        title: { text: null },
+        xAxis: { categories: cats, crosshair: true, labels: { style: { fontSize: '11px' } } },
+        yAxis: { title: { text: 'Eventos registrados' }, min: 0, allowDecimals: false, gridLineColor: '#F0EDE8' },
+        tooltip: { shared: true, valueSuffix: ' eventos' },
+        legend: { align: 'center', verticalAlign: 'bottom' },
+        series: [
+          { name: 'Beacon BLE',       color: '#0EA5E9', data: cats.map(f => grupos.beacon[f] || 0),           marker: { radius: 4 } },
+          { name: 'RFID',             color: '#6366F1', data: cats.map(f => grupos.rfid[f] || 0),             marker: { radius: 4 } },
+          { name: 'NFC Medicamento',  color: '#52B788', data: cats.map(f => grupos.nfc_medicamento[f] || 0),  marker: { radius: 4 } },
+        ],
+        credits: { enabled: false },
+      });
+    })
+    .catch(() => {
+      document.getElementById('hc-iot').style.display = 'none';
+      document.getElementById('hc-iot-empty').style.display = 'flex';
+    });
+})();
+</script>
+{% endif %}
+
+
+{# ════════════════════════════════════════════════════════════════════════════
+   TAB 8 — ANIMO HISTORICO (Highcharts · Barras comparativas · MongoDB)
+   Fuente: colección checkins_animo en MongoDB (eldercare_nosql)
+   Consulta Flask: GET /api/mongo/animo?limit=200
+   ════════════════════════════════════════════════════════════════════════════ #}
+{% if tab == 'mongo_animo' %}
+<div class="card" style="margin-bottom:16px">
+  <div class="card-header">
+    <span class="card-title">Tendencia Historica de Estado de Animo</span>
+    <span class="badge" style="background:#e0f2fe;color:#0369a1">
+      <i class="fa-solid fa-database" style="margin-right:5px"></i>Fuente: MongoDB · checkins_animo
+    </span>
+  </div>
+  <div class="card-body">
+    <p style="font-size:12.5px;color:var(--text-sm);margin-bottom:16px">
+      Barras comparativas del puntaje promedio diario de estado de animo (eje izquierdo)
+      contra el numero de alertas de animo bajo generadas (eje derecho). Datos de la
+      coleccion <code>checkins_animo</code> en MongoDB, relacionada con
+      <code>residente</code> y <code>staff</code> de PostgreSQL por
+      <code>id_residente</code> e <code>id_staff</code>.
+    </p>
+    <div id="hc-animo" style="height:360px"></div>
+    <div id="hc-animo-empty" class="empty-state" style="display:none">
+      <i class="fa-solid fa-brain"></i><p>Sin check-ins en MongoDB aun.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:16px">
+  <div class="card-header"><span class="card-title" style="font-size:12.5px">Codigo de consulta (Flask → MongoDB)</span></div>
+  <div class="card-body" style="padding:0">
+    <pre style="margin:0;padding:16px;font-size:11.5px;background:var(--bg);border-radius:0 0 12px 12px;overflow-x:auto;color:var(--text-md)">GET /api/mongo/animo?limit=200
+
+# mongo_find() en app.py:
+db['checkins_animo'].find({}, {'_id': 0}).sort('timestamp', DESCENDING).limit(200)
+
+# Documento ejemplo:
+{ "timestamp": "2026-05-13T08:30:00Z",
+  "id_residente": 2, "id_staff": 5,   # FK lógica → PostgreSQL
+  "puntaje": 3, "notas": null, "alerta_baja": false }</pre>
+  </div>
+</div>
+
+<script>
+(function () {
+  fetch('/api/mongo/animo?limit=200')
+    .then(r => r.json())
+    .then(res => {
+      if (!res.ok || !res.data.length) {
+        document.getElementById('hc-animo').style.display = 'none';
+        document.getElementById('hc-animo-empty').style.display = 'flex';
+        return;
+      }
+      const porFecha = {};
+      res.data.forEach(d => {
+        const f = d.timestamp.substring(0, 10);
+        if (!porFecha[f]) porFecha[f] = { suma: 0, total: 0, alertas: 0 };
+        porFecha[f].suma  += d.puntaje;
+        porFecha[f].total += 1;
+        if (d.alerta_baja) porFecha[f].alertas += 1;
+      });
+      const cats      = Object.keys(porFecha).sort();
+      const promedios = cats.map(f => parseFloat((porFecha[f].suma / porFecha[f].total).toFixed(2)));
+      const alertas   = cats.map(f => porFecha[f].alertas);
+      Highcharts.chart('hc-animo', {
+        chart: { backgroundColor: 'transparent', style: { fontFamily: 'inherit' } },
+        title: { text: null },
+        xAxis: { categories: cats, crosshair: true, labels: { style: { fontSize: '11px' } } },
+        yAxis: [
+          { title: { text: 'Puntaje promedio (1-5)' }, min: 1, max: 5, gridLineColor: '#F0EDE8',
+            plotLines: [{ value: 2, color: '#EF4444', dashStyle: 'dash', width: 1,
+              label: { text: 'Umbral alerta', style: { color: '#EF4444', fontSize: '10px' } } }] },
+          { title: { text: 'Alertas animo bajo' }, opposite: true, min: 0, allowDecimals: false, gridLineWidth: 0 },
+        ],
+        tooltip: { shared: true },
+        legend: { align: 'center', verticalAlign: 'bottom' },
+        series: [
+          { name: 'Puntaje promedio',   type: 'column', data: promedios, color: '#52B788', yAxis: 0, borderRadius: 3, tooltip: { valueSuffix: ' / 5' } },
+          { name: 'Alertas animo bajo', type: 'spline', data: alertas,   color: '#EF4444', yAxis: 1, marker: { radius: 4 }, tooltip: { valueSuffix: ' alertas' } },
+        ],
+        credits: { enabled: false },
+      });
+    })
+    .catch(() => {
+      document.getElementById('hc-animo').style.display = 'none';
+      document.getElementById('hc-animo-empty').style.display = 'flex';
+    });
+})();
+</script>
+{% endif %}
+
+
+{# ════════════════════════════════════════════════════════════════════════════
+   TAB 9 — SEGURIDAD (Highcharts · Solid Gauge · MongoDB)
+   Fuente: colecciones logs_aplicacion + eventos_iot en MongoDB
+   Consulta Flask: GET /api/mongo/logs + GET /api/mongo/eventos_iot
+   ════════════════════════════════════════════════════════════════════════════ #}
+{% if tab == 'mongo_seguridad' %}
+<div class="card" style="margin-bottom:16px">
+  <div class="card-header">
+    <span class="card-title">Indicadores de Seguridad del Sistema</span>
+    <span class="badge" style="background:#e0f2fe;color:#0369a1">
+      <i class="fa-solid fa-database" style="margin-right:5px"></i>Fuente: MongoDB · logs_aplicacion + eventos_iot
+    </span>
+  </div>
+  <div class="card-body">
+    <p style="font-size:12.5px;color:var(--text-sm);margin-bottom:20px">
+      Indicadores dinamicos (solid gauge) calculados desde MongoDB.
+      Miden la tasa de exito en autenticacion, autorizacion RFID y registro NFC.
+      Los campos <code>user_id</code> e <code>id_staff</code> mantienen la relacion
+      logica con las tablas de PostgreSQL.
+    </p>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px" id="stat-row-seg">
+      <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-key"></i></div><div><div class="stat-label">Logins auditados</div><div class="stat-value" id="cnt-login">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#EEF2FF;color:#6366F1"><i class="fa-solid fa-door-open"></i></div><div><div class="stat-label">Eventos RFID</div><div class="stat-value" id="cnt-rfid">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#EBF5EF;color:#52B788"><i class="fa-solid fa-mobile-screen"></i></div><div><div class="stat-label">Escaneos NFC</div><div class="stat-value" id="cnt-nfc">—</div></div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px" id="gauge-row">
+      <div>
+        <div style="text-align:center;font-size:12px;font-weight:600;color:var(--text-md);margin-bottom:4px">Tasa de Login Exitoso</div>
+        <div id="hc-gauge-login" style="height:200px"></div>
+      </div>
+      <div>
+        <div style="text-align:center;font-size:12px;font-weight:600;color:var(--text-md);margin-bottom:4px">RFID Autorizados</div>
+        <div id="hc-gauge-rfid" style="height:200px"></div>
+      </div>
+      <div>
+        <div style="text-align:center;font-size:12px;font-weight:600;color:var(--text-md);margin-bottom:4px">NFC Exitosos</div>
+        <div id="hc-gauge-nfc" style="height:200px"></div>
+      </div>
+    </div>
+    <div id="hc-seg-empty" class="empty-state" style="display:none">
+      <i class="fa-solid fa-shield-halved"></i><p>Sin datos de seguridad en MongoDB aun.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="card-title" style="font-size:12.5px">Codigo de consulta (Flask → MongoDB)</span></div>
+  <div class="card-body" style="padding:0">
+    <pre style="margin:0;padding:16px;font-size:11.5px;background:var(--bg);border-radius:0 0 12px 12px;overflow-x:auto;color:var(--text-md)">GET /api/mongo/logs?limit=200       → KPI 1: logins_exitosos / total_logins * 100
+GET /api/mongo/eventos_iot?limit=200 → KPI 2: rfid_autorizados / total_rfid * 100
+                                      → KPI 3: nfc_exitosos / total_nfc * 100
+
+# Documento logs_aplicacion:
+{ "evento": "login_exitoso", "user_id": 1,  # FK lógica → usuario_sistema (PostgreSQL)
+  "username": "admin_sistema", "nivel_acceso": 1, "ip": "192.168.1.10" }</pre>
+  </div>
+</div>
+
+<script>
+(function () {
+  function makeGauge(id, valor) {
+    Highcharts.chart(id, {
+      chart: {
+        type: 'solidgauge', backgroundColor: 'transparent',
+        margin: [0, 0, 0, 0], style: { fontFamily: 'inherit' }
+      },
+      title: { text: null },
+      pane: {
+        center: ['50%', '85%'], size: '160%', startAngle: -90, endAngle: 90,
+        background: [{ backgroundColor: '#F0EDE8', innerRadius: '60%', outerRadius: '100%', shape: 'arc' }]
+      },
+      yAxis: {
+        min: 0, max: 100,
+        stops: [[0.1, '#EF4444'], [0.5, '#F59E0B'], [0.9, '#52B788']],
+        lineWidth: 0, tickWidth: 0, minorTickInterval: null,
+        labels: { enabled: false }
+      },
+      plotOptions: {
+        solidgauge: {
+          innerRadius: '60%',
+          dataLabels: {
+            enabled: true, borderWidth: 0, useHTML: true,
+            format: '<div style="text-align:center"><span style="font-size:28px;font-weight:700;color:#334155">{y}%</span></div>'
+          }
+        }
+      },
+      series: [{ data: [valor] }],
+      credits: { enabled: false },
+      tooltip: { enabled: false }
+    });
+  }
+
+  Promise.all([
+    fetch('/api/mongo/logs?limit=200').then(r => r.json()),
+    fetch('/api/mongo/eventos_iot?limit=200').then(r => r.json()),
+  ]).then(([logsRes, iotRes]) => {
+    const logs    = logsRes.data  || [];
+    const eventos = iotRes.data   || [];
+
+    if (!logs.length && !eventos.length) {
+      document.getElementById('stat-row-seg').style.display = 'none';
+      document.getElementById('gauge-row').style.display    = 'none';
+      document.getElementById('hc-seg-empty').style.display = 'flex';
+      return;
+    }
+
+    const totalLogins = logs.length;
+    const exitosos    = logs.filter(l => l.evento === 'login_exitoso').length;
+    const loginRate   = totalLogins > 0 ? Math.round(exitosos / totalLogins * 100) : 0;
+
+    const rfidEvs  = eventos.filter(e => e.tipo === 'rfid');
+    const rfidRate = rfidEvs.length > 0 ? Math.round(rfidEvs.filter(e => e.autorizado).length / rfidEvs.length * 100) : 0;
+
+    const nfcEvs  = eventos.filter(e => e.tipo === 'nfc_medicamento');
+    const nfcRate = nfcEvs.length > 0 ? Math.round(nfcEvs.filter(e => e.exitoso).length / nfcEvs.length * 100) : 0;
+
+    document.getElementById('cnt-login').textContent = totalLogins + ' eventos';
+    document.getElementById('cnt-rfid').textContent  = rfidEvs.length + ' eventos';
+    document.getElementById('cnt-nfc').textContent   = nfcEvs.length + ' eventos';
+
+    makeGauge('hc-gauge-login', loginRate);
+    makeGauge('hc-gauge-rfid',  rfidRate);
+    makeGauge('hc-gauge-nfc',   nfcRate);
+  }).catch(() => {
+    document.getElementById('stat-row-seg').style.display = 'none';
+    document.getElementById('gauge-row').style.display    = 'none';
+    document.getElementById('hc-seg-empty').style.display = 'flex';
+  });
+})();
+</script>
 {% endif %}
 
 {% endblock %}

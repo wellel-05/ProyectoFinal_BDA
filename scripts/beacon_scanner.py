@@ -29,7 +29,7 @@ RSSI_MIN     = -85    # dBm — señales mas debiles se ignoran (muy lejos)
 LOOP_PAUSE   = 3.0    # segundos de espera entre ciclos de escaneo
 
 # Nombres tipicos del FSC-BP104D (puede variar segun configuracion del dispositivo)
-BEACON_NAMES = ["FSC-BP104D", "FeasyBeacon", "Feasy", "FSC"]
+BEACON_NAMES = ["FSC-BP104D", "FeasyBeacon", "Feasy", "FSC", "104D"]
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 

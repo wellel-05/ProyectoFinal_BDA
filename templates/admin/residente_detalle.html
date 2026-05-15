@@ -19,10 +19,10 @@
     <div class="card">
       <div class="card-body">
         <div style="text-align:center;padding:16px 0 20px">
-          <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#52B788,#1B4D3E);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:30px;color:#fff;font-weight:700;margin:0 auto 12px">
+          <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#52B788,#1B4D3E);display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:30px;color:#fff;font-weight:700;margin:0 auto 12px">
             {{ residente.nombre[0] }}
           </div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700">{{ residente.nombre }} {{ residente.apellidos }}</div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:700">{{ residente.nombre }} {{ residente.apellidos }}</div>
           <span class="badge {% if residente.nivel_movilidad=='Autonomo' %}badge-success{% elif residente.nivel_movilidad=='Asistido' %}badge-warning{% else %}badge-danger{% endif %}" style="margin-top:6px">
             {{ residente.nivel_movilidad }}
           </span>

@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
-{% block title %}Sesiones Terapeuticas{% endblock %}
-{% block page_title %}Sesiones Terapeuticas{% endblock %}
+{% block title %}Sesiones Terapéuticas{% endblock %}
+{% block page_title %}Sesiones Terapéuticas{% endblock %}
 
 {% block content %}
 <div class="page-header">
-  <div><h1>Sesiones Terapeuticas</h1><p>{{ sesiones|length }} sesiones registradas</p></div>
+  <div><h1>Sesiones Terapéuticas</h1><p>{{ sesiones|length }} sesiones registradas</p></div>
   <a href="{{ url_for('terapeuta_sesion_nueva') }}" class="btn btn-primary btn-sm">
-    <i class="fa-solid fa-calendar-plus"></i> Nueva sesion
+    <i class="fa-solid fa-calendar-plus"></i> Nueva sesión
   </a>
 </div>
 

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ElderCare — Portal Familiar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'IBM Plex Sans',sans-serif;min-height:100vh;display:flex;background:#F4F0E8}
+
+    /* ── Panel izquierdo ── */
+    .split-left{
+      width:420px;flex-shrink:0;
+      background:linear-gradient(160deg,#2D1B5E 0%,#4C3575 50%,#3A2860 100%);
+      display:flex;flex-direction:column;justify-content:space-between;
+      padding:48px 44px;position:relative;overflow:hidden;
+    }
+    .split-left::before{
+      content:'';position:absolute;top:-80px;right:-80px;
+      width:300px;height:300px;
+      background:radial-gradient(circle,rgba(187,160,230,0.20) 0%,transparent 65%);
+      pointer-events:none;
+    }
+    .split-left::after{
+      content:'';position:absolute;bottom:-70px;left:-70px;
+      width:240px;height:240px;
+      background:radial-gradient(circle,rgba(123,94,167,0.25) 0%,transparent 65%);
+      pointer-events:none;
+    }
+
+    /* ── Branding ── */
+    .brand{position:relative;z-index:1}
+    .brand-icon{
+      width:52px;height:52px;
+      background:linear-gradient(135deg,#A78BCC,#7B5EA7);
+      border-radius:14px;display:flex;align-items:center;justify-content:center;
+      font-size:22px;color:#fff;margin-bottom:20px;
+      box-shadow:0 6px 20px rgba(123,94,167,0.45);
+    }
+    .brand-name{font-family:'Plus Jakarta Sans',sans-serif;font-size:28px;font-weight:700;color:#fff;letter-spacing:.06em}
+    .brand-sub{font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#C4A8E8;margin-top:4px}
+    .brand-desc{margin-top:32px;font-size:14px;color:rgba(255,255,255,.55);line-height:1.75;font-style:italic}
+
+    /* ── Feature list ── */
+    .features{position:relative;z-index:1;display:flex;flex-direction:column;gap:14px}
+    .feat-item{display:flex;align-items:center;gap:12px;color:rgba(255,255,255,.6);font-size:13px}
+    .feat-icon{
+      width:30px;height:30px;flex-shrink:0;
+      background:rgba(187,160,230,0.12);border-radius:8px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:12px;color:#C4A8E8;
+    }
+
+    /* ── Panel derecho ── */
+    .split-right{flex:1;display:flex;align-items:center;justify-content:center;padding:40px}
+
+    .login-box{width:100%;max-width:400px}
+    .portal-badge{
+      display:inline-flex;align-items:center;gap:7px;
+      background:#F3EEFF;color:#7B5EA7;border:1px solid rgba(123,94,167,.2);
+      border-radius:20px;padding:5px 14px;font-size:11.5px;font-weight:700;
+      letter-spacing:.03em;margin-bottom:24px;
+    }
+    .login-heading{font-family:'Plus Jakarta Sans',sans-serif;font-size:34px;font-weight:700;color:#1A1A18;line-height:1.1;margin-bottom:6px}
+    .login-heading em{color:#4C3575;font-style:italic}
+    .login-sub{font-size:13.5px;color:#7A8070;margin-bottom:32px}
+
+    .form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+    .form-group label{font-size:11.5px;font-weight:600;color:#4A5240;letter-spacing:.03em}
+    .input-wrap{position:relative}
+    .input-wrap i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#AAA49C;font-size:13px;pointer-events:none}
+    .input-wrap input{
+      width:100%;padding:12px 13px 12px 40px;
+      border:1.5px solid #E3DDD5;border-radius:9px;
+      font-family:'IBM Plex Sans',sans-serif;font-size:13.5px;color:#1A1A18;
+      background:#FAFAF8;transition:border-color .15s,box-shadow .15s;outline:none;
+    }
+    .input-wrap input:focus{border-color:#7B5EA7;box-shadow:0 0 0 3px rgba(123,94,167,.12);background:#fff}
+
+    .error-banner{
+      background:#FEE2E2;border:1px solid #FECACA;border-radius:9px;
+      padding:11px 14px;display:flex;align-items:center;gap:10px;
+      font-size:13px;color:#7F1D1D;margin-bottom:20px;
+    }
+
+    .btn-login{
+      width:100%;padding:13px;border-radius:9px;
+      background:linear-gradient(135deg,#7B5EA7,#5C3D9E);
+      color:#fff;border:none;
+      font-family:'IBM Plex Sans',sans-serif;font-size:14px;font-weight:600;
+      cursor:pointer;transition:opacity .15s,transform .12s;
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      margin-top:8px;box-shadow:0 4px 16px rgba(123,94,167,.35);
+    }
+    .btn-login:hover{opacity:.92;transform:translateY(-1px)}
+    .btn-login:active{transform:scale(.99)}
+
+    .divider{display:flex;align-items:center;gap:12px;margin:22px 0;color:#C0BAB2;font-size:11.5px}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:#E3DDD5}
+
+    .staff-link{
+      display:flex;align-items:center;justify-content:center;gap:6px;
+      color:#9090A0;font-size:12.5px;text-decoration:none;
+      transition:color .15s;
+    }
+    .staff-link:hover{color:#7B5EA7}
+  </style>
+</head>
+<body>
+
+<div class="split-left">
+  <div class="brand">
+    <div class="brand-icon"><i class="fa-solid fa-people-roof"></i></div>
+    <div class="brand-name">ELDERCARE</div>
+    <div class="brand-sub">Portal Familiar</div>
+    <p class="brand-desc">Consulta el bienestar, sesiones y medicamentos de tu familiar residente, en cualquier momento.</p>
+  </div>
+  <div class="features">
+    <div class="feat-item">
+      <div class="feat-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+      <span>Estado de animo en tiempo real</span>
+    </div>
+    <div class="feat-item">
+      <div class="feat-icon"><i class="fa-solid fa-calendar-check"></i></div>
+      <span>Sesiones de terapia recientes</span>
+    </div>
+    <div class="feat-item">
+      <div class="feat-icon"><i class="fa-solid fa-pills"></i></div>
+      <span>Adherencia de medicamentos</span>
+    </div>
+    <div class="feat-item">
+      <div class="feat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <span>Incidentes reportados</span>
+    </div>
+  </div>
+</div>
+
+<div class="split-right">
+  <div class="login-box">
+    <div class="portal-badge">
+      <i class="fa-solid fa-people-roof"></i> Portal Familiar
+    </div>
+    <h1 class="login-heading">Bienvenido<br>de <em>regreso</em></h1>
+    <p class="login-sub">Ingresa con tus credenciales de acceso familiar</p>
+
+    {% if error %}
+    <div class="error-banner">
+      <i class="fa-solid fa-circle-xmark"></i>
+      <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('familiar_login') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group">
+        <label>Usuario</label>
+        <div class="input-wrap">
+          <i class="fa-solid fa-user"></i>
+          <input type="text" name="username" placeholder="tu.usuario" autocomplete="username" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Contrasena</label>
+        <div class="input-wrap">
+          <i class="fa-solid fa-lock"></i>
+          <input type="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
+        </div>
+      </div>
+      <button type="submit" class="btn-login">
+        <i class="fa-solid fa-right-to-bracket"></i>
+        Ingresar al Portal
+      </button>
+    </form>
+
+    <div class="divider">o si eres personal del asilo</div>
+
+    <a href="{{ url_for('login') }}" class="staff-link">
+      <i class="fa-solid fa-arrow-left"></i>
+      Acceder como Admin / Terapeuta / Cuidador
+    </a>
+  </div>
+</div>
+
+</body>
+</html>

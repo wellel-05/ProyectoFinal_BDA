@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Escaneo NFC{% endblock %}
+{% block page_title %}Asistencias NFC — Mis Residentes{% endblock %}
+
+{% block head %}
+<style>
+  .table-wrap { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: var(--bg); color: var(--text-sm); font-size: 11.5px; text-transform: uppercase;
+       letter-spacing: .4px; padding: 11px 14px; text-align: left; border-bottom: 2px solid var(--border); }
+  td { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .tipo-grupal     { background: #DCFCE7; color: #166534; }
+  .tipo-individual { background: #DBEAFE; color: #1D4ED8; }
+  .tipo-terapia    { background: #F3E8FF; color: #7E22CE; }
+  .tipo-recreativa { background: #FEF9C3; color: #854D0E; }
+  .empty { text-align: center; padding: 48px; color: var(--text-sm); }
+
+  .info-banner { background: var(--card); border-radius: var(--radius); padding: 16px 20px;
+                 box-shadow: var(--shadow); margin-bottom: 20px;
+                 display: flex; align-items: center; gap: 14px; }
+  .info-icon { width: 44px; height: 44px; border-radius: 10px; background: #DCFCE7;
+               display: flex; align-items: center; justify-content: center;
+               color: #166534; font-size: 20px; flex-shrink: 0; }
+  .info-text h3 { font-size: 14px; font-weight: 700; color: var(--text); }
+  .info-text p  { font-size: 12.5px; color: var(--text-sm); margin-top: 3px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="info-banner">
+  <div class="info-icon"><i class="fa-solid fa-nfc-symbol"></i></div>
+  <div class="info-text">
+    <h3>Registro por tag NFC</h3>
+    <p>Al escanear el llavero NFC del residente con el celular, se abrirá la página de registro automáticamente.
+       Aquí puedes ver el historial de las últimas asistencias de tus residentes.</p>
+  </div>
+</div>
+
+<div class="table-wrap">
+  {% if rows %}
+  <table>
+    <thead>
+      <tr>
+        <th>Fecha / Hora</th>
+        <th>Residente</th>
+        <th>Hab.</th>
+        <th>Actividad</th>
+        <th>Tipo</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td style="white-space:nowrap">{{ r.ts_registro.strftime('%d/%m/%Y %H:%M') if r.ts_registro else '—' }}</td>
+        <td style="font-weight:600">{{ r.residente }}</td>
+        <td>{{ r.habitacion or '—' }}</td>
+        <td>{{ r.actividad }}</td>
+        <td><span class="badge tipo-{{ r.tipo }}">{{ r.tipo|capitalize }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">
+    <i class="fa-solid fa-nfc-symbol fa-2x" style="opacity:.2;display:block;margin-bottom:10px"></i>
+    Aún no hay asistencias NFC registradas para tus residentes.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

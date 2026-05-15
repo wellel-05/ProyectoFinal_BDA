@@ -1,0 +1,962 @@
+[
+  {
+    "timestamp": "2026-05-14T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 6,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-13T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 5,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-12T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 4,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-11T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 5,
+    "puntaje": 3,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-10T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 5,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-09T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 6,
+    "puntaje": 4,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-08T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 4,
+    "puntaje": 1,
+    "notas": null,
+    "alerta_baja": true
+  },
+  {
+    "timestamp": "2026-05-07T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 4,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-06T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 5,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-05T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 5,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-04T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 5,
+    "puntaje": 1,
+    "notas": null,
+    "alerta_baja": true
+  },
+  {
+    "timestamp": "2026-05-03T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 5,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-02T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 6,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-01T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 5,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-30T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 5,
+    "puntaje": 2,
+    "notas": null,
+    "alerta_baja": true
+  },
+  {
+    "timestamp": "2026-04-29T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 4,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-28T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 6,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-27T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 5,
+    "puntaje": 4,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-26T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 6,
+    "puntaje": 4,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-25T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 4,
+    "puntaje": 3,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-24T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 5,
+    "puntaje": 5,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-23T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 5,
+    "puntaje": 5,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-22T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 5,
+    "puntaje": 5,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-21T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 4,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-20T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 4,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-19T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 5,
+    "puntaje": 2,
+    "notas": "Generado por seed",
+    "alerta_baja": true
+  },
+  {
+    "timestamp": "2026-04-18T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 4,
+    "puntaje": 5,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-17T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 4,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-16T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 6,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-15T20:22:07.216000",
+    "id_residente": 1,
+    "id_staff": 6,
+    "puntaje": 1,
+    "notas": "Generado por seed",
+    "alerta_baja": true
+  },
+  {
+    "timestamp": "2026-05-14T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 4,
+    "puntaje": 5,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-13T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 4,
+    "puntaje": 5,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-12T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 6,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-11T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 5,
+    "puntaje": 5,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-10T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 5,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-09T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 5,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-08T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 4,
+    "puntaje": 4,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-07T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 4,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-06T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 4,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-05T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 4,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-04T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 5,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-03T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 4,
+    "puntaje": 2,
+    "notas": null,
+    "alerta_baja": true
+  },
+  {
+    "timestamp": "2026-05-02T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 6,
+    "puntaje": 4,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-01T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 5,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-30T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 5,
+    "puntaje": 5,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-29T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 5,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-28T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 4,
+    "puntaje": 3,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-27T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 4,
+    "puntaje": 5,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-26T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 4,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-25T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 5,
+    "puntaje": 5,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-24T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 5,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-23T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 4,
+    "puntaje": 4,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-22T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 5,
+    "puntaje": 3,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-21T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 6,
+    "puntaje": 1,
+    "notas": "Generado por seed",
+    "alerta_baja": true
+  },
+  {
+    "timestamp": "2026-04-20T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 4,
+    "puntaje": 2,
+    "notas": null,
+    "alerta_baja": true
+  },
+  {
+    "timestamp": "2026-04-19T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 6,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-18T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 4,
+    "puntaje": 4,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-17T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 5,
+    "puntaje": 1,
+    "notas": null,
+    "alerta_baja": true
+  },
+  {
+    "timestamp": "2026-04-16T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 6,
+    "puntaje": 2,
+    "notas": null,
+    "alerta_baja": true
+  },
+  {
+    "timestamp": "2026-04-15T20:22:07.216000",
+    "id_residente": 2,
+    "id_staff": 4,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-14T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 5,
+    "puntaje": 3,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-13T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 5,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-12T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 6,
+    "puntaje": 4,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-11T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 4,
+    "puntaje": 3,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-10T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 4,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-09T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 6,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-08T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 6,
+    "puntaje": 2,
+    "notas": null,
+    "alerta_baja": true
+  },
+  {
+    "timestamp": "2026-05-07T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 6,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-06T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 5,
+    "puntaje": 1,
+    "notas": null,
+    "alerta_baja": true
+  },
+  {
+    "timestamp": "2026-05-05T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 4,
+    "puntaje": 2,
+    "notas": null,
+    "alerta_baja": true
+  },
+  {
+    "timestamp": "2026-05-04T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 4,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-03T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 5,
+    "puntaje": 2,
+    "notas": null,
+    "alerta_baja": true
+  },
+  {
+    "timestamp": "2026-05-02T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 6,
+    "puntaje": 5,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-01T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 4,
+    "puntaje": 3,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-30T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 6,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-29T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 4,
+    "puntaje": 3,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-28T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 4,
+    "puntaje": 5,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-27T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 5,
+    "puntaje": 1,
+    "notas": "Generado por seed",
+    "alerta_baja": true
+  },
+  {
+    "timestamp": "2026-04-26T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 5,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-25T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 4,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-24T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 6,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-23T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 6,
+    "puntaje": 4,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-22T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 5,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-21T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 5,
+    "puntaje": 2,
+    "notas": null,
+    "alerta_baja": true
+  },
+  {
+    "timestamp": "2026-04-20T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 5,
+    "puntaje": 4,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-19T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 5,
+    "puntaje": 2,
+    "notas": null,
+    "alerta_baja": true
+  },
+  {
+    "timestamp": "2026-04-18T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 5,
+    "puntaje": 5,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-17T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 6,
+    "puntaje": 5,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-16T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 6,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-15T20:22:07.216000",
+    "id_residente": 3,
+    "id_staff": 4,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-14T20:22:07.216000",
+    "id_residente": 4,
+    "id_staff": 6,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-13T20:22:07.216000",
+    "id_residente": 4,
+    "id_staff": 6,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-12T20:22:07.216000",
+    "id_residente": 4,
+    "id_staff": 4,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-11T20:22:07.216000",
+    "id_residente": 4,
+    "id_staff": 5,
+    "puntaje": 5,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-10T20:22:07.216000",
+    "id_residente": 4,
+    "id_staff": 6,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-09T20:22:07.216000",
+    "id_residente": 4,
+    "id_staff": 6,
+    "puntaje": 3,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-08T20:22:07.216000",
+    "id_residente": 4,
+    "id_staff": 4,
+    "puntaje": 4,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-07T20:22:07.216000",
+    "id_residente": 4,
+    "id_staff": 5,
+    "puntaje": 3,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-06T20:22:07.216000",
+    "id_residente": 4,
+    "id_staff": 4,
+    "puntaje": 1,
+    "notas": null,
+    "alerta_baja": true
+  },
+  {
+    "timestamp": "2026-05-05T20:22:07.216000",
+    "id_residente": 4,
+    "id_staff": 4,
+    "puntaje": 4,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-04T20:22:07.217000",
+    "id_residente": 4,
+    "id_staff": 6,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-03T20:22:07.217000",
+    "id_residente": 4,
+    "id_staff": 5,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-02T20:22:07.217000",
+    "id_residente": 4,
+    "id_staff": 4,
+    "puntaje": 4,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-05-01T20:22:07.217000",
+    "id_residente": 4,
+    "id_staff": 5,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-30T20:22:07.217000",
+    "id_residente": 4,
+    "id_staff": 5,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-29T20:22:07.217000",
+    "id_residente": 4,
+    "id_staff": 5,
+    "puntaje": 4,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-28T20:22:07.217000",
+    "id_residente": 4,
+    "id_staff": 4,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-27T20:22:07.217000",
+    "id_residente": 4,
+    "id_staff": 4,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-26T20:22:07.217000",
+    "id_residente": 4,
+    "id_staff": 6,
+    "puntaje": 2,
+    "notas": null,
+    "alerta_baja": true
+  },
+  {
+    "timestamp": "2026-04-25T20:22:07.217000",
+    "id_residente": 4,
+    "id_staff": 4,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-24T20:22:07.217000",
+    "id_residente": 4,
+    "id_staff": 4,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-23T20:22:07.217000",
+    "id_residente": 4,
+    "id_staff": 6,
+    "puntaje": 4,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-22T20:22:07.217000",
+    "id_residente": 4,
+    "id_staff": 5,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-21T20:22:07.217000",
+    "id_residente": 4,
+    "id_staff": 5,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-20T20:22:07.217000",
+    "id_residente": 4,
+    "id_staff": 6,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-19T20:22:07.217000",
+    "id_residente": 4,
+    "id_staff": 6,
+    "puntaje": 4,
+    "notas": "Generado por seed",
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-18T20:22:07.217000",
+    "id_residente": 4,
+    "id_staff": 6,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-17T20:22:07.217000",
+    "id_residente": 4,
+    "id_staff": 6,
+    "puntaje": 4,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-16T20:22:07.217000",
+    "id_residente": 4,
+    "id_staff": 5,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  },
+  {
+    "timestamp": "2026-04-15T20:22:07.217000",
+    "id_residente": 4,
+    "id_staff": 6,
+    "puntaje": 3,
+    "notas": null,
+    "alerta_baja": false
+  }
+]

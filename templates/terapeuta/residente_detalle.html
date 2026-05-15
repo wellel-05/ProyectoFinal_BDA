@@ -22,10 +22,10 @@
     <div class="card">
       <div class="card-body">
         <div style="text-align:center;padding:16px 0 20px">
-          <div style="width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,#6B9FD4,#2D5A8E);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:28px;color:#fff;font-weight:700;margin:0 auto 12px">
+          <div style="width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,#6B9FD4,#2D5A8E);display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:28px;color:#fff;font-weight:700;margin:0 auto 12px">
             {{ residente.nombre[0] }}
           </div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:700">{{ residente.nombre }} {{ residente.apellidos }}</div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:19px;font-weight:700">{{ residente.nombre }} {{ residente.apellidos }}</div>
           <span class="badge {% if residente.nivel_movilidad=='Autonomo' %}badge-success{% elif residente.nivel_movilidad=='Asistido' %}badge-warning{% else %}badge-danger{% endif %}" style="margin-top:6px">
             {{ residente.nivel_movilidad }}
           </span>
@@ -50,7 +50,7 @@
 
     <!-- Sesion rapida -->
     <div class="card">
-      <div class="card-header"><span class="card-title" style="font-size:14px">Agendar Sesion</span></div>
+      <div class="card-header"><span class="card-title" style="font-size:14px">Agendar Sesión</span></div>
       <div class="card-body">
         <form method="POST" action="{{ url_for('terapeuta_sesion_nueva') }}">
           <input type="hidden" name="id_residente" value="{{ residente.id_residente }}">
@@ -111,7 +111,7 @@
     <!-- Historial de sesiones -->
     <div class="card">
       <div class="card-header">
-        <span class="card-title">Sesiones Terapeuticas</span>
+        <span class="card-title">Sesiones Terapéuticas</span>
         <span class="badge badge-neutral">{{ sesiones|length }}</span>
       </div>
       <div class="card-body" style="padding-top:12px">
@@ -175,7 +175,7 @@
 {% if evolucion_animo %}
 <script>
 const labels = {{ evolucion_animo | map(attribute='fecha') | list | tojson }};
-const scores = {{ evolucion_animo | map(attribute='puntaje') | list | tojson }};
+const scores = {{ evolucion_animo | map(attribute='puntaje_promedio') | list | tojson }};
 
 const ctx = document.getElementById('moodChart').getContext('2d');
 new Chart(ctx, {

@@ -1,0 +1,1074 @@
+[
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-14T08:22:07.092000",
+    "id_beacon": 2,
+    "id_staff": 2,
+    "pg_deteccion_id": 1,
+    "rssi": -62
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-12T05:22:07.092000",
+    "id_beacon": 3,
+    "id_staff": 2,
+    "pg_deteccion_id": 2,
+    "rssi": -79
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-14T14:22:07.092000",
+    "id_beacon": 4,
+    "id_staff": 5,
+    "pg_deteccion_id": 3,
+    "rssi": -71
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-14T18:22:07.092000",
+    "id_beacon": 2,
+    "id_staff": 5,
+    "pg_deteccion_id": 4,
+    "rssi": -74
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-12T23:22:07.092000",
+    "id_beacon": 3,
+    "id_staff": 4,
+    "pg_deteccion_id": 5,
+    "rssi": -54
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-08T22:22:07.092000",
+    "id_beacon": 4,
+    "id_staff": 3,
+    "pg_deteccion_id": 6,
+    "rssi": -71
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-14T15:22:07.092000",
+    "id_beacon": 4,
+    "id_staff": 2,
+    "pg_deteccion_id": 7,
+    "rssi": -71
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-09T12:22:07.092000",
+    "id_beacon": 3,
+    "id_staff": 1,
+    "pg_deteccion_id": 8,
+    "rssi": -74
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-10T00:22:07.092000",
+    "id_beacon": 2,
+    "id_staff": 4,
+    "pg_deteccion_id": 9,
+    "rssi": -89
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-10T08:22:07.092000",
+    "id_beacon": 3,
+    "id_staff": 5,
+    "pg_deteccion_id": 10,
+    "rssi": -55
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-13T09:22:07.092000",
+    "id_beacon": 1,
+    "id_staff": 5,
+    "pg_deteccion_id": 11,
+    "rssi": -58
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-09T01:22:07.092000",
+    "id_beacon": 4,
+    "id_staff": 1,
+    "pg_deteccion_id": 12,
+    "rssi": -70
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-07T07:22:07.092000",
+    "id_beacon": 1,
+    "id_staff": 6,
+    "pg_deteccion_id": 13,
+    "rssi": -83
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-09T14:22:07.092000",
+    "id_beacon": 1,
+    "id_staff": 3,
+    "pg_deteccion_id": 14,
+    "rssi": -80
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-12T00:22:07.092000",
+    "id_beacon": 3,
+    "id_staff": 1,
+    "pg_deteccion_id": 15,
+    "rssi": -87
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-08T00:22:07.092000",
+    "id_beacon": 1,
+    "id_staff": 5,
+    "pg_deteccion_id": 16,
+    "rssi": -58
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-09T09:22:07.092000",
+    "id_beacon": 1,
+    "id_staff": 4,
+    "pg_deteccion_id": 17,
+    "rssi": -57
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-11T09:22:07.092000",
+    "id_beacon": 1,
+    "id_staff": 3,
+    "pg_deteccion_id": 18,
+    "rssi": -59
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-09T02:22:07.092000",
+    "id_beacon": 1,
+    "id_staff": 6,
+    "pg_deteccion_id": 19,
+    "rssi": -60
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-12T20:22:07.092000",
+    "id_beacon": 3,
+    "id_staff": 1,
+    "pg_deteccion_id": 20,
+    "rssi": -89
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-14T00:22:07.092000",
+    "id_beacon": 2,
+    "id_staff": 2,
+    "pg_deteccion_id": 21,
+    "rssi": -71
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-11T21:22:07.092000",
+    "id_beacon": 2,
+    "id_staff": 4,
+    "pg_deteccion_id": 22,
+    "rssi": -67
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-11T00:22:07.092000",
+    "id_beacon": 4,
+    "id_staff": 3,
+    "pg_deteccion_id": 23,
+    "rssi": -62
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-13T00:22:07.092000",
+    "id_beacon": 4,
+    "id_staff": 6,
+    "pg_deteccion_id": 24,
+    "rssi": -64
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-13T21:22:07.092000",
+    "id_beacon": 2,
+    "id_staff": 4,
+    "pg_deteccion_id": 25,
+    "rssi": -77
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-12T04:22:07.092000",
+    "id_beacon": 2,
+    "id_staff": 5,
+    "pg_deteccion_id": 26,
+    "rssi": -51
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-13T07:22:07.092000",
+    "id_beacon": 2,
+    "id_staff": 4,
+    "pg_deteccion_id": 27,
+    "rssi": -61
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-08T14:22:07.092000",
+    "id_beacon": 1,
+    "id_staff": 1,
+    "pg_deteccion_id": 28,
+    "rssi": -66
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-08T13:22:07.092000",
+    "id_beacon": 1,
+    "id_staff": 2,
+    "pg_deteccion_id": 29,
+    "rssi": -84
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-12T07:22:07.092000",
+    "id_beacon": 4,
+    "id_staff": 4,
+    "pg_deteccion_id": 30,
+    "rssi": -55
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-13T08:22:07.092000",
+    "id_beacon": 1,
+    "id_staff": 2,
+    "pg_deteccion_id": 31,
+    "rssi": -63
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-11T16:22:07.092000",
+    "id_beacon": 3,
+    "id_staff": 4,
+    "pg_deteccion_id": 32,
+    "rssi": -58
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-07T20:22:07.092000",
+    "id_beacon": 2,
+    "id_staff": 5,
+    "pg_deteccion_id": 33,
+    "rssi": -71
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-07T09:22:07.092000",
+    "id_beacon": 2,
+    "id_staff": 3,
+    "pg_deteccion_id": 34,
+    "rssi": -89
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-09T21:22:07.092000",
+    "id_beacon": 3,
+    "id_staff": 5,
+    "pg_deteccion_id": 35,
+    "rssi": -56
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-11T19:22:07.092000",
+    "id_beacon": 2,
+    "id_staff": 4,
+    "pg_deteccion_id": 36,
+    "rssi": -70
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-11T01:22:07.092000",
+    "id_beacon": 4,
+    "id_staff": 3,
+    "pg_deteccion_id": 37,
+    "rssi": -88
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-12T03:22:07.092000",
+    "id_beacon": 3,
+    "id_staff": 1,
+    "pg_deteccion_id": 38,
+    "rssi": -85
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-09T01:22:07.092000",
+    "id_beacon": 3,
+    "id_staff": 1,
+    "pg_deteccion_id": 39,
+    "rssi": -59
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-10T23:22:07.092000",
+    "id_beacon": 4,
+    "id_staff": 1,
+    "pg_deteccion_id": 40,
+    "rssi": -61
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-14T15:22:07.092000",
+    "id_beacon": 4,
+    "id_staff": 2,
+    "pg_deteccion_id": 41,
+    "rssi": -76
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-11T22:22:07.092000",
+    "id_beacon": 1,
+    "id_staff": 3,
+    "pg_deteccion_id": 42,
+    "rssi": -74
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-14T16:22:07.092000",
+    "id_beacon": 1,
+    "id_staff": 5,
+    "pg_deteccion_id": 43,
+    "rssi": -89
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-09T10:22:07.092000",
+    "id_beacon": 4,
+    "id_staff": 4,
+    "pg_deteccion_id": 44,
+    "rssi": -77
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-13T18:22:07.092000",
+    "id_beacon": 4,
+    "id_staff": 4,
+    "pg_deteccion_id": 45,
+    "rssi": -85
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-13T02:22:07.092000",
+    "id_beacon": 4,
+    "id_staff": 4,
+    "pg_deteccion_id": 46,
+    "rssi": -53
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-08T07:22:07.092000",
+    "id_beacon": 4,
+    "id_staff": 2,
+    "pg_deteccion_id": 47,
+    "rssi": -57
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-12T05:22:07.092000",
+    "id_beacon": 3,
+    "id_staff": 2,
+    "pg_deteccion_id": 48,
+    "rssi": -74
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-10T20:22:07.092000",
+    "id_beacon": 1,
+    "id_staff": 3,
+    "pg_deteccion_id": 49,
+    "rssi": -68
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-11T05:22:07.092000",
+    "id_beacon": 2,
+    "id_staff": 5,
+    "pg_deteccion_id": 50,
+    "rssi": -69
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-09T01:22:07.092000",
+    "id_beacon": 3,
+    "id_staff": 1,
+    "pg_deteccion_id": 51,
+    "rssi": -77
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-08T13:22:07.092000",
+    "id_beacon": 3,
+    "id_staff": 5,
+    "pg_deteccion_id": 52,
+    "rssi": -80
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-08T23:22:07.092000",
+    "id_beacon": 1,
+    "id_staff": 5,
+    "pg_deteccion_id": 53,
+    "rssi": -63
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-09T07:22:07.092000",
+    "id_beacon": 4,
+    "id_staff": 1,
+    "pg_deteccion_id": 54,
+    "rssi": -66
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-08T05:22:07.092000",
+    "id_beacon": 2,
+    "id_staff": 5,
+    "pg_deteccion_id": 55,
+    "rssi": -87
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-11T20:22:07.092000",
+    "id_beacon": 4,
+    "id_staff": 5,
+    "pg_deteccion_id": 56,
+    "rssi": -80
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-08T10:22:07.093000",
+    "id_beacon": 3,
+    "id_staff": 4,
+    "pg_deteccion_id": 57,
+    "rssi": -85
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-07T22:22:07.093000",
+    "id_beacon": 1,
+    "id_staff": 4,
+    "pg_deteccion_id": 58,
+    "rssi": -54
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-10T12:22:07.093000",
+    "id_beacon": 4,
+    "id_staff": 3,
+    "pg_deteccion_id": 59,
+    "rssi": -74
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-07T00:22:07.093000",
+    "id_beacon": 1,
+    "id_staff": 4,
+    "pg_deteccion_id": 60,
+    "rssi": -63
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-14T07:22:07.093000",
+    "id_lector": 3,
+    "id_staff": 6,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-09T15:22:07.093000",
+    "id_lector": 3,
+    "id_staff": 2,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-09T13:22:07.093000",
+    "id_lector": 1,
+    "id_staff": 1,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-08T07:22:07.093000",
+    "id_lector": 1,
+    "id_staff": 1,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-13T16:22:07.093000",
+    "id_lector": 1,
+    "id_staff": 2,
+    "autorizado": false,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-10T00:22:07.093000",
+    "id_lector": 2,
+    "id_staff": 4,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-08T01:22:07.093000",
+    "id_lector": 3,
+    "id_staff": 5,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-14T06:22:07.093000",
+    "id_lector": 2,
+    "id_staff": 5,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-13T17:22:07.093000",
+    "id_lector": 3,
+    "id_staff": 1,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-11T08:22:07.093000",
+    "id_lector": 2,
+    "id_staff": 5,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-14T14:22:07.093000",
+    "id_lector": 2,
+    "id_staff": 4,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-07T07:22:07.093000",
+    "id_lector": 2,
+    "id_staff": 1,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-14T11:22:07.093000",
+    "id_lector": 3,
+    "id_staff": 5,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-08T18:22:07.093000",
+    "id_lector": 2,
+    "id_staff": 5,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-13T21:22:07.093000",
+    "id_lector": 3,
+    "id_staff": 5,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-12T20:22:07.093000",
+    "id_lector": 1,
+    "id_staff": 3,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-10T17:22:07.093000",
+    "id_lector": 3,
+    "id_staff": 3,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-07T06:22:07.093000",
+    "id_lector": 1,
+    "id_staff": 3,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-14T01:22:07.093000",
+    "id_lector": 2,
+    "id_staff": 6,
+    "autorizado": false,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-13T00:22:07.093000",
+    "id_lector": 3,
+    "id_staff": 5,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-09T04:22:07.093000",
+    "id_lector": 2,
+    "id_staff": 4,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-11T20:22:07.093000",
+    "id_lector": 3,
+    "id_staff": 4,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-08T13:22:07.093000",
+    "id_lector": 3,
+    "id_staff": 6,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-11T22:22:07.093000",
+    "id_lector": 2,
+    "id_staff": 3,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-10T21:22:07.093000",
+    "id_lector": 2,
+    "id_staff": 3,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-12T00:22:07.093000",
+    "id_lector": 3,
+    "id_staff": 6,
+    "autorizado": false,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-08T21:22:07.093000",
+    "id_lector": 2,
+    "id_staff": 4,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-12T05:22:07.093000",
+    "id_lector": 2,
+    "id_staff": 1,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-10T23:22:07.093000",
+    "id_lector": 2,
+    "id_staff": 1,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-09T19:22:07.093000",
+    "id_lector": 1,
+    "id_staff": 2,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-14T17:22:07.093000",
+    "id_staff": 6,
+    "codigo_tag": "NFC-MED-001",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-11T03:22:07.093000",
+    "id_staff": 4,
+    "codigo_tag": "NFC-MED-001",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-07T14:22:07.093000",
+    "id_staff": 5,
+    "codigo_tag": "NFC-MED-001",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-07T12:22:07.093000",
+    "id_staff": 4,
+    "codigo_tag": "NFC-MED-004",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-09T08:22:07.093000",
+    "id_staff": 6,
+    "codigo_tag": "NFC-MED-003",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-12T07:22:07.093000",
+    "id_staff": 5,
+    "codigo_tag": "NFC-MED-002",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-08T13:22:07.093000",
+    "id_staff": 5,
+    "codigo_tag": "NFC-MED-001",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-14T05:22:07.093000",
+    "id_staff": 5,
+    "codigo_tag": "NFC-MED-004",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-12T11:22:07.093000",
+    "id_staff": 4,
+    "codigo_tag": "NFC-MED-001",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-08T07:22:07.093000",
+    "id_staff": 6,
+    "codigo_tag": "NFC-MED-004",
+    "exitoso": false
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-10T19:22:07.093000",
+    "id_staff": 5,
+    "codigo_tag": "NFC-MED-003",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-10T05:22:07.093000",
+    "id_staff": 6,
+    "codigo_tag": "NFC-MED-004",
+    "exitoso": false
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-07T20:22:07.093000",
+    "id_staff": 5,
+    "codigo_tag": "NFC-MED-003",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-06T23:22:07.093000",
+    "id_staff": 6,
+    "codigo_tag": "NFC-MED-002",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-12T08:22:07.093000",
+    "id_staff": 5,
+    "codigo_tag": "NFC-MED-003",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-07T06:22:07.093000",
+    "id_staff": 6,
+    "codigo_tag": "NFC-MED-002",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-13T17:22:07.093000",
+    "id_staff": 4,
+    "codigo_tag": "NFC-MED-003",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-11T09:22:07.093000",
+    "id_staff": 6,
+    "codigo_tag": "NFC-MED-001",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-13T01:22:07.093000",
+    "id_staff": 4,
+    "codigo_tag": "NFC-MED-002",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-11T08:22:07.093000",
+    "id_staff": 6,
+    "codigo_tag": "NFC-MED-004",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-13T09:22:07.093000",
+    "id_staff": 4,
+    "codigo_tag": "NFC-MED-004",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-07T22:22:07.093000",
+    "id_staff": 6,
+    "codigo_tag": "NFC-MED-001",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-09T11:22:07.093000",
+    "id_staff": 5,
+    "codigo_tag": "NFC-MED-001",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-14T01:22:07.093000",
+    "id_staff": 5,
+    "codigo_tag": "NFC-MED-004",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-09T13:22:07.093000",
+    "id_staff": 5,
+    "codigo_tag": "NFC-MED-003",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-11T21:22:07.093000",
+    "id_staff": 6,
+    "codigo_tag": "NFC-MED-002",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-11T08:22:07.093000",
+    "id_staff": 4,
+    "codigo_tag": "NFC-MED-004",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-13T03:22:07.093000",
+    "id_staff": 5,
+    "codigo_tag": "NFC-MED-002",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-07T14:22:07.093000",
+    "id_staff": 5,
+    "codigo_tag": "NFC-MED-002",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-11T05:22:07.093000",
+    "id_staff": 5,
+    "codigo_tag": "NFC-MED-001",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-08T13:22:07.093000",
+    "id_staff": 5,
+    "codigo_tag": "NFC-MED-002",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-14T06:22:07.093000",
+    "id_staff": 4,
+    "codigo_tag": "NFC-MED-002",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-14T01:22:07.093000",
+    "id_staff": 5,
+    "codigo_tag": "NFC-MED-003",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-12T00:22:07.093000",
+    "id_staff": 6,
+    "codigo_tag": "NFC-MED-002",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-12T10:22:07.093000",
+    "id_staff": 4,
+    "codigo_tag": "NFC-MED-003",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-07T05:22:07.093000",
+    "id_staff": 5,
+    "codigo_tag": "NFC-MED-001",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-11T13:22:07.093000",
+    "id_staff": 5,
+    "codigo_tag": "NFC-MED-001",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-12T06:22:07.093000",
+    "id_staff": 4,
+    "codigo_tag": "NFC-MED-004",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-13T21:22:07.093000",
+    "id_staff": 4,
+    "codigo_tag": "NFC-MED-001",
+    "exitoso": true
+  },
+  {
+    "tipo": "nfc_medicamento",
+    "timestamp": "2026-05-13T19:22:07.093000",
+    "id_staff": 4,
+    "codigo_tag": "NFC-MED-001",
+    "exitoso": true
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-14T21:09:34.009000",
+    "id_lector": 1,
+    "id_staff": 2,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-14T21:10:03.250000",
+    "id_lector": 1,
+    "id_staff": 1,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-14T21:10:19.818000",
+    "id_lector": 2,
+    "id_staff": 1,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-14T21:27:07.721000",
+    "id_lector": 1,
+    "id_staff": 6,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-14T21:27:17.972000",
+    "id_lector": 2,
+    "id_staff": 1,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-14T21:27:38.459000",
+    "id_lector": 3,
+    "id_staff": 6,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-14T21:39:47.145000",
+    "id_lector": 1,
+    "id_staff": 1,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-14T21:39:55.042000",
+    "id_lector": 2,
+    "id_staff": 4,
+    "autorizado": true,
+    "registrado_por": 1
+  },
+  {
+    "tipo": "rfid",
+    "timestamp": "2026-05-14T21:43:08.713000",
+    "id_lector": 2,
+    "id_staff": 6,
+    "autorizado": true,
+    "registrado_por": 1
+  }
+]

@@ -1,0 +1,437 @@
+{% extends 'base.html' %}
+{% block title %}GPS Residentes{% endblock %}
+{% block page_title %}GPS Residentes{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  .gps-layout{display:grid;grid-template-columns:340px 1fr;gap:0;height:calc(100vh - 60px);margin:-26px;overflow:hidden}
+  .gps-panel{background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+  .gps-map-wrap{position:relative}
+  #map{width:100%;height:100%}
+
+  .panel-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+  .ptab{flex:1;padding:11px 6px;font-size:11.5px;font-weight:600;text-align:center;cursor:pointer;
+        color:var(--text-sm);border-bottom:2px solid transparent;transition:all .15s;position:relative}
+  .ptab.active{color:var(--primary);border-bottom-color:var(--primary)}
+  .ptab .cnt{position:absolute;top:5px;right:6px;background:#EF4444;color:#fff;
+             font-size:9px;font-weight:700;border-radius:10px;padding:1px 5px;line-height:1.4}
+  .panel-body{flex:1;overflow-y:auto;padding:14px}
+
+  .res-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:9px;
+            cursor:pointer;border:1px solid var(--border);margin-bottom:8px;transition:all .15s}
+  .res-item:hover{border-color:var(--primary);background:#F4F9F6}
+  .res-item.selected{border-color:var(--primary);background:#EBF5EF}
+  .res-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-lt));
+              display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0}
+  .res-name{font-weight:600;font-size:13px;line-height:1.3}
+  .res-meta{font-size:11px;color:var(--text-sm);margin-top:2px}
+  .res-batt{display:flex;align-items:center;gap:3px;font-size:10.5px}
+  .dot-live{width:7px;height:7px;border-radius:50%;background:#22C55E;animation:pulse-dot 2s infinite}
+  @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.35}}
+
+  .map-overlay{position:absolute;top:12px;right:12px;z-index:999;
+               background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.15);
+               padding:10px 14px;font-size:12px;color:var(--text-sm)}
+  .map-overlay b{color:var(--text);display:block;margin-bottom:4px;font-size:13px}
+
+  .alert-item{border-left:3px solid #EF4444;padding:9px 12px;border-radius:0 8px 8px 0;
+              background:#FEF2F2;margin-bottom:8px;font-size:12.5px}
+  .alert-item .a-msg{font-weight:600;color:#7F1D1D;margin-bottom:4px}
+  .alert-item .a-meta{font-size:11px;color:#9A1B1B;display:flex;justify-content:space-between;align-items:center}
+
+  .zona-item{display:flex;align-items:center;gap:9px;padding:8px 10px;
+             border-radius:8px;border:1px solid var(--border);margin-bottom:7px}
+  .zona-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+  .zona-name{font-weight:600;font-size:12.5px}
+  .zona-meta{font-size:11px;color:var(--text-sm)}
+
+  .map-crosshair-btn{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;
+                     background:#1B4D3E;color:#fff;border:none;border-radius:8px;padding:8px 18px;
+                     font-size:12.5px;font-weight:600;cursor:pointer;display:none;align-items:center;gap:7px}
+  .map-crosshair-btn.show{display:flex}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gps-layout">
+
+  {# ── Panel izquierdo ── #}
+  <div class="gps-panel">
+    <div class="panel-tabs">
+      <div class="ptab active" onclick="switchTab('mapa',this)">
+        <i class="fa-solid fa-location-dot"></i> Mapa
+      </div>
+      <div class="ptab" onclick="switchTab('dispositivos',this)">
+        <i class="fa-solid fa-mobile-screen"></i> Dispositivos
+      </div>
+      <div class="ptab" onclick="switchTab('zonas',this)">
+        <i class="fa-solid fa-draw-polygon"></i> Zonas
+      </div>
+      <div class="ptab" onclick="switchTab('alertas',this)">
+        <i class="fa-solid fa-bell"></i> Alertas
+        {% if alertas_count > 0 %}
+        <span class="cnt">{{ alertas_count }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    {# TAB: Mapa — lista de residentes #}
+    <div id="tab-mapa" class="panel-body">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-sm);margin-bottom:10px">
+        Residentes con GPS
+      </div>
+      <div id="res-list">
+        <div style="text-align:center;padding:30px;color:var(--text-sm);font-size:13px">
+          <i class="fa-solid fa-satellite-dish fa-lg" style="opacity:.3;display:block;margin-bottom:8px"></i>
+          Cargando posiciones…
+        </div>
+      </div>
+      <div style="margin-top:14px;padding:10px;background:#F4F0E8;border-radius:8px;font-size:11.5px;color:var(--text-sm)">
+        <i class="fa-solid fa-circle-info" style="margin-right:5px"></i>
+        Auto-actualiza cada <b>15 s</b>
+      </div>
+    </div>
+
+    {# TAB: Dispositivos #}
+    <div id="tab-dispositivos" class="panel-body" style="display:none">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-sm);margin-bottom:12px">
+        Registrar dispositivo Traccar
+      </div>
+      <form method="POST" action="{{ url_for('admin_gps_dispositivo_nuevo') }}" style="margin-bottom:18px">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div style="margin-bottom:10px">
+          <label class="form-group" style="font-size:10.5px;font-weight:700;color:var(--text-md);text-transform:uppercase;letter-spacing:.07em">
+            Identificador Traccar *
+          </label>
+          <input type="text" name="device_id" class="form-control" required
+                 placeholder="Ej: residente_1 o IMEI"
+                 style="padding:8px 10px;font-size:12.5px;margin-top:4px">
+          <div style="font-size:10.5px;color:var(--text-sm);margin-top:4px">
+            Debe coincidir con el campo "Identificador" en Traccar Client
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <label class="form-group" style="font-size:10.5px;font-weight:700;color:var(--text-md);text-transform:uppercase;letter-spacing:.07em">
+            Residente vinculado *
+          </label>
+          <select name="id_residente" required style="margin-top:4px;padding:8px 10px;font-size:12.5px">
+            <option value="">Seleccionar…</option>
+            {% for r in residentes %}
+            <option value="{{ r.id_residente }}">{{ r.nombre_completo }} (Hab. {{ r.habitacion or '—' }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="margin-bottom:12px">
+          <label class="form-group" style="font-size:10.5px;font-weight:700;color:var(--text-md);text-transform:uppercase;letter-spacing:.07em">
+            Nombre del dispositivo
+          </label>
+          <input type="text" name="nombre" class="form-control" placeholder="Ej: Celular Familiar"
+                 style="padding:8px 10px;font-size:12.5px;margin-top:4px">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">
+          <i class="fa-solid fa-plus"></i> Registrar
+        </button>
+      </form>
+
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-sm);margin-bottom:8px">
+        Dispositivos activos ({{ dispositivos|length }})
+      </div>
+      {% for d in dispositivos %}
+      <div class="zona-item" style="flex-wrap:wrap;gap:6px">
+        <div style="flex:1;min-width:0">
+          <div class="zona-name">{{ d.device_id }}</div>
+          <div class="zona-meta">{{ d.residente_nombre or 'Sin vincular' }} · {{ d.nombre }}</div>
+        </div>
+        <form method="POST" action="{{ url_for('admin_gps_dispositivo_delete', id_disp=d.id_dispositivo) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-ghost btn-sm" title="Desactivar">
+            <i class="fa-solid fa-trash" style="color:#EF4444"></i>
+          </button>
+        </form>
+      </div>
+      {% else %}
+      <div style="color:var(--text-sm);font-size:12.5px;text-align:center;padding:16px">Sin dispositivos registrados</div>
+      {% endfor %}
+
+      <div style="margin-top:16px;padding:12px;background:#EBF5EF;border-radius:8px;font-size:11.5px;line-height:1.6">
+        <b style="display:block;margin-bottom:4px"><i class="fa-solid fa-mobile-screen-button" style="margin-right:5px"></i>Config. Traccar Client</b>
+        Protocolo: <b>OsmAnd (HTTP)</b><br>
+        URL servidor: <b>http://&lt;TU-IP&gt;:8080/api/gps</b><br>
+        Frecuencia: 30 s recomendado
+      </div>
+    </div>
+
+    {# TAB: Zonas #}
+    <div id="tab-zonas" class="panel-body" style="display:none">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-sm);margin-bottom:12px">
+        Nueva geocerca
+      </div>
+      <form method="POST" action="{{ url_for('admin_gps_zona_nueva') }}" id="form-zona" style="margin-bottom:18px">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div style="margin-bottom:10px">
+          <label style="font-size:10.5px;font-weight:700;color:var(--text-md);text-transform:uppercase;letter-spacing:.07em">Nombre *</label>
+          <input type="text" name="nombre" required placeholder="Ej: Zona de riesgo norte"
+                 style="width:100%;padding:8px 10px;font-size:12.5px;border:1.5px solid var(--border);border-radius:8px;margin-top:4px;outline:none">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div>
+            <label style="font-size:10.5px;font-weight:700;color:var(--text-md);text-transform:uppercase;letter-spacing:.07em">Latitud *</label>
+            <input type="number" name="latitud" id="zona-lat" step="any" required
+                   placeholder="25.6866"
+                   style="width:100%;padding:8px 10px;font-size:12.5px;border:1.5px solid var(--border);border-radius:8px;margin-top:4px;outline:none">
+          </div>
+          <div>
+            <label style="font-size:10.5px;font-weight:700;color:var(--text-md);text-transform:uppercase;letter-spacing:.07em">Longitud *</label>
+            <input type="number" name="longitud" id="zona-lon" step="any" required
+                   placeholder="-100.3161"
+                   style="width:100%;padding:8px 10px;font-size:12.5px;border:1.5px solid var(--border);border-radius:8px;margin-top:4px;outline:none">
+          </div>
+        </div>
+        <div style="margin-bottom:4px">
+          <button type="button" id="btn-pick-coords"
+                  onclick="activarPickCoords()"
+                  style="width:100%;padding:7px;background:#F4F0E8;border:1.5px dashed #C0BAB2;border-radius:8px;
+                         font-size:12px;font-weight:600;color:var(--text-md);cursor:pointer;margin-bottom:10px">
+            <i class="fa-solid fa-crosshairs"></i> Hacer clic en el mapa para elegir coordenadas
+          </button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div>
+            <label style="font-size:10.5px;font-weight:700;color:var(--text-md);text-transform:uppercase;letter-spacing:.07em">Radio (m) *</label>
+            <input type="number" name="radio_m" required min="5" max="5000" placeholder="50"
+                   style="width:100%;padding:8px 10px;font-size:12.5px;border:1.5px solid var(--border);border-radius:8px;margin-top:4px;outline:none">
+          </div>
+          <div>
+            <label style="font-size:10.5px;font-weight:700;color:var(--text-md);text-transform:uppercase;letter-spacing:.07em">Tipo *</label>
+            <select name="tipo" style="width:100%;padding:8px 10px;font-size:12.5px;border:1.5px solid var(--border);border-radius:8px;margin-top:4px;outline:none">
+              <option value="peligrosa">⚠ Peligrosa</option>
+              <option value="segura">✓ Segura</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">
+          <i class="fa-solid fa-plus"></i> Crear zona
+        </button>
+      </form>
+
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-sm);margin-bottom:8px">
+        Zonas activas ({{ zonas|length }})
+      </div>
+      {% for z in zonas %}
+      <div class="zona-item">
+        <div class="zona-dot" style="background:{{ z.color }}"></div>
+        <div style="flex:1">
+          <div class="zona-name">{{ z.nombre }}</div>
+          <div class="zona-meta">{{ z.tipo|capitalize }} · {{ z.radio_m }} m radio</div>
+        </div>
+        <form method="POST" action="{{ url_for('admin_gps_zona_delete', id_zona=z.id_zona) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-ghost btn-sm">
+            <i class="fa-solid fa-trash" style="color:#EF4444"></i>
+          </button>
+        </form>
+      </div>
+      {% else %}
+      <div style="color:var(--text-sm);font-size:12.5px;text-align:center;padding:16px">Sin geocercas definidas</div>
+      {% endfor %}
+    </div>
+
+    {# TAB: Alertas #}
+    <div id="tab-alertas" class="panel-body" style="display:none">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-sm);margin-bottom:10px">
+        Alertas pendientes ({{ alertas_count }})
+      </div>
+      {% for a in alertas %}
+      <div class="alert-item">
+        <div class="a-msg">
+          <i class="fa-solid fa-triangle-exclamation" style="margin-right:5px"></i>
+          {{ a.residente_nombre or a.device_id }}
+        </div>
+        <div style="font-size:12px;color:#991B1B;margin-bottom:6px">{{ a.mensaje }}</div>
+        <div class="a-meta">
+          <span>{{ a.ts_alerta.strftime('%d %b %H:%M') if a.ts_alerta else '—' }}</span>
+          <form method="POST" action="{{ url_for('admin_gps_alerta_atender', id_alerta=a.id_alerta) }}" style="margin:0">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" style="background:#EF4444;color:#fff;border:none;border-radius:6px;
+                    padding:3px 10px;font-size:10.5px;font-weight:600;cursor:pointer">
+              Atender
+            </button>
+          </form>
+        </div>
+      </div>
+      {% else %}
+      <div style="text-align:center;padding:30px;color:var(--text-sm)">
+        <i class="fa-solid fa-shield-halved fa-lg" style="opacity:.3;display:block;margin-bottom:8px"></i>
+        Sin alertas pendientes
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# ── Mapa ── #}
+  <div class="gps-map-wrap">
+    <div id="map"></div>
+    <div class="map-overlay">
+      <b><i class="fa-solid fa-satellite-dish" style="margin-right:5px"></i>GPS en tiempo real</b>
+      <span id="ultimo-update">—</span>
+    </div>
+    <button class="map-crosshair-btn" id="btn-cancel-pick" onclick="cancelarPickCoords()">
+      <i class="fa-solid fa-xmark"></i> Cancelar selección
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const MONTERREY = [25.6866, -100.3161];
+const map = L.map('map').setView(MONTERREY, 14);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors', maxZoom: 19
+}).addTo(map);
+
+// ── Estado ──────────────────────────────────────────────────────────────────
+let markers   = {};
+let circles   = {};
+let pickMode  = false;
+let selDevice = null;
+
+// ── Icono personalizado ──────────────────────────────────────────────────────
+function makeIcon(initial, color) {
+  return L.divIcon({
+    html: `<div style="width:34px;height:34px;border-radius:50%;background:${color};
+                border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);
+                display:flex;align-items:center;justify-content:center;
+                color:#fff;font-weight:700;font-size:13px;font-family:sans-serif">${initial}</div>`,
+    className: '', iconSize: [34, 34], iconAnchor: [17, 17], popupAnchor: [0, -20]
+  });
+}
+
+// ── Cargar zonas (una sola vez) ─────────────────────────────────────────────
+function cargarZonas() {
+  fetch('/api/gps/zonas').then(r=>r.json()).then(zonas => {
+    Object.values(circles).forEach(c => map.removeLayer(c));
+    circles = {};
+    zonas.forEach(z => {
+      const c = L.circle([z.latitud, z.longitud], {
+        radius: z.radio_m, color: z.color, fillColor: z.color,
+        fillOpacity: 0.15, weight: 2, dashArray: z.tipo==='peligrosa'?'6,4':null
+      }).addTo(map).bindPopup(
+        `<b>${z.nombre}</b><br>${z.tipo==='peligrosa'?'⚠ Zona peligrosa':'✓ Zona segura'}<br>Radio: ${z.radio_m} m`
+      );
+      circles[z.id_zona] = c;
+    });
+  }).catch(()=>{});
+}
+
+// ── Cargar posiciones ───────────────────────────────────────────────────────
+function actualizarPosiciones() {
+  fetch('/api/gps/posiciones').then(r=>r.json()).then(data => {
+    document.getElementById('ultimo-update').textContent =
+      new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+    const lista = document.getElementById('res-list');
+    if (!data.length) {
+      lista.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-sm);font-size:13px">
+        <i class="fa-solid fa-satellite-dish fa-lg" style="opacity:.3;display:block;margin-bottom:8px"></i>
+        Sin posiciones GPS activas.<br>Registra un dispositivo en la pestaña Dispositivos.
+      </div>`;
+      return;
+    }
+
+    const colors = ['#1B4D3E','#2D6A4F','#0369A1','#6D28D9','#B45309','#BE185D'];
+    let html = '';
+    data.forEach((r, i) => {
+      const color = colors[i % colors.length];
+      const inicial = r.residente[0];
+      const isSelected = selDevice === r.device_id;
+      const batt = r.bateria != null ? `<span class="res-batt">
+        <i class="fa-solid fa-battery-${r.bateria>75?'full':r.bateria>40?'half':'low'}"
+           style="color:${r.bateria>40?'#22C55E':'#EF4444'}"></i> ${r.bateria}%
+      </span>` : '';
+
+      html += `<div class="res-item ${isSelected?'selected':''}" onclick="centrarEn('${r.device_id}',${r.latitud},${r.longitud})">
+        <div class="res-avatar" style="background:${color}">${inicial}</div>
+        <div style="flex:1;min-width:0">
+          <div class="res-name">${r.residente}</div>
+          <div class="res-meta">
+            <span style="display:flex;align-items:center;gap:5px">
+              <span class="dot-live"></span>Hab. ${r.habitacion} · ${r.hace}
+            </span>
+            ${batt}
+          </div>
+        </div>
+      </div>`;
+
+      // Actualizar o crear marcador
+      if (markers[r.device_id]) {
+        markers[r.device_id].setLatLng([r.latitud, r.longitud]);
+      } else {
+        markers[r.device_id] = L.marker([r.latitud, r.longitud], {icon: makeIcon(inicial, color)})
+          .addTo(map);
+      }
+      markers[r.device_id].bindPopup(`
+        <div style="min-width:160px">
+          <b style="font-size:13px">${r.residente}</b><br>
+          <span style="font-size:11.5px;color:#666">Hab. ${r.habitacion}</span><br><br>
+          <span style="font-size:12px">📍 ${r.latitud.toFixed(5)}, ${r.longitud.toFixed(5)}</span><br>
+          <span style="font-size:12px">🚶 ${r.velocidad_kmh} km/h</span><br>
+          ${r.bateria!=null?`<span style="font-size:12px">🔋 ${r.bateria}%</span><br>`:''}
+          <span style="font-size:11px;color:#888;margin-top:4px;display:block">${r.hace}</span>
+        </div>
+      `);
+    });
+    lista.innerHTML = html;
+  }).catch(()=>{});
+}
+
+function centrarEn(deviceId, lat, lon) {
+  selDevice = deviceId;
+  map.setView([lat, lon], 17);
+  if (markers[deviceId]) markers[deviceId].openPopup();
+  actualizarPosiciones();
+}
+
+// ── Pick coords en mapa para zona ──────────────────────────────────────────
+let pickCirclePreview = null;
+function activarPickCoords() {
+  pickMode = true;
+  map.getContainer().style.cursor = 'crosshair';
+  document.getElementById('btn-cancel-pick').classList.add('show');
+  switchTab('zonas', document.querySelectorAll('.ptab')[2]);
+}
+function cancelarPickCoords() {
+  pickMode = false;
+  map.getContainer().style.cursor = '';
+  document.getElementById('btn-cancel-pick').classList.remove('show');
+  if (pickCirclePreview) { map.removeLayer(pickCirclePreview); pickCirclePreview = null; }
+}
+map.on('click', function(e) {
+  if (!pickMode) return;
+  document.getElementById('zona-lat').value = e.latlng.lat.toFixed(6);
+  document.getElementById('zona-lon').value = e.latlng.lng.toFixed(6);
+  if (pickCirclePreview) map.removeLayer(pickCirclePreview);
+  pickCirclePreview = L.circleMarker(e.latlng, {radius:8,color:'#7B5EA7',fillColor:'#7B5EA7',fillOpacity:.6}).addTo(map);
+  cancelarPickCoords();
+  switchTab('zonas', document.querySelectorAll('.ptab')[2]);
+});
+
+// ── Tabs ────────────────────────────────────────────────────────────────────
+function switchTab(name, el) {
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('[id^="tab-"]').forEach(t=>t.style.display='none');
+  document.getElementById('tab-'+name).style.display='block';
+  if (name==='zonas') map.getContainer().style.cursor='';
+}
+
+// ── Init ────────────────────────────────────────────────────────────────────
+cargarZonas();
+actualizarPosiciones();
+setInterval(actualizarPosiciones, 15000);
+setInterval(cargarZonas, 60000);
+</script>
+{% endblock %}
