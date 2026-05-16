@@ -50,8 +50,23 @@ CREATE OR REPLACE PROCEDURE sp_registrar_residente(
 )
 LANGUAGE plpgsql AS $$
 DECLARE
-    v_id_residente INT;
+    v_id_residente  INT;
+    v_edad          INT;
+    v_fecha_max     DATE;
 BEGIN
+    -- Validar edad minima de 65 años antes de intentar el INSERT
+    v_edad      := EXTRACT(YEAR FROM AGE(p_fecha_nacimiento))::INT;
+    v_fecha_max := CURRENT_DATE - INTERVAL '65 years';
+
+    IF p_fecha_nacimiento > v_fecha_max THEN
+        ok  := 0;
+        msg := 'El residente debe tener al menos 65 años para ingresar al asilo. '
+            || 'Edad ingresada: ' || v_edad || ' años. '
+            || 'La fecha de nacimiento no puede ser posterior al '
+            || TO_CHAR(v_fecha_max, 'DD/MM/YYYY') || '.';
+        RETURN;
+    END IF;
+
     -- Insertar residente
     INSERT INTO residente (nombre, apellidos, fecha_nacimiento, sexo, habitacion,
                            diagnostico_principal, nivel_movilidad,
@@ -70,7 +85,7 @@ BEGIN
     msg := 'Residente registrado con ID ' || v_id_residente;
 EXCEPTION WHEN OTHERS THEN
     ok  := 0;
-    msg := 'Error: ' || SQLERRM;
+    msg := 'Error al registrar el residente: ' || SQLERRM;
 END;
 $$;
 

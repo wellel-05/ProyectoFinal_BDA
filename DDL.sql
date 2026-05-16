@@ -108,7 +108,7 @@ CREATE TABLE residente (
     tel_emergencia      VARCHAR(15),
     fecha_ingreso       DATE         NOT NULL DEFAULT CURRENT_DATE,
     activo              BOOLEAN      NOT NULL DEFAULT TRUE,
-    CONSTRAINT ck_residente_edad CHECK (fecha_nacimiento <= CURRENT_DATE - INTERVAL '60 years')
+    CONSTRAINT ck_residente_edad CHECK (fecha_nacimiento <= CURRENT_DATE - INTERVAL '65 years')
 );
 
 -- N:M residente <-> staff (cuidadores y terapeutas asignados)

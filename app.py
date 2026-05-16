@@ -436,11 +436,17 @@ def admin_residentes():
 @rol_required(1)
 def admin_residente_nuevo():
     cuidadores = call_refcursor("CALL sp_lista_cuidadores('resultado')")
+    hoy = date.today()
+    try:
+        max_nacimiento = hoy.replace(year=hoy.year - 65).isoformat()
+    except ValueError:
+        max_nacimiento = hoy.replace(year=hoy.year - 65, day=28).isoformat()
 
     if request.method == 'POST':
         f = request.form
         if not require_fields(f, 'nombre', 'apellidos', 'fecha_nacimiento', 'sexo'):
-            return render_template('admin/residente_nuevo.html', cuidadores=cuidadores)
+            return render_template('admin/residente_nuevo.html',
+                                   cuidadores=cuidadores, max_nacimiento=max_nacimiento)
 
         ok, msg = call_proc(
             "CALL sp_registrar_residente(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NULL,NULL)",
@@ -454,7 +460,8 @@ def admin_residente_nuevo():
         if ok:
             return redirect(url_for('admin_residentes'))
 
-    return render_template('admin/residente_nuevo.html', cuidadores=cuidadores)
+    return render_template('admin/residente_nuevo.html',
+                           cuidadores=cuidadores, max_nacimiento=max_nacimiento)
 
 @app.route('/admin/residentes/<int:id_residente>')
 @rol_required(1)
