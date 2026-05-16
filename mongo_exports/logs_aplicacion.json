@@ -475,5 +475,262 @@
     "nivel_acceso": 3,
     "ip": "127.0.0.1",
     "user_agent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; es-MX) WindowsPowerShell/5.1.26100.8457"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-15T02:19:03.590000",
+    "user_id": 1,
+    "username": "admin",
+    "nivel_acceso": 1,
+    "ip": "172.32.182.58",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-15T02:22:46.197000",
+    "user_id": 1,
+    "username": "admin",
+    "nivel_acceso": 1,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; es-MX) WindowsPowerShell/5.1.26100.8457"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-15T02:57:59.199000",
+    "user_id": 1,
+    "username": "admin",
+    "nivel_acceso": 1,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; es-MX) WindowsPowerShell/5.1.26100.8457"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-15T02:58:16.397000",
+    "user_id": 1,
+    "username": "admin",
+    "nivel_acceso": 1,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; es-MX) WindowsPowerShell/5.1.26100.8457"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-15T03:08:50.058000",
+    "user_id": 1,
+    "username": "admin",
+    "nivel_acceso": 1,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; es-MX) WindowsPowerShell/5.1.26100.8457"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-15T03:09:10.867000",
+    "user_id": 2,
+    "username": "jramirez",
+    "nivel_acceso": 2,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; es-MX) WindowsPowerShell/5.1.26100.8457"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-15T03:09:11.888000",
+    "user_id": 4,
+    "username": "mlopez",
+    "nivel_acceso": 3,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; es-MX) WindowsPowerShell/5.1.26100.8457"
+  },
+  {
+    "evento": "login_exitoso_familiar",
+    "timestamp": "2026-05-15T03:09:13.115000",
+    "user_id": 1,
+    "username": "familiar1",
+    "ip": "127.0.0.1"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-15T03:10:01.745000",
+    "user_id": 1,
+    "username": "admin",
+    "nivel_acceso": 1,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; es-MX) WindowsPowerShell/5.1.26100.8457"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-15T03:10:44.270000",
+    "user_id": 1,
+    "username": "admin",
+    "nivel_acceso": 1,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; es-MX) WindowsPowerShell/5.1.26100.8457"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-15T03:10:44.805000",
+    "user_id": 2,
+    "username": "jramirez",
+    "nivel_acceso": 2,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; es-MX) WindowsPowerShell/5.1.26100.8457"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-15T03:11:11.531000",
+    "user_id": 1,
+    "username": "admin",
+    "nivel_acceso": 1,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; es-MX) WindowsPowerShell/5.1.26100.8457"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-15T03:11:12.382000",
+    "user_id": 2,
+    "username": "jramirez",
+    "nivel_acceso": 2,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; es-MX) WindowsPowerShell/5.1.26100.8457"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-15T03:12:26.017000",
+    "user_id": 1,
+    "username": "admin",
+    "nivel_acceso": 1,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; es-MX) WindowsPowerShell/5.1.26100.8457"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-15T03:12:26.314000",
+    "user_id": 2,
+    "username": "jramirez",
+    "nivel_acceso": 2,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; es-MX) WindowsPowerShell/5.1.26100.8457"
+  },
+  {
+    "evento": "login_fallido",
+    "timestamp": "2026-05-16T00:54:48.987000",
+    "username": "admin1",
+    "ip": "127.0.0.1",
+    "user_agent": "python-requests/2.32.5"
+  },
+  {
+    "evento": "login_fallido",
+    "timestamp": "2026-05-16T00:54:49.440000",
+    "username": "terapeuta1",
+    "ip": "127.0.0.1",
+    "user_agent": "python-requests/2.32.5"
+  },
+  {
+    "evento": "login_fallido",
+    "timestamp": "2026-05-16T00:54:49.552000",
+    "username": "cuidador1",
+    "ip": "127.0.0.1",
+    "user_agent": "python-requests/2.32.5"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-16T01:44:53.005000",
+    "user_id": 1,
+    "username": "admin",
+    "nivel_acceso": 1,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+  },
+  {
+    "evento": "login_fallido",
+    "timestamp": "2026-05-16T01:45:38.612000",
+    "username": "jramirez",
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+  },
+  {
+    "evento": "login_fallido",
+    "timestamp": "2026-05-16T01:45:46.021000",
+    "username": "jramirez",
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-16T01:45:54.819000",
+    "user_id": 2,
+    "username": "jramirez",
+    "nivel_acceso": 2,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-16T01:46:17.376000",
+    "user_id": 4,
+    "username": "mlopez",
+    "nivel_acceso": 3,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-16T01:46:47.521000",
+    "user_id": 1,
+    "username": "admin",
+    "nivel_acceso": 1,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-16T02:01:50.430000",
+    "user_id": 4,
+    "username": "mlopez",
+    "nivel_acceso": 3,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+  },
+  {
+    "evento": "login_exitoso_familiar",
+    "timestamp": "2026-05-16T02:02:03.414000",
+    "user_id": 1,
+    "username": "familiar1",
+    "ip": "127.0.0.1"
+  },
+  {
+    "evento": "login_fallido",
+    "timestamp": "2026-05-16T02:02:26.728000",
+    "username": "alex",
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+  },
+  {
+    "evento": "login_fallido",
+    "timestamp": "2026-05-16T02:02:31.033000",
+    "username": "alex",
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+  },
+  {
+    "evento": "login_exitoso_familiar",
+    "timestamp": "2026-05-16T02:02:42.359000",
+    "user_id": 2,
+    "username": "alex",
+    "ip": "127.0.0.1"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-16T02:03:00.094000",
+    "user_id": 1,
+    "username": "admin",
+    "nivel_acceso": 1,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+  },
+  {
+    "evento": "login_exitoso_familiar",
+    "timestamp": "2026-05-16T02:03:57.699000",
+    "user_id": 3,
+    "username": "deigo",
+    "ip": "127.0.0.1"
   }
 ]

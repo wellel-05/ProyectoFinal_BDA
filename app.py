@@ -320,6 +320,7 @@ def inject_globals():
 # ── Index / Login / Logout ────────────────────────────────────────────────────
 
 @app.route('/')
+@app.route('/home')
 def index():
     if 'user_id' in session:
         nivel = session.get('nivel_acceso')

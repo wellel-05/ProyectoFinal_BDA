@@ -1070,5 +1070,261 @@
     "id_staff": 6,
     "autorizado": true,
     "registrado_por": 1
+  },
+  {
+    "tipo": "gps_update",
+    "device_id": "67108604",
+    "latitud": 25.66021606854551,
+    "longitud": -100.4171727283728,
+    "timestamp": "2026-05-15T02:25:52.860000"
+  },
+  {
+    "tipo": "gps_update",
+    "device_id": "67108604",
+    "latitud": 25.66342875419503,
+    "longitud": -100.4215731537243,
+    "timestamp": "2026-05-15T02:25:52.953000"
+  },
+  {
+    "tipo": "gps_update",
+    "device_id": "67108604",
+    "latitud": 25.66409236040258,
+    "longitud": -100.4210848866939,
+    "timestamp": "2026-05-15T02:25:52.995000"
+  },
+  {
+    "tipo": "gps_update",
+    "device_id": "67108604",
+    "latitud": 25.66364321905708,
+    "longitud": -100.4217688634938,
+    "timestamp": "2026-05-15T02:25:53.033000"
+  },
+  {
+    "tipo": "gps_update",
+    "device_id": "67108604",
+    "latitud": 25.66364965248502,
+    "longitud": -100.4217926279929,
+    "timestamp": "2026-05-15T02:25:53.066000"
+  },
+  {
+    "tipo": "gps_update",
+    "device_id": "67108604",
+    "latitud": 25.66364965248502,
+    "longitud": -100.4217926279929,
+    "timestamp": "2026-05-15T02:25:53.102000"
+  },
+  {
+    "tipo": "gps_update",
+    "device_id": "67108604",
+    "latitud": 25.66364965248502,
+    "longitud": -100.4217926279929,
+    "timestamp": "2026-05-15T02:25:53.135000"
+  },
+  {
+    "tipo": "gps_update",
+    "device_id": "67108604",
+    "latitud": 25.66364965248502,
+    "longitud": -100.4217926279929,
+    "timestamp": "2026-05-15T02:25:53.170000"
+  },
+  {
+    "tipo": "gps_update",
+    "device_id": "67108604",
+    "latitud": 25.66364965248502,
+    "longitud": -100.4217926279929,
+    "timestamp": "2026-05-15T02:25:53.209000"
+  },
+  {
+    "tipo": "gps_update",
+    "device_id": "67108604",
+    "latitud": 25.66364965248502,
+    "longitud": -100.4217926279929,
+    "timestamp": "2026-05-15T02:25:53.245000"
+  },
+  {
+    "tipo": "gps_update",
+    "device_id": "67108604",
+    "latitud": 25.66364965248502,
+    "longitud": -100.4217926279929,
+    "timestamp": "2026-05-15T02:25:53.297000"
+  },
+  {
+    "tipo": "gps_update",
+    "device_id": "67108604",
+    "latitud": 25.66364965248502,
+    "longitud": -100.4217926279929,
+    "timestamp": "2026-05-15T02:25:53.340000"
+  },
+  {
+    "tipo": "gps_update",
+    "device_id": "67108604",
+    "latitud": 25.66364965248502,
+    "longitud": -100.4217926279929,
+    "timestamp": "2026-05-15T02:25:53.383000"
+  },
+  {
+    "tipo": "gps_update",
+    "device_id": "67108604",
+    "latitud": 25.66364965248502,
+    "longitud": -100.4217926279929,
+    "timestamp": "2026-05-15T02:25:53.425000"
+  },
+  {
+    "tipo": "gps_update",
+    "device_id": "67108604",
+    "latitud": 25.66364965248502,
+    "longitud": -100.4217926279929,
+    "timestamp": "2026-05-15T02:25:53.464000"
+  },
+  {
+    "tipo": "gps_update",
+    "device_id": "67108604",
+    "latitud": 25.66364965248502,
+    "longitud": -100.4217926279929,
+    "timestamp": "2026-05-15T02:25:54.876000"
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-15T03:15:47.792000",
+    "id_beacon": 1,
+    "id_staff": 4,
+    "pg_deteccion_id": 25,
+    "rssi": null
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-15T03:16:00.878000",
+    "id_beacon": 1,
+    "id_staff": 4,
+    "pg_deteccion_id": 26,
+    "rssi": null
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-15T03:16:08.385000",
+    "id_beacon": 4,
+    "id_staff": 5,
+    "pg_deteccion_id": 27,
+    "rssi": null
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-15T03:16:13.978000",
+    "id_beacon": 1,
+    "id_staff": 4,
+    "pg_deteccion_id": 28,
+    "rssi": null
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-15T03:16:21.485000",
+    "id_beacon": 4,
+    "id_staff": 5,
+    "pg_deteccion_id": 29,
+    "rssi": null
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-15T03:16:27.078000",
+    "id_beacon": 1,
+    "id_staff": 4,
+    "pg_deteccion_id": 30,
+    "rssi": null
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-15T03:16:34.590000",
+    "id_beacon": 4,
+    "id_staff": 5,
+    "pg_deteccion_id": 31,
+    "rssi": null
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-15T03:16:40.169000",
+    "id_beacon": 1,
+    "id_staff": 4,
+    "pg_deteccion_id": 32,
+    "rssi": null
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-15T03:16:47.712000",
+    "id_beacon": 4,
+    "id_staff": 5,
+    "pg_deteccion_id": 33,
+    "rssi": null
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-15T03:16:53.287000",
+    "id_beacon": 1,
+    "id_staff": 4,
+    "pg_deteccion_id": 34,
+    "rssi": null
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-15T03:17:00.860000",
+    "id_beacon": 4,
+    "id_staff": 5,
+    "pg_deteccion_id": 35,
+    "rssi": null
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-15T03:17:06.404000",
+    "id_beacon": 1,
+    "id_staff": 4,
+    "pg_deteccion_id": 36,
+    "rssi": null
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-15T03:17:13.974000",
+    "id_beacon": 4,
+    "id_staff": 5,
+    "pg_deteccion_id": 37,
+    "rssi": null
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-15T03:17:19.536000",
+    "id_beacon": 1,
+    "id_staff": 4,
+    "pg_deteccion_id": 38,
+    "rssi": null
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-15T03:17:27.087000",
+    "id_beacon": 4,
+    "id_staff": 5,
+    "pg_deteccion_id": 39,
+    "rssi": null
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-15T03:17:32.668000",
+    "id_beacon": 1,
+    "id_staff": 4,
+    "pg_deteccion_id": 40,
+    "rssi": null
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-15T03:17:40.181000",
+    "id_beacon": 4,
+    "id_staff": 5,
+    "pg_deteccion_id": 41,
+    "rssi": null
+  },
+  {
+    "tipo": "beacon",
+    "timestamp": "2026-05-15T03:17:45.777000",
+    "id_beacon": 1,
+    "id_staff": 4,
+    "pg_deteccion_id": 42,
+    "rssi": null
   }
 ]
