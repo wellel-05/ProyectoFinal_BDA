@@ -1,0 +1,384 @@
+================================================================================
+GUION DE DEMO — ELDERCARE
+Presentacion presencial + Video YouTube
+Equipo 5 — BDA UDEM — 2026-05-19
+================================================================================
+
+
+================================================================================
+PARTE 1: PRESENTACION PRESENCIAL (10 MINUTOS)
+================================================================================
+
+Criterios a demostrar (por peso descendente):
+  [15%] Stored Procedures, Triggers y Views
+  [10%] Sistema de KPI y analitica (>=10 KPIs)
+  [10%] Integracion PostgreSQL + MongoDB
+  [10%] Reportes con Highcharts (>=5 escenarios)
+  [10%] Implementacion DDL / integridad
+  [ 5%] Arquitectura Flask + UI/UX
+
+ANTES DE EMPEZAR — checklist tecnico (hacer 15 min antes):
+  [ ] python app.py corriendo en terminal
+  [ ] Navegador abierto en http://localhost:8080
+  [ ] Telefono en la misma red WiFi con http://<IP_LOCAL>:8080 abierto
+  [ ] Terminal 2 lista con: python scripts/export_mongodb.py
+  [ ] Terminal 3 lista con el comando del beacon scanner (si hay hardware)
+  [ ] Verificar que hay datos de HOY en la BD:
+        - Al menos 1 turno para hoy
+        - Al menos 1 checkin de animo de hoy
+        - Al menos 1 sesion de terapia de hoy
+        - Al menos 1 acceso RFID de hoy
+
+--------------------------------------------------------------------------------
+SEGMENTO 1 — CONTEXTO Y ARQUITECTURA (1 min)
+--------------------------------------------------------------------------------
+
+QUE DECIR:
+  "ElderCare es un sistema integral de gestion para un asilo de salud mental.
+  Corre sobre Flask con PostgreSQL como base de datos principal y MongoDB para
+  eventos IoT. Tiene 32 tablas, 54 stored procedures, 15 vistas, 10 triggers
+  y 4 roles de usuario distintos."
+
+QUE MOSTRAR:
+  - La pantalla de login
+  - Mencionar brevemente los 4 roles: Admin, Terapeuta, Cuidador, Familiar
+
+TIEMPO ESTIMADO: 45 segundos
+
+--------------------------------------------------------------------------------
+SEGMENTO 2 — KPI Y ANALITICA (2 min)
+[Rubrica: Sistema de KPI y analitica — 10%]
+--------------------------------------------------------------------------------
+
+PASOS:
+  1. Iniciar sesion como admin (usuario: admin / contrasena: la del seed)
+  2. Ir a /admin/kpi
+
+QUE SENALAR Y DECIR para cada KPI visible:
+  1.  Total de residentes activos
+  2.  Residentes con animo bajo (puntaje <= 2) en ultimas 24h
+  3.  Sesiones de terapia completadas hoy
+  4.  Medicamentos pendientes de administrar hoy
+  5.  Tasa de adherencia terapeutica (% dosis administradas vs programadas)
+  6.  Incidentes sin resolver
+  7.  Accesos RFID del dia
+  8.  Alertas GPS activas
+  9.  Staff en turno hoy
+  10. Eventos NFC registrados
+
+  "Todos estos KPIs se calculan en tiempo real desde PostgreSQL mediante
+  stored procedures y vistas. Superamos el minimo de 10 KPIs que pide la rubrica."
+
+TIEMPO ESTIMADO: 1 min 30 seg
+
+--------------------------------------------------------------------------------
+SEGMENTO 3 — STORED PROCEDURES EN ACCION (2.5 min)
+[Rubrica: SP, Triggers y Views — 15% — criterio de mayor peso]
+--------------------------------------------------------------------------------
+
+PARTE A — Registrar un residente nuevo (SP: sp_registrar_residente):
+  1. Ir a /admin/residentes/nuevo
+  2. Llenar el formulario con datos de ejemplo rapido
+  3. Guardar
+  4. DECIR: "Esta operacion llama a sp_registrar_residente, que en una sola
+     transaccion inserta el residente Y crea la asignacion con su cuidador
+     principal. Todo dentro del stored procedure, sin SQL inline en el backend."
+
+PARTE B — Registrar turno y medicamento (SP: sp_registrar_turno / sp_registrar_medicamento):
+  1. Ir a /admin/turnos → crear un turno
+  2. Ir a /admin/medicamentos → agregar horario de medicamento
+  3. DECIR: "Cada operacion de escritura en el sistema pasa por un stored
+     procedure que valida, transacciona y retorna parametros OUT (p_ok, p_msg)
+     para manejo de errores de negocio."
+
+PARTE C — Toggle de horario (SP: sp_toggle_horario_medicamento):
+  1. En /admin/medicamentos, suspender un horario
+  2. DECIR: "sp_toggle_horario_medicamento retorna tres parametros OUT:
+     p_ok, p_msg y p_activo, lo que permite al frontend actualizar la UI
+     sin hacer una segunda consulta."
+
+TIEMPO ESTIMADO: 2 min 30 seg
+
+--------------------------------------------------------------------------------
+SEGMENTO 4 — TRIGGERS EN ACCION (1.5 min)
+[Rubrica: SP, Triggers y Views — 15%]
+--------------------------------------------------------------------------------
+
+TRIGGER 1 — Alerta automatica por animo bajo (trg_after_checkin_animo):
+  1. Ir a /cuidador/checkin (o desde el dashboard admin simular)
+  2. Registrar un checkin con puntaje 1 o 2
+  3. Ir a /admin/residentes → ver que aparecio un incidente automatico
+  4. DECIR: "El trigger trg_after_checkin_animo detecta puntajes menores o
+     iguales a 2 e invoca sp_crear_incidente_automatico sin ningun codigo
+     en el backend. El incidente se genera solo, a nivel de base de datos."
+
+TRIGGER 2 — Historial inmutable (trg_before_delete_log_medicamento):
+  1. DECIR (sin necesidad de demostrar en vivo): "Tenemos un trigger BEFORE
+     DELETE sobre log_medicamento que bloquea cualquier eliminacion del
+     historial de medicacion. El historial clinico es inmutable por diseno."
+
+TRIGGER 3 — Baja logica obligatoria (trg_before_delete_residente):
+  1. DECIR: "Este trigger bloquea DELETE fisico sobre la tabla de residentes.
+     Las bajas solo se pueden hacer por sp_dar_baja_residente, que registra
+     fecha y motivo. Ningun residente se puede borrar accidentalmente."
+
+TIEMPO ESTIMADO: 1 min 30 seg
+
+--------------------------------------------------------------------------------
+SEGMENTO 5 — VISTAS Y REPORTES HIGHCHARTS (2 min)
+[Rubrica: SP, Triggers y Views 15% / Reportes Highcharts 10%]
+--------------------------------------------------------------------------------
+
+PASOS:
+  1. Ir a /admin/reportes
+
+QUE SENALAR (>=5 escenarios con graficas):
+  Grafica 1: Evolucion de animo global (linea) — v_adherencia_medicamentos
+  Grafica 2: Incidentes por severidad (barras) — v_resumen_incidentes_mes
+  Grafica 3: Adherencia terapeutica por residente (columnas)
+  Grafica 4: Resumen IoT — eventos por tecnologia (pie/dona)
+  Grafica 5: Carga operativa del staff (columnas agrupadas)
+
+  "Cada grafica consume un stored procedure con REFCURSOR que devuelve
+  los datos, los cuales se renderizan en tiempo real con Highcharts.
+  Los datos vienen de las vistas analiticas de PostgreSQL."
+
+  2. Ir a /admin/iot — mostrar grafica de beacon y GPS en tiempo real
+  3. DECIR: "Esta es la vista v_ubicacion_actual_staff y v_estado_gps_residentes
+     actualizandose via API REST cada pocos segundos."
+
+TIEMPO ESTIMADO: 2 min
+
+--------------------------------------------------------------------------------
+SEGMENTO 6 — INTEGRACION MONGODB (1 min)
+[Rubrica: Integracion PostgreSQL + MongoDB — 10%]
+--------------------------------------------------------------------------------
+
+PASOS:
+  1. En terminal 2, ejecutar: python scripts/export_mongodb.py
+  2. Mostrar el output en consola
+  3. Ir a /api/mongo/eventos_iot en el navegador (o mostrar el JSON)
+  4. DECIR: "Los eventos IoT (NFC, GPS, beacon) se almacenan en MongoDB
+     ademas de PostgreSQL. El script export_mongodb.py sincroniza los datos.
+     Las graficas de IoT del dashboard consumen directamente de MongoDB via
+     pymongo, mientras que los datos transaccionales viven en PostgreSQL."
+
+TIEMPO ESTIMADO: 1 min
+
+--------------------------------------------------------------------------------
+RESUMEN DE TIEMPO PRESENCIAL
+--------------------------------------------------------------------------------
+
+  Seg. 1 — Contexto y arquitectura       : 0:45
+  Seg. 2 — KPI y analitica               : 1:30
+  Seg. 3 — Stored Procedures             : 2:30
+  Seg. 4 — Triggers                      : 1:30
+  Seg. 5 — Vistas + Reportes Highcharts  : 2:00
+  Seg. 6 — MongoDB                       : 1:00
+  Buffer / preguntas                      : 0:45
+  ─────────────────────────────────────────────
+  TOTAL                                  : 10:00
+
+--------------------------------------------------------------------------------
+POSIBLES PREGUNTAS DEL MAESTRO Y RESPUESTAS
+--------------------------------------------------------------------------------
+
+P: "Por que usaron stored procedures en vez de SQL directo en Flask?"
+R: "Para separar la logica de negocio de la capa de aplicacion. Toda
+   validacion y transaccion ocurre dentro de la BD, lo que garantiza
+   integridad incluso si se accede por otra aplicacion."
+
+P: "Como funciona el patron REFCURSOR?"
+R: "El SP declara un parametro INOUT de tipo REFCURSOR. Dentro del SP se
+   abre con OPEN cursor FOR SELECT... El backend llama al SP dentro de una
+   transaccion, obtiene el cursor y lo itera para construir la respuesta."
+
+P: "Que pasa si dos terapeutas intentan reservar la misma sala al mismo tiempo?"
+R: "El trigger trg_before_sesion_terapia valida solapamientos antes de
+   confirmar cualquier INSERT o UPDATE en sesion_terapia. Si hay conflicto,
+   lanza una excepcion y cancela la operacion a nivel de BD."
+
+P: "Como justifican MongoDB junto con PostgreSQL?"
+R: "PostgreSQL maneja los datos transaccionales y relacionales. MongoDB
+   almacena los eventos IoT de alta frecuencia (pings GPS, detecciones
+   beacon) donde la flexibilidad de documentos y la velocidad de escritura
+   son mas importantes que las relaciones."
+
+P: "Cuantas vistas implementaron y para que sirven?"
+R: "15 vistas. 8 operacionales para los dashboards, 2 analiticas para
+   reportes, y 5 del portal familiar que filtran datos clinicos sensibles
+   para que los familiares solo vean informacion apropiada."
+
+
+================================================================================
+PARTE 2: VIDEO DEMOSTRATIVO YOUTUBE
+================================================================================
+
+Objetivo: cubrir lo que NO alcanzo en la presentacion presencial.
+Criterios pendientes: ERD, Normalizacion 3NF, DDL, roles adicionales,
+funcionalidades IoT completas, portal familiar.
+
+Formato sugerido: grabacion de pantalla con voz en off. Cada integrante
+presenta una seccion para cumplir "participacion total" (rubrica 100%).
+
+--------------------------------------------------------------------------------
+SECCION 1 — ERD Y NORMALIZACION (2.5 min) — Integrante A
+--------------------------------------------------------------------------------
+
+  1. Abrir DIAGRAMA_ER.drawio en draw.io
+  2. Mostrar el diagrama completo
+  3. DECIR: "El diagrama tiene 32 tablas organizadas en 9 modulos:
+     catalogos, personas, operacional, clinico, IoT, auditoria,
+     familiar, GPS avanzado y actividades NFC."
+  4. Hacer zoom a un grupo (ej: clinico) y explicar las relaciones
+  5. Explicar normalizacion 3NF en 2 ejemplos:
+     Ejemplo A — tabla STAFF:
+       "1FN: todos los campos son atomicos, no hay grupos repetidos.
+        2FN: los campos nombre, email, especialidad dependen completamente
+             de id_staff, no de parte de la clave.
+        3FN: no hay dependencias transitivas. El nombre del rol no esta
+             en STAFF, esta en la tabla ROL referenciada por FK."
+     Ejemplo B — tabla LOG_MEDICAMENTO:
+       "Separamos el catalogo de medicamentos, el horario y el log en
+        tres tablas distintas para eliminar redundancia y cumplir 3FN."
+
+TIEMPO: 2 min 30 seg
+
+--------------------------------------------------------------------------------
+SECCION 2 — DDL E INTEGRIDAD (1.5 min) — Integrante B
+--------------------------------------------------------------------------------
+
+  1. Abrir DDL.sql en un editor de texto
+  2. Mostrar brevemente la definicion de 2-3 tablas con sus constraints
+  3. DESTACAR:
+     - CHECK (nivel_acceso BETWEEN 1 AND 3) en tabla ROL
+     - UNIQUE (codigo_tag) en NFC_TAG
+     - FK con ON UPDATE CASCADE en sala → ala
+     - CONSTRAINT ck_lat CHECK (lat_min < lat_max) en limite_jardin
+  4. DECIR: "Todos los constraints de integridad estan definidos en el DDL,
+     no en el backend. La integridad de datos es responsabilidad de la BD."
+
+TIEMPO: 1 min 30 seg
+
+--------------------------------------------------------------------------------
+SECCION 3 — DASHBOARD TERAPEUTA Y CUIDADOR (2 min) — Integrante C
+--------------------------------------------------------------------------------
+
+  1. Cerrar sesion de admin
+  2. Login como terapeuta
+     - Mostrar dashboard: sesiones del dia, residentes asignados
+     - Ir a un residente → ver grafica de evolucion de animo (Highcharts)
+     - Mostrar registro de sesion (sp_reservar_sesion + trigger solapamiento)
+  3. Logout → login como cuidador
+     - Mostrar dashboard: medicamentos pendientes, checkins
+     - Registrar un checkin de animo normal (puntaje 4)
+     - Mostrar la lista de medicamentos del dia
+
+TIEMPO: 2 min
+
+--------------------------------------------------------------------------------
+SECCION 4 — NFC EN VIVO + PORTAL FAMILIAR (2 min) — Integrante D
+--------------------------------------------------------------------------------
+
+  PARTE A — NFC desde telefono (1 min):
+  1. Con el telefono en la misma red, abrir: http://<IP_LOCAL>:8080/nfc/1
+  2. Mostrar la pantalla de confirmacion de actividad NFC
+  3. Volver al admin → /admin/nfc/asistencias → ver el registro
+  4. DECIR: "El endpoint /nfc/<codigo_tag> es publico y funciona con HTTP
+     puro para compatibilidad con iOS. Registra la asistencia o
+     administracion de medicamento sin login."
+
+  PARTE B — Portal familiar (1 min):
+  1. Abrir en otra pestana: /familiar/login
+  2. Login con credenciales del familiar
+  3. Mostrar: info del residente, historial de sesiones (sin notas clinicas),
+     medicamentos de hoy, grafica de animo de los ultimos 30 dias
+  4. DECIR: "Las vistas v_familiar_* filtran activamente los datos clinicos
+     sensibles. El familiar ve solo lo que le corresponde."
+
+TIEMPO: 2 min
+
+--------------------------------------------------------------------------------
+SECCION 5 — IOT COMPLETO: GPS + RFID + BEACON (2 min) — Integrante A o B
+--------------------------------------------------------------------------------
+
+  1. Ir a /admin/gps
+     - Mostrar el mapa con posicion del residente
+     - Mostrar zonas configuradas y alertas
+     - DECIR: "El trigger trg_after_gps_ping compara la posicion con
+       limite_jardin y genera incidentes automaticos si el residente
+       sale del area segura."
+
+  2. Ir a /admin/rfid
+     - Mostrar los accesos del dia (concedidos y denegados)
+     - DECIR: "El trigger trg_after_acceso_rfid registra en log_auditoria
+       cada acceso, permitiendo auditoria de seguridad fisica."
+
+  3. Ir a /admin/iot
+     - Mostrar el panel de beacons: ubicacion actual del staff
+     - DECIR: "v_ubicacion_actual_staff muestra la ultima deteccion beacon
+       de cada empleado con los minutos transcurridos desde la deteccion."
+
+TIEMPO: 2 min
+
+--------------------------------------------------------------------------------
+SECCION 6 — AUDITORIA Y CIERRE (30 seg) — cualquier integrante
+--------------------------------------------------------------------------------
+
+  1. Ir a /admin/auditoria
+  2. Mostrar el log de operaciones con tabla, operacion e IP
+  3. DECIR: "Cuatro triggers de auditoria (staff, residente, usuario_sistema,
+     acceso_rfid) escriben en log_auditoria de forma transparente.
+     El admin tiene trazabilidad completa de todas las operaciones criticas."
+  4. Cerrar con creditos del equipo
+
+TIEMPO: 30 seg
+
+--------------------------------------------------------------------------------
+RESUMEN DE TIEMPO DEL VIDEO
+--------------------------------------------------------------------------------
+
+  Sec. 1 — ERD y Normalizacion 3NF          : 2:30
+  Sec. 2 — DDL e integridad                 : 1:30
+  Sec. 3 — Dashboards terapeuta y cuidador  : 2:00
+  Sec. 4 — NFC en vivo + Portal familiar    : 2:00
+  Sec. 5 — IoT completo GPS/RFID/Beacon     : 2:00
+  Sec. 6 — Auditoria y cierre               : 0:30
+  ─────────────────────────────────────────────
+  TOTAL                                     : 10:30
+
+--------------------------------------------------------------------------------
+COBERTURA DE RUBRICA
+--------------------------------------------------------------------------------
+
+  Criterio                            Pres. | Video | Cubierto en
+  ─────────────────────────────────────────────────────────────────
+  Analisis del problema (10%)           --    Sec.1   Video (intro ERD)
+  ERD Crow's Foot (10%)                 --    Sec.1   Video
+  Normalizacion 3NF (10%)               --    Sec.1   Video
+  Implementacion DDL (10%)              --    Sec.2   Video
+  SP, Triggers y Views (15%)           Seg3-4  Sec.3-5 AMBOS
+  KPI y analitica (10%)                Seg2    --      Presencial
+  PostgreSQL + MongoDB (10%)           Seg6    --      Presencial
+  Reportes Highcharts (10%)            Seg5    Sec.3   AMBOS
+  Flask + UI/UX (5%)                   Seg1    Sec.3-4 AMBOS
+  Documento tecnico (5%)               --      --      DOCUMENTACION_TECNICA.txt
+  README tecnico (5%)                  --      --      (pendiente: ver abajo)
+  Video YouTube (5%)                   --      Todo    Video
+  Coevaluacion (5%)                    --      --      Formato separado
+
+--------------------------------------------------------------------------------
+PENDIENTE ANTES DEL DIA DE LA DEMO
+--------------------------------------------------------------------------------
+
+  [ ] README.md del proyecto (criterio 5% — "Claro, detallado y profesional")
+  [ ] Seed data de hoy — verificar que los dashboards no salgan vacios
+  [ ] Ensayo cronometrado con el equipo (al menos una vez con temporizador)
+  [ ] Definir quien presenta cada segmento de la presencial
+  [ ] Definir quien graba cada seccion del video
+  [ ] Subir video a YouTube (no listado o publico segun indicaciones del profe)
+  [ ] Llevar laptop cargada + cable HDMI si hay proyector
+
+================================================================================
+FIN DEL GUION
+================================================================================

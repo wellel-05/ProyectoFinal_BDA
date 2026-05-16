@@ -83,10 +83,14 @@ def query(sql, params=None, fetchone=False, fetchall=False):
     try:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(sql, params or ())
-            if fetchone:   return cur.fetchone()
-            elif fetchall: return cur.fetchall()
-            return None
+            if fetchone:   result = cur.fetchone()
+            elif fetchall: result = cur.fetchall()
+            else:          result = None
+        conn.commit()
+        return result
     except Exception as e:
+        try: conn.rollback()
+        except Exception: pass
         logger.error('query error [%.80s]: %s', sql, e)
         return None
     finally:
@@ -100,11 +104,12 @@ def call_proc(sql, params=(), user_id=None):
         if user_id is not None:
             cur.execute("SELECT set_config('app.id_usuario', %s, TRUE)", (str(user_id),))
         cur.execute(sql, params)
-        conn.commit()
         row = cur.fetchone()
+        conn.commit()
         return (int(row[0]), str(row[1])) if row else (0, 'Sin respuesta del servidor.')
     except Exception as e:
-        conn.rollback()
+        try: conn.rollback()
+        except Exception: pass
         logger.error('call_proc error [%.80s]: %s', sql, e)
         return (0, 'Error interno del servidor.')
     finally:
@@ -468,13 +473,15 @@ def admin_residente_detalle(id_residente):
         "CALL sp_historial_checkins_residente(%s, 'resultado')", (id_residente,))
     incidentes   = call_refcursor(
         "CALL sp_historial_incidentes_residente(%s, 'resultado')", (id_residente,))
+    cuidadores   = call_refcursor("CALL sp_lista_cuidadores('resultado')")
 
     return render_template('admin/residente_detalle.html',
                            residente=residente,
                            asignaciones=asignaciones,
                            sesiones=sesiones,
                            checkins=checkins,
-                           incidentes=incidentes)
+                           incidentes=incidentes,
+                           cuidadores=cuidadores)
 
 @app.route('/admin/residentes/<int:id_residente>/editar', methods=['POST'])
 @rol_required(1)
@@ -485,6 +492,20 @@ def admin_residente_editar(id_residente):
         (id_residente, f.get('habitacion') or None, f.get('diagnostico') or None,
          f.get('nivel_movilidad', 'Autonomo'),
          f.get('contacto') or None, f.get('tel_contacto') or None),
+        user_id=session.get('user_id'))
+    flash(msg, 'exito' if ok else 'error')
+    return redirect(url_for('admin_residente_detalle', id_residente=id_residente))
+
+@app.route('/admin/residentes/<int:id_residente>/cambiar-cuidador', methods=['POST'])
+@rol_required(1)
+def admin_cambiar_cuidador(id_residente):
+    id_cuidador = request.form.get('id_cuidador', type=int)
+    if not id_cuidador:
+        flash('Selecciona un cuidador.', 'error')
+        return redirect(url_for('admin_residente_detalle', id_residente=id_residente))
+    ok, msg = call_proc(
+        "CALL sp_cambiar_cuidador(%s,%s,NULL,NULL)",
+        (id_residente, id_cuidador),
         user_id=session.get('user_id'))
     flash(msg, 'exito' if ok else 'error')
     return redirect(url_for('admin_residente_detalle', id_residente=id_residente))
@@ -2218,6 +2239,7 @@ def nfc_confirmar():
     id_staff = session.get('staff_id')
 
     conn = get_db()
+    id_asistencia = None
     try:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
@@ -2225,11 +2247,14 @@ def nfc_confirmar():
                 VALUES (%s, %s, %s, %s, 'nfc') RETURNING id_asistencia
             """, (id_residente, id_actividad, id_staff, notas))
             id_asistencia = cur.fetchone()['id_asistencia']
-            conn.commit()
+        conn.commit()
     except Exception as e:
-        conn.rollback()
+        try: conn.rollback()
+        except Exception: pass
         logger.error('NFC confirmar error: %s', e)
         return 'Error al registrar', 500
+    finally:
+        release_db(conn)
 
     residente  = query("SELECT * FROM residente WHERE id_residente=%s", (id_residente,), fetchone=True)
     actividad  = query("SELECT * FROM actividad  WHERE id_actividad=%s", (id_actividad,), fetchone=True)
@@ -2270,12 +2295,15 @@ def admin_actividad_nueva():
                 INSERT INTO actividad (nombre, tipo, descripcion, id_staff_crea)
                 VALUES (%s, %s, %s, %s)
             """, (nombre, tipo, descripcion, session.get('staff_id')))
-            conn.commit()
+        conn.commit()
         flash(f'Actividad "{nombre}" creada', 'exito')
     except Exception as e:
-        conn.rollback()
+        try: conn.rollback()
+        except Exception: pass
         flash('Error al crear actividad', 'error')
         logger.error('admin_actividad_nueva: %s', e)
+    finally:
+        release_db(conn)
     return redirect(url_for('admin_actividades'))
 
 
@@ -2286,10 +2314,13 @@ def admin_actividad_toggle(id_act):
     try:
         with conn.cursor() as cur:
             cur.execute("UPDATE actividad SET activo = NOT activo WHERE id_actividad=%s", (id_act,))
-            conn.commit()
+        conn.commit()
     except Exception as e:
-        conn.rollback()
+        try: conn.rollback()
+        except Exception: pass
         logger.error('admin_actividad_toggle: %s', e)
+    finally:
+        release_db(conn)
     return redirect(url_for('admin_actividades'))
 
 
@@ -2300,12 +2331,15 @@ def admin_actividad_delete(id_act):
     try:
         with conn.cursor() as cur:
             cur.execute("DELETE FROM actividad WHERE id_actividad=%s", (id_act,))
-            conn.commit()
+        conn.commit()
         flash('Actividad eliminada', 'exito')
     except Exception as e:
-        conn.rollback()
+        try: conn.rollback()
+        except Exception: pass
         flash('No se puede eliminar: tiene asistencias registradas', 'error')
         logger.error('admin_actividad_delete: %s', e)
+    finally:
+        release_db(conn)
     return redirect(url_for('admin_actividades'))
 
 

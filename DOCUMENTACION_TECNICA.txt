@@ -1,0 +1,969 @@
+================================================================================
+DOCUMENTACION TECNICA — SISTEMA DE GESTION INTEGRAL PARA ASILO
+SALUD MENTAL ADULTOS MAYORES
+================================================================================
+Materia   : Base de Datos Avanzadas
+Institucion: Universidad de Monterrey (UDEM)
+Equipo    : 5
+Integrantes: (completar con nombres del equipo)
+Fecha     : Mayo 2026
+--------------------------------------------------------------------------------
+
+
+================================================================================
+INDICE
+================================================================================
+
+1.  Descripcion General del Sistema
+2.  Tecnologias Utilizadas
+3.  Arquitectura del Sistema
+4.  Modelo de Base de Datos — Tablas
+    4.1  Tablas Maestras / Catalogos
+    4.2  Tablas de Personas
+    4.3  Tablas Operacionales
+    4.4  Tablas Clinicas y de Cuidado Diario
+    4.5  Tablas de IoT
+    4.6  Tablas de Auditoria
+    4.7  Tablas del Portal Familiar
+    4.8  Tablas del Modulo GPS Avanzado
+    4.9  Tablas del Modulo de Actividades NFC
+5.  Stored Procedures
+    5.1  Auditoria
+    5.2  Residentes
+    5.3  Staff / Personal
+    5.4  Sesiones de Terapia
+    5.5  Medicamentos y Horarios
+    5.6  Turnos
+    5.7  Cuidado Diario
+    5.8  Modulo IoT — GPS
+    5.9  Modulo IoT — RFID
+    5.10 Modulo IoT — Beacon BLE
+    5.11 Modulo IoT — NFC
+    5.12 Dashboards por Rol
+    5.13 Reportes y Graficas
+    5.14 Catalogos y Listas
+6.  Vistas (Views)
+    6.1  Vistas Operacionales
+    6.2  Vistas Analiticas
+    6.3  Vistas del Portal Familiar
+7.  Triggers
+8.  Modulos Funcionales de la Aplicacion
+9.  Control de Acceso por Rol
+10. Caracteristicas Tecnicas Destacadas
+
+
+================================================================================
+1. DESCRIPCION GENERAL DEL SISTEMA
+================================================================================
+
+ElderCare es un sistema de gestion integral desarrollado para un asilo de salud
+mental orientado a adultos mayores. El sistema cubre el ciclo completo de atencion
+al residente: desde su ingreso, la gestion clinica diaria (medicamentos, terapias,
+check-ins de animo e incidentes), hasta el monitoreo en tiempo real mediante
+tecnologias IoT (GPS, NFC, RFID y beacons BLE), reportes analiticos y un portal
+dedicado para familiares.
+
+El sistema esta disenado bajo tres principios:
+
+a) Trazabilidad completa: toda operacion relevante genera un registro de auditoria.
+b) Seguridad de datos: los historiales clinicos son inmutables y las bajas de
+   residentes son logicas, no fisicas.
+c) Acceso diferenciado por rol: cada perfil de usuario (Administrador, Terapeuta,
+   Cuidador y Familiar) accede unicamente a la informacion que le corresponde.
+
+
+================================================================================
+2. TECNOLOGIAS UTILIZADAS
+================================================================================
+
+Base de datos  : PostgreSQL 18
+Backend        : Python 3.11 con Flask 3
+Driver DB      : psycopg 3 (psycopg[binary]) + psycopg-pool
+Frontend       : HTML5, CSS3 (Bootstrap 5), JavaScript, Highcharts
+IoT / Hardware : Beacons BLE (iBeacon), Lectores RFID, Tags NFC, GPS (Traccar)
+Bases alternas : MongoDB (registro de eventos IoT con pymongo)
+Tipografia     : Plus Jakarta Sans, IBM Plex Sans (Google Fonts)
+Control version: Git
+
+
+================================================================================
+3. ARQUITECTURA DEL SISTEMA
+================================================================================
+
+El sistema sigue una arquitectura de tres capas:
+
+CAPA DE PRESENTACION
+  Templates HTML renderizados por Jinja2 (Flask). Interfaz diferenciada segun
+  el rol del usuario autenticado. Graficas en tiempo real con Highcharts.
+
+CAPA DE LOGICA DE NEGOCIO
+  Aplicacion Flask (app.py). Toda interaccion con la base de datos se realiza
+  exclusivamente a traves de Stored Procedures. No hay SQL inline en el backend
+  para operaciones de negocio.
+
+CAPA DE DATOS
+  PostgreSQL: base de datos relacional principal con 32 tablas, 54 stored
+  procedures, 15 vistas y 10 triggers.
+  MongoDB: almacenamiento secundario de eventos IoT para consultas analiticas.
+
+Flujo tipico de una peticion:
+  Navegador -> Flask (route handler) -> call_proc / call_refcursor ->
+  Stored Procedure PostgreSQL -> Respuesta JSON o template HTML
+
+
+================================================================================
+4. MODELO DE BASE DE DATOS — TABLAS
+================================================================================
+
+El esquema esta distribuido en cuatro archivos DDL:
+  - DDL.sql         : 23 tablas principales del sistema
+  - familiar_ddl.sql: 3 tablas del portal familiar
+  - gps_ddl.sql     : 4 tablas del modulo GPS avanzado
+  - nfc_ddl.sql     : 2 tablas del modulo de actividades NFC
+
+Total: 32 tablas
+
+
+--------------------------------------------------------------------------------
+4.1 TABLAS MAESTRAS / CATALOGOS
+--------------------------------------------------------------------------------
+
+ROL
+  Almacena los roles de acceso del personal. Campo nivel_acceso con constraint
+  CHECK (BETWEEN 1 AND 3) define la jerarquia: 1=Administrador, 2=Terapeuta/
+  Medico, 3=Cuidador.
+  Columnas: id_rol (PK), nombre_rol (UNIQUE), nivel_acceso
+
+ALA
+  Representa las alas fisicas del edificio (Ala Norte, Ala Sur, etc.).
+  Columnas: id_ala (PK), nombre (UNIQUE), piso, descripcion, activa
+
+SALA
+  Salas de terapia o consulta dentro de cada ala.
+  Columnas: id_sala (PK), nombre (UNIQUE), id_ala (FK -> ala), capacidad
+
+LIMITE_JARDIN
+  Tabla de configuracion con una sola fila. Define el rectangulo geografico
+  (latitud/longitud minima y maxima) del jardin del asilo, usado por el trigger
+  de GPS para detectar si un residente salio de los limites.
+  Columnas: id_limite (PK), descripcion, lat_min, lat_max, lon_min, lon_max
+
+MEDICAMENTO
+  Catalogo de medicamentos disponibles.
+  Columnas: id_medicamento (PK), nombre (UNIQUE), descripcion, unidad
+
+
+--------------------------------------------------------------------------------
+4.2 TABLAS DE PERSONAS
+--------------------------------------------------------------------------------
+
+STAFF
+  Personal del asilo. Vinculado a un rol. El campo activo permite dar de baja
+  logicamente a un empleado sin eliminar su historial.
+  Columnas: id_staff (PK), nombre, apellidos, especialidad, email (UNIQUE),
+            id_rol (FK -> rol), activo, fecha_alta
+
+USUARIO_SISTEMA
+  Cuentas de autenticacion del personal. Separado de staff para mantener
+  independencia entre los datos del empleado y sus credenciales de acceso.
+  Columnas: id_usuario (PK), id_staff (FK -> staff), username (UNIQUE),
+            password_hash, ultimo_login, activo
+
+RESIDENTE
+  Registro central del residente. El campo activo implementa la baja logica
+  obligatoria (el trigger trg_before_delete_residente bloquea cualquier DELETE
+  fisico).
+  Columnas: id_residente (PK), nombre, apellidos, fecha_nacimiento, sexo,
+            habitacion, diagnostico_principal, nivel_movilidad,
+            contacto_emergencia, tel_contacto, fecha_ingreso, fecha_baja,
+            motivo_baja, activo
+
+
+--------------------------------------------------------------------------------
+4.3 TABLAS OPERACIONALES
+--------------------------------------------------------------------------------
+
+ASIGNACION
+  Tabla de relacion N:M entre residentes y staff. Registra el tipo de rol en la
+  relacion (Cuidador, Terapeuta) y si es la asignacion principal. La fecha_fin
+  nula indica asignacion activa.
+  Columnas: id_asignacion (PK), id_residente (FK), id_staff (FK), tipo_rol,
+            es_principal, fecha_inicio, fecha_fin
+
+TURNO
+  Programacion de turnos del personal por ala. Permite gestionar que staff cubre
+  que ala en que horario.
+  Columnas: id_turno (PK), id_staff (FK -> staff), id_ala (FK -> ala),
+            fecha, hora_inicio, hora_fin
+
+SESION_TERAPIA
+  Registro de sesiones de terapia (individual o grupal). El trigger
+  trg_before_sesion_terapia valida que no existan solapamientos de terapeuta
+  ni de sala antes de permitir la insercion.
+  Columnas: id_sesion (PK), id_residente (FK), id_terapeuta (FK -> staff),
+            id_sala (FK -> sala), fecha_sesion, duracion_min, tipo_sesion,
+            asistio, notas_sesion
+
+
+--------------------------------------------------------------------------------
+4.4 TABLAS CLINICAS Y DE CUIDADO DIARIO
+--------------------------------------------------------------------------------
+
+CHECKIN_ESTADO_ANIMO
+  Registro diario del estado emocional del residente, con puntaje del 1 al 5.
+  El trigger trg_after_checkin_animo genera un incidente automatico si el
+  puntaje es menor o igual a 2.
+  Columnas: id_checkin (PK), id_residente (FK), id_cuidador (FK -> staff),
+            puntaje (1-5), notas, fecha_registro
+
+REPORTE_INCIDENTE
+  Registro de incidentes clinicos o de seguridad. El trigger
+  trg_before_incidente valida que la severidad sea un valor valido (Alta, Media,
+  Baja) y exige descripcion cuando la severidad es Alta.
+  Columnas: id_incidente (PK), id_residente (FK), id_staff (FK),
+            tipo, descripcion, severidad, fecha_incidente, resuelto
+
+HORARIO_MEDICAMENTO
+  Prescripcion de medicamentos para cada residente: que medicamento, a que hora,
+  que dosis y con que frecuencia. El campo activo permite suspender un horario
+  sin eliminarlo.
+  Columnas: id_horario (PK), id_residente (FK), id_medicamento (FK),
+            hora_administracion, dosis, frecuencia, activo
+
+LOG_MEDICAMENTO
+  Registro inmutable de administraciones de medicamentos. El trigger
+  trg_before_delete_log_medicamento bloquea cualquier DELETE sobre esta tabla,
+  garantizando la integridad del historial clinico.
+  Columnas: id_log (PK), id_horario (FK), id_cuidador (FK -> staff),
+            fecha_administracion, metodo (NFC/Manual), observaciones
+
+
+--------------------------------------------------------------------------------
+4.5 TABLAS DE IoT
+--------------------------------------------------------------------------------
+
+GPS_PING
+  Registro de pings GPS enviados por dispositivos de los residentes. El trigger
+  trg_after_gps_ping compara la posicion con la tabla limite_jardin y genera
+  un incidente automatico si el residente esta fuera del area segura.
+  Columnas: id_ping (BIGSERIAL PK), id_residente (FK), latitud, longitud,
+            precision_m, timestamp_dispositivo, timestamp_servidor
+
+NFC_TAG
+  Catalogo de tags NFC asignados a residentes. El codigo_tag es el identificador
+  unico grabado en el tag fisico.
+  Columnas: id_tag (PK), id_residente (FK), codigo_tag (UNIQUE), descripcion,
+            activo
+
+NFC_EVENTO
+  Registro de cada escaneo de tag NFC. Puede estar vinculado a un
+  log_medicamento si el escaneo se uso para registrar la administracion de un
+  medicamento.
+  Columnas: id_evento (BIGSERIAL PK), id_tag (FK), id_staff (FK),
+            id_log_med (FK -> log_medicamento, nullable), timestamp_evento,
+            resultado
+
+LECTOR_RFID
+  Catalogo de lectores RFID instalados en el edificio, con su ubicacion por ala
+  y sala.
+  Columnas: id_lector (PK), nombre, id_ala (FK), id_sala (FK, nullable),
+            ubicacion_descripcion, activo
+
+ACCESO_RFID
+  Registro de cada acceso (concedido o denegado) detectado por los lectores
+  RFID. El trigger trg_after_acceso_rfid genera auditoria para accesos a zonas
+  restringidas.
+  Columnas: id_acceso (BIGSERIAL PK), id_lector (FK), id_staff (FK),
+            timestamp_acceso, acceso_concedido
+
+BEACON
+  Catalogo de beacons BLE instalados en el edificio, con su ala asignada.
+  Columnas: id_beacon (PK), nombre (UNIQUE), id_ala (FK), mac_address,
+            activo
+
+DETECCION_BEACON
+  Registro de cada vez que un beacon detecta la presencia de un staff.
+  Permite rastrear la ubicacion aproximada del personal en tiempo real.
+  Columnas: id_deteccion (BIGSERIAL PK), id_beacon (FK), id_staff (FK),
+            timestamp_deteccion, rssi
+
+
+--------------------------------------------------------------------------------
+4.6 TABLAS DE AUDITORIA
+--------------------------------------------------------------------------------
+
+LOG_AUDITORIA
+  Registro centralizado de todas las operaciones sobre tablas criticas del
+  sistema. Es llenada por los triggers de auditoria (staff, residente,
+  usuario_sistema, acceso_rfid). Incluye la IP del cliente para trazabilidad.
+  Columnas: id_log (BIGSERIAL PK), id_usuario (FK -> usuario_sistema),
+            tabla_afectada, operacion (INSERT/UPDATE/DELETE), id_registro,
+            timestamp_operacion, ip_cliente
+
+
+--------------------------------------------------------------------------------
+4.7 TABLAS DEL PORTAL FAMILIAR
+--------------------------------------------------------------------------------
+
+FAMILIAR
+  Registro de familiares o contactos autorizados a consultar informacion del
+  residente.
+  Columnas: id_familiar (PK), nombre, apellidos, parentesco, email (UNIQUE),
+            telefono, activo
+
+FAMILIAR_RESIDENTE
+  Relacion N:M entre familiares y residentes. Un familiar puede tener acceso
+  a mas de un residente y un residente puede tener varios familiares registrados.
+  Columnas: id_vinculo (PK), id_familiar (FK), id_residente (FK),
+            fecha_autorizacion
+
+USUARIO_FAMILIAR
+  Cuentas de acceso para el portal familiar, independientes del sistema interno
+  de staff.
+  Columnas: id_usuario (PK), id_familiar (FK), username (UNIQUE),
+            password_hash, ultimo_login, activo
+
+
+--------------------------------------------------------------------------------
+4.8 TABLAS DEL MODULO GPS AVANZADO
+--------------------------------------------------------------------------------
+
+DISPOSITIVO_GPS
+  Registro de dispositivos GPS asignados a residentes. El device_id es el
+  identificador unico del dispositivo en el servidor Traccar.
+  Columnas: id_dispositivo (PK), id_residente (FK), device_id (UNIQUE),
+            nombre_dispositivo, activo
+
+POSICION_GPS
+  Pings de ubicacion del servidor Traccar. Almacena tanto el timestamp del
+  dispositivo como el de recepcion en el servidor.
+  Columnas: id_posicion (BIGSERIAL PK), device_id, latitud, longitud,
+            velocidad, ts_dispositivo, ts_servidor
+
+ZONA_GPS
+  Definicion de zonas de seguridad o alerta con nombre, centro geografico y
+  radio en metros.
+  Columnas: id_zona (PK), nombre, latitud_centro, longitud_centro,
+            radio_metros, tipo_zona (segura/peligro/alerta), activa
+
+ALERTA_GPS
+  Alertas generadas cuando un dispositivo cruza los limites de una zona.
+  Columnas: id_alerta (BIGSERIAL PK), id_zona (FK), device_id,
+            timestamp_alerta, atendida, timestamp_atencion
+
+
+--------------------------------------------------------------------------------
+4.9 TABLAS DEL MODULO DE ACTIVIDADES NFC
+--------------------------------------------------------------------------------
+
+ACTIVIDAD
+  Catalogo de actividades programadas en el asilo (grupal, individual, terapia,
+  recreativa). Cada actividad tiene un codigo QR/NFC que permite registrar
+  asistencia por escaneo.
+  Columnas: id_actividad (PK), nombre, descripcion, tipo_actividad,
+            id_staff_crea (FK -> staff), fecha_creacion, activa
+
+ASISTENCIA_NFC
+  Registro de participacion en actividades. Puede ser por escaneo NFC o
+  registro manual por el staff.
+  Columnas: id_asistencia (BIGSERIAL PK), id_residente (FK), id_actividad (FK),
+            id_staff (FK), timestamp_registro, metodo (NFC/Manual), notas
+
+
+================================================================================
+5. STORED PROCEDURES
+================================================================================
+
+El sistema cuenta con 54 stored procedures. Todos siguen la convencion de
+retornar al menos dos parametros de salida (OUT p_ok BOOLEAN, OUT p_msg TEXT)
+para operaciones de escritura, lo que permite al backend manejar errores de
+negocio sin excepciones de base de datos.
+
+Para consultas que retornan conjuntos de datos, se usa el tipo REFCURSOR de
+PostgreSQL, que permite pasar el cursor abierto al cliente para su iteracion.
+
+
+--------------------------------------------------------------------------------
+5.1 AUDITORIA
+--------------------------------------------------------------------------------
+
+sp_registrar_auditoria(p_id_usuario, p_tabla, p_operacion, p_id_registro, p_ip)
+  Registra una entrada en log_auditoria. Es invocado directamente desde el
+  backend en operaciones criticas y desde los triggers de auditoria.
+
+
+--------------------------------------------------------------------------------
+5.2 RESIDENTES
+--------------------------------------------------------------------------------
+
+sp_registrar_residente(p_nombre, p_apellidos, p_fecha_nacimiento, p_sexo,
+    p_habitacion, p_diagnostico, p_nivel_movilidad, p_contacto, p_tel_contacto,
+    p_id_cuidador, OUT p_ok, OUT p_msg)
+  Inserta un nuevo residente y crea su asignacion de cuidador principal en una
+  sola transaccion.
+
+sp_actualizar_residente(p_id_residente, p_habitacion, p_diagnostico,
+    p_nivel_movilidad, p_contacto, p_tel_contacto, OUT p_ok, OUT p_msg)
+  Actualiza los datos modificables de un residente existente.
+
+sp_dar_baja_residente(p_id_residente, OUT p_ok, OUT p_msg)
+  Implementa la baja logica: establece activo=FALSE, registra fecha_baja y
+  desactiva sus horarios de medicamentos y asignaciones activas.
+
+
+--------------------------------------------------------------------------------
+5.3 STAFF / PERSONAL
+--------------------------------------------------------------------------------
+
+sp_registrar_staff(p_nombre, p_apellidos, p_especialidad, p_email, p_id_rol,
+    p_username, p_password_hash, OUT p_ok, OUT p_msg)
+  Crea el registro de staff y su cuenta de usuario_sistema en una sola
+  transaccion.
+
+sp_actualizar_staff(p_id_staff, p_nombre, p_apellidos, p_especialidad, p_email,
+    p_id_rol, OUT p_ok, OUT p_msg)
+  Actualiza los datos del empleado.
+
+sp_toggle_staff(p_id_staff, OUT p_ok, OUT p_msg)
+  Alterna el campo activo del staff (alta/baja logica).
+
+
+--------------------------------------------------------------------------------
+5.4 SESIONES DE TERAPIA
+--------------------------------------------------------------------------------
+
+sp_reservar_sesion(p_id_residente, p_id_terapeuta, p_id_sala, p_fecha_sesion,
+    p_duracion_min, p_tipo_sesion, OUT p_ok, OUT p_msg)
+  Registra una sesion. La validacion de solapamientos es responsabilidad del
+  trigger trg_before_sesion_terapia.
+
+sp_actualizar_sesion(p_id_sesion, p_asistio, p_notas, OUT p_ok, OUT p_msg)
+  Registra el resultado de una sesion: si el residente asistio y las notas
+  clinicas del terapeuta.
+
+sp_eliminar_sesion(p_id_sesion, p_id_terapeuta, OUT p_ok, OUT p_msg)
+  Elimina una sesion, validando que el terapeuta solicitante sea el dueno de
+  la sesion.
+
+
+--------------------------------------------------------------------------------
+5.5 MEDICAMENTOS Y HORARIOS
+--------------------------------------------------------------------------------
+
+sp_registrar_medicamento(p_nombre, p_descripcion, p_unidad,
+    OUT p_ok, OUT p_msg, OUT p_id)
+  Agrega un medicamento al catalogo. Retorna el id generado.
+
+sp_actualizar_medicamento(p_id, p_nombre, p_descripcion, p_unidad,
+    OUT p_ok, OUT p_msg)
+  Actualiza los datos de un medicamento del catalogo.
+
+sp_eliminar_medicamento(p_id, OUT p_ok, OUT p_msg)
+  Elimina un medicamento del catalogo. Falla si hay horarios activos que lo
+  referencian.
+
+sp_registrar_horario_medicamento(p_id_residente, p_id_medicamento, p_hora,
+    p_dosis, p_frecuencia, OUT p_ok, OUT p_msg, OUT p_id_horario)
+  Crea una nueva prescripcion de medicamento para un residente.
+
+sp_toggle_horario_medicamento(p_id_horario, OUT p_ok, OUT p_msg, OUT p_activo)
+  Suspende o reactiva un horario de medicamento. Retorna el nuevo estado en
+  p_activo.
+
+sp_log_medicamento_nfc(p_codigo_tag, p_id_staff, OUT p_ok, OUT p_msg)
+  Registra la administracion de un medicamento mediante escaneo NFC. Busca
+  el horario pendiente del residente vinculado al tag y crea el log.
+
+
+--------------------------------------------------------------------------------
+5.6 TURNOS
+--------------------------------------------------------------------------------
+
+sp_registrar_turno(p_id_staff, p_id_ala, p_fecha, p_hora_inicio, p_hora_fin,
+    OUT p_ok, OUT p_msg, OUT p_id)
+  Crea un turno para un empleado en un ala especifica.
+
+sp_eliminar_turno(p_id, OUT p_ok, OUT p_msg)
+  Elimina un turno existente.
+
+
+--------------------------------------------------------------------------------
+5.7 CUIDADO DIARIO
+--------------------------------------------------------------------------------
+
+sp_checkin_estado_animo(p_id_residente, p_id_cuidador, p_puntaje, p_notas,
+    OUT p_ok, OUT p_msg)
+  Registra el check-in de animo. El trigger trg_after_checkin_animo actua
+  automaticamente si el puntaje es <= 2.
+
+sp_registrar_incidente(p_id_residente, p_id_staff, p_tipo, p_descripcion,
+    p_severidad, OUT p_ok, OUT p_msg)
+  Registra un incidente manualmente.
+
+sp_actualizar_incidente(p_id_incidente, p_tipo, p_descripcion, p_severidad,
+    OUT p_ok, OUT p_msg)
+  Actualiza un incidente existente.
+
+sp_crear_incidente_automatico(p_id_residente, p_id_staff, p_tipo,
+    p_descripcion, p_severidad)
+  Procedimiento interno invocado por los triggers de animo y GPS para crear
+  incidentes automaticos. No tiene parametros de salida porque es llamado
+  dentro de funciones de trigger.
+
+
+--------------------------------------------------------------------------------
+5.8 MODULO IoT — GPS
+--------------------------------------------------------------------------------
+
+sp_residentes_al_aire_libre(INOUT resultado REFCURSOR)
+  Retorna los residentes cuya ultima posicion GPS los ubica dentro del jardin,
+  comparando contra los limites de la tabla limite_jardin.
+
+
+--------------------------------------------------------------------------------
+5.9 MODULO IoT — RFID
+--------------------------------------------------------------------------------
+
+sp_registrar_acceso_rfid(p_id_lector, p_id_staff, p_acceso_concedido,
+    OUT p_ok, OUT p_msg)
+  Registra un evento de acceso RFID.
+
+sp_log_acceso_rfid(p_fecha, INOUT resultado REFCURSOR)
+  Retorna todos los accesos RFID de una fecha dada, incluyendo el nombre del
+  staff y la ubicacion del lector.
+
+sp_accesos_no_autorizados(p_fecha, INOUT resultado REFCURSOR)
+  Retorna unicamente los accesos denegados de una fecha, para revision de
+  seguridad.
+
+
+--------------------------------------------------------------------------------
+5.10 MODULO IoT — BEACON BLE
+--------------------------------------------------------------------------------
+
+sp_ubicacion_actual_staff(INOUT resultado REFCURSOR)
+  Retorna la ultima deteccion beacon de cada miembro del staff activo, con
+  el nombre del ala donde fue detectado y los minutos transcurridos desde
+  la ultima deteccion.
+
+
+--------------------------------------------------------------------------------
+5.11 MODULO IoT — NFC (ACTIVIDADES)
+--------------------------------------------------------------------------------
+
+La logica de actividades NFC es manejada directamente en el backend. Los
+registros de asistencia se insertan via SQL directo en la tabla asistencia_nfc
+dentro de rutas dedicadas del modulo de administrador.
+
+
+--------------------------------------------------------------------------------
+5.12 DASHBOARDS POR ROL
+--------------------------------------------------------------------------------
+
+sp_dashboard_admin(p_cursor REFCURSOR)
+  Retorna los KPIs del administrador en un solo resultado: total de residentes
+  activos, staff activo, sesiones del dia, medicamentos pendientes, incidentes
+  sin resolver, accesos RFID del dia y alertas GPS activas.
+
+sp_dashboard_terapeuta(p_id_staff, p_cursor REFCURSOR)
+  Retorna el resumen del dia para el terapeuta: sesiones propias del dia,
+  residentes asignados y sus ultimos puntajes de animo.
+
+sp_dashboard_cuidador(p_id_staff, p_cursor REFCURSOR)
+  Retorna el resumen del cuidador: residentes bajo su cuidado, medicamentos
+  pendientes de administrar y check-ins pendientes del dia.
+
+sp_ids_residentes_cuidador(p_id_staff, p_cursor REFCURSOR)
+  Lista los IDs y nombres de los residentes asignados a un cuidador especifico.
+
+sp_meds_pendientes_cuidador(p_id_staff, p_cursor REFCURSOR)
+  Retorna los medicamentos pendientes de administrar en el turno actual para
+  los residentes del cuidador.
+
+sp_medicamentos_admin_hoy(p_id_staff, p_cursor REFCURSOR)
+  Retorna el historial de medicamentos ya administrados hoy por el cuidador.
+
+sp_animo_bajo_cuidador(p_id_staff, p_cursor REFCURSOR)
+  Lista los residentes del cuidador con puntaje de animo bajo (1 o 2) en las
+  ultimas 24 horas.
+
+sp_sesiones_hoy_terapeuta(p_id_staff, p_cursor REFCURSOR)
+  Lista las sesiones de terapia del dia para un terapeuta especifico con el
+  estado de asistencia.
+
+
+--------------------------------------------------------------------------------
+5.13 REPORTES Y GRAFICAS
+--------------------------------------------------------------------------------
+
+sp_evolucion_animo_global(p_dias, INOUT resultado REFCURSOR)
+  Retorna el promedio diario de puntaje de animo de todos los residentes para
+  los ultimos p_dias dias. Usado en graficas de linea en el modulo de reportes.
+
+sp_evolucion_animo_residente(p_id_residente, p_dias, INOUT resultado REFCURSOR)
+  Igual al anterior pero filtrado para un residente especifico.
+
+sp_incidentes_por_severidad(p_dias, INOUT resultado REFCURSOR)
+  Cuenta de incidentes agrupados por severidad (Alta, Media, Baja) para el
+  periodo indicado. Usado en graficas de barras.
+
+sp_adherencia_terapeutica(p_dias, INOUT resultado REFCURSOR)
+  Porcentaje de dosis administradas vs. programadas por residente para el
+  periodo. Usado en graficas de columnas.
+
+sp_resumen_iot(p_dias, INOUT resultado REFCURSOR)
+  Totales de eventos IoT del periodo: pings GPS, accesos RFID, eventos NFC
+  y detecciones beacon.
+
+sp_carga_operativa(p_dias, INOUT resultado REFCURSOR)
+  Distribucion de carga de trabajo del staff: sesiones dirigidas, check-ins
+  realizados y medicamentos administrados por empleado.
+
+sp_resumen_semanal_cuidador(p_semana_inicio, INOUT resultado REFCURSOR)
+  Reporte semanal del cuidador: medicamentos administrados, check-ins de animo
+  e incidentes reportados en la semana.
+
+
+--------------------------------------------------------------------------------
+5.14 CATALOGOS Y LISTAS
+--------------------------------------------------------------------------------
+
+sp_lista_residentes_activos(p_cursor REFCURSOR)
+  Lista completa de residentes con activo=TRUE.
+
+sp_lista_roles(p_cursor REFCURSOR)
+  Catalogo de roles del sistema.
+
+sp_lista_cuidadores(p_cursor REFCURSOR)
+  Lista de staff con rol de Cuidador y activo=TRUE.
+
+sp_lista_staff(p_cursor REFCURSOR)
+  Lista completa de staff (activos e inactivos).
+
+sp_lista_staff_activo(p_cursor REFCURSOR)
+  Lista de staff con activo=TRUE.
+
+sp_lectores_rfid(p_cursor REFCURSOR)
+  Catalogo de lectores RFID con nombre de ala y sala.
+
+sp_lista_medicamentos(p_cursor REFCURSOR)
+  Catalogo de medicamentos.
+
+sp_lista_horarios_medicamento(p_cursor REFCURSOR)
+  Todos los horarios de medicamentos con nombre del residente y medicamento.
+
+sp_lista_alas(p_cursor REFCURSOR)
+  Catalogo de alas del edificio.
+
+sp_lista_turnos(p_cursor REFCURSOR)
+  Todos los turnos registrados con informacion del staff y el ala.
+
+
+================================================================================
+6. VISTAS (VIEWS)
+================================================================================
+
+Se implementaron 15 vistas agrupadas por proposito: operacionales, analiticas
+y del portal familiar.
+
+
+--------------------------------------------------------------------------------
+6.1 VISTAS OPERACIONALES
+--------------------------------------------------------------------------------
+
+v_residentes_resumen
+  Residentes activos con nombre completo, habitacion, diagnostico, edad
+  calculada, cuidador principal asignado, ultimo puntaje de animo y fecha del
+  ultimo check-in. Usa LATERAL JOIN para obtener el check-in mas reciente de
+  forma eficiente.
+
+v_medicamentos_pendientes_hoy
+  Medicamentos programados para el dia actual (con horario activo) que aun no
+  tienen un registro de log_medicamento en la fecha de hoy. Permite al cuidador
+  ver exactamente que medicamentos debe administrar.
+
+v_sesiones_hoy
+  Sesiones de terapia del dia con nombre del terapeuta, nombre del residente,
+  sala y tipo de sesion. Incluye el estado de asistencia cuando ya fue
+  registrado.
+
+v_staff_en_turno_hoy
+  Personal que tiene turno registrado en la fecha actual, con su especialidad,
+  rol y el nombre del ala asignada.
+
+v_accesos_rfid_hoy
+  Accesos RFID del dia actual con nombre del staff, ubicacion del lector
+  (ala y sala) y si el acceso fue concedido o denegado.
+
+v_incidentes_recientes
+  Incidentes de los ultimos 7 dias ordenados por severidad descendente
+  (Alta primero). Incluye nombre del residente, tipo, descripcion y si ya
+  fue resuelto.
+
+v_ubicacion_actual_staff
+  Ultima deteccion beacon de cada miembro del staff activo, con nombre del
+  ala donde fue detectado y los minutos transcurridos desde la deteccion.
+  Util para el panel de monitoreo en tiempo real del administrador.
+
+v_estado_gps_residentes
+  Posicion GPS mas reciente de cada residente con dispositivo activo,
+  indicando si esta dentro o fuera del area del jardin segun los limites
+  configurados en limite_jardin.
+
+
+--------------------------------------------------------------------------------
+6.2 VISTAS ANALITICAS
+--------------------------------------------------------------------------------
+
+v_adherencia_medicamentos
+  Porcentaje de dosis administradas vs. dosis programadas por residente en
+  los ultimos 30 dias. Calcula las dosis esperadas segun la frecuencia
+  (diaria, dos veces al dia, semanal) y las compara con los logs reales.
+
+v_resumen_incidentes_mes
+  Agregacion mensual de incidentes agrupados por tipo y severidad. Permite
+  identificar tendencias en el comportamiento clinico de la poblacion.
+
+
+--------------------------------------------------------------------------------
+6.3 VISTAS DEL PORTAL FAMILIAR
+--------------------------------------------------------------------------------
+
+v_familiar_residente_info
+  Informacion basica del residente visible para familiares: nombre, edad,
+  habitacion y fecha de ingreso. Excluye datos clinicos sensibles como
+  el diagnostico.
+
+v_familiar_sesiones
+  Historial de sesiones del residente filtrado para familiares: fecha,
+  tipo de sesion, nombre del terapeuta y si el residente asistio. Excluye
+  las notas clinicas.
+
+v_familiar_medicamentos
+  Medicamentos programados del residente y si ya fueron administrados hoy.
+  No incluye el nombre del cuidador ni las dosis detalladas.
+
+v_familiar_incidentes
+  Ultimos 30 dias de incidentes. Muestra tipo y severidad pero filtra
+  la descripcion detallada para incidentes de tipo clinico sensible.
+
+v_familiar_animo
+  Historico de 30 dias de puntajes de animo del residente. Permite al familiar
+  ver la tendencia del estado emocional representada en una grafica de linea.
+
+
+================================================================================
+7. TRIGGERS
+================================================================================
+
+El sistema implementa 10 triggers que cubren cuatro categorias: auditoria,
+automatizacion de alertas, validacion de negocio e integridad de datos.
+
+
+CATEGORIA: AUDITORIA
+--------------------------------------------------------------------------------
+
+trg_after_staff (AFTER UPDATE, DELETE ON staff)
+  Al modificar o eliminar un registro de staff, inserta una entrada en
+  log_auditoria con la operacion realizada, el id del registro afectado y
+  la marca de tiempo. Garantiza la trazabilidad de cambios en el personal.
+
+trg_after_acceso_rfid (AFTER INSERT ON acceso_rfid)
+  Registra en log_auditoria cada acceso detectado por los lectores RFID,
+  incluyendo si fue concedido o denegado. Permite auditoria de seguridad
+  fisica del edificio.
+
+trg_after_residente (AFTER INSERT, UPDATE, DELETE ON residente)
+  Auditoria triple sobre la tabla de residentes. Registra altas, modificaciones
+  y bajas en log_auditoria. Dada la sensibilidad de los datos del residente,
+  se auditan las tres operaciones.
+
+trg_after_usuario_sistema (AFTER INSERT, UPDATE ON usuario_sistema)
+  Registra la creacion y modificacion de cuentas de acceso al sistema, lo que
+  permite detectar cambios no autorizados en credenciales.
+
+
+CATEGORIA: AUTOMATIZACION DE ALERTAS
+--------------------------------------------------------------------------------
+
+trg_after_checkin_animo (AFTER INSERT ON checkin_estado_animo)
+  Cuando el puntaje registrado es menor o igual a 2, invoca automaticamente
+  a sp_crear_incidente_automatico para generar un incidente de tipo
+  "Agitacion / Tristeza" con severidad "Alta". Esto garantiza que ningun
+  caso de animo bajo pase desapercibido.
+
+trg_after_gps_ping (AFTER INSERT ON gps_ping)
+  Tras cada ping de GPS, compara la posicion recibida con los limites de la
+  tabla limite_jardin. Si el residente esta fuera del area segura, invoca
+  sp_crear_incidente_automatico para crear un incidente de tipo "Deambulacion"
+  con severidad "Alta".
+
+
+CATEGORIA: VALIDACION DE NEGOCIO
+--------------------------------------------------------------------------------
+
+trg_before_sesion_terapia (BEFORE INSERT, UPDATE ON sesion_terapia)
+  Valida dos restricciones antes de permitir insertar o modificar una sesion:
+  1) El terapeuta no tiene otra sesion activa en el mismo rango de tiempo.
+  2) La sala no esta ocupada por otra sesion en el mismo rango de tiempo.
+  Si alguna condicion se cumple, el trigger lanza una excepcion y cancela
+  la operacion.
+
+trg_before_incidente (BEFORE INSERT, UPDATE ON reporte_incidente)
+  Valida que el campo severidad sea uno de los valores permitidos del dominio
+  (Alta, Media, Baja) y que los incidentes de severidad Alta tengan una
+  descripcion con al menos 10 caracteres.
+
+
+CATEGORIA: INTEGRIDAD DE DATOS
+--------------------------------------------------------------------------------
+
+trg_before_delete_residente (BEFORE DELETE ON residente)
+  Bloquea cualquier intento de DELETE fisico sobre la tabla residente.
+  Lanza una excepcion indicando que la baja debe realizarse a traves de
+  sp_dar_baja_residente. Garantiza que ningun residente sea eliminado
+  accidentalmente de la base de datos.
+
+trg_before_delete_log_medicamento (BEFORE DELETE ON log_medicamento)
+  Bloquea cualquier DELETE sobre el historial de administracion de medicamentos.
+  El historial clinico es inmutable por diseno: una vez registrada una
+  administracion, no puede eliminarse.
+
+
+================================================================================
+8. MODULOS FUNCIONALES DE LA APLICACION
+================================================================================
+
+La aplicacion web cuenta con 74 rutas organizadas en los siguientes modulos:
+
+
+MODULO DE AUTENTICACION
+  Maneja el login y logout del personal interno. Sesiones basadas en Flask-Login
+  con hash de contrasena (werkzeug.security). Redirige al dashboard del rol
+  correspondiente tras el login exitoso.
+  Rutas: /login, /logout
+
+MODULO ADMINISTRADOR (25 rutas)
+  Panel de control completo. Permite gestionar residentes (alta, edicion, baja
+  logica), personal (nuevo, edicion, toggle activo), medicamentos (catalogo y
+  horarios), turnos, familiares y todas las vistas de IoT.
+  Prefijo: /admin/
+
+MODULO IoT ADMINISTRADOR (12 rutas)
+  Dashboard de monitoreo en tiempo real con graficas Highcharts: ubicaciones
+  beacon del staff, pings GPS de residentes, accesos RFID y eventos NFC.
+  Incluye APIs REST para actualizacion periodica sin recargar la pagina.
+  Prefijo: /admin/iot, /admin/rfid, /admin/nfc, /admin/gps, /api/
+
+MODULO TERAPEUTA (9 rutas)
+  Dashboard del dia, lista de residentes asignados con historial de sesiones
+  y evolucion de animo, gestion de sesiones (nueva, edicion, eliminacion) y
+  registro de incidentes.
+  Prefijo: /terapeuta/
+
+MODULO CUIDADOR (8 rutas)
+  Dashboard con residentes y medicamentos pendientes del dia, registro de
+  check-ins de animo, reporte de incidentes, escaneo NFC de medicamentos y
+  registro de asistencias.
+  Prefijo: /cuidador/
+
+MODULO PORTAL FAMILIAR (5 rutas)
+  Login independiente del sistema principal. Acceso de solo lectura a la
+  informacion filtrada del residente: datos generales, sesiones, medicamentos,
+  incidentes (sin notas clinicas) y grafica de animo.
+  Prefijo: /familiar/
+
+MODULO NFC (3 rutas)
+  Endpoint publico para escaneo de tags NFC desde dispositivos moviles.
+  Funciona con HTTP puro (sin SSL) para compatibilidad con iOS, en la misma
+  red local del asilo.
+  Ruta: /nfc/<codigo_tag>
+
+
+================================================================================
+9. CONTROL DE ACCESO POR ROL
+================================================================================
+
+El sistema implementa cuatro niveles de acceso diferenciados:
+
+ROL 1 — ADMINISTRADOR
+  Acceso total al sistema. Gestiona residentes, personal, catalogos, IoT,
+  reportes, KPIs, auditoria y portal familiar.
+
+ROL 2 — TERAPEUTA / MEDICO
+  Acceso a sus residentes asignados, gestion de sesiones de terapia, registro
+  de incidentes y visualizacion del historial clinico de sus pacientes.
+
+ROL 3 — CUIDADOR
+  Acceso a sus residentes asignados, registro de check-ins de animo,
+  administracion de medicamentos (NFC y manual) y reporte de incidentes.
+
+FAMILIAR (autenticacion separada)
+  Portal de solo lectura con informacion filtrada del residente vinculado.
+  No tiene acceso al sistema interno ni a datos clinicos sensibles.
+
+La separacion de autenticacion (usuario_sistema para staff, usuario_familiar
+para familiares) garantiza que una brecha en el portal familiar no comprometa
+el acceso al sistema interno.
+
+
+================================================================================
+10. CARACTERISTICAS TECNICAS DESTACADAS
+================================================================================
+
+BAJA LOGICA OBLIGATORIA
+  El trigger trg_before_delete_residente bloquea los DELETE fisicos sobre la
+  tabla de residentes. Las bajas se realizan exclusivamente mediante
+  sp_dar_baja_residente, que establece activo=FALSE y registra fecha y motivo
+  de baja. Esto garantiza la integridad del historial clinico a largo plazo.
+
+HISTORIAL CLINICO INMUTABLE
+  El trigger trg_before_delete_log_medicamento impide la eliminacion de
+  registros de administracion de medicamentos. El historial de medicacion es
+  parte del expediente clinico del residente y no puede modificarse
+  retroactivamente.
+
+ALERTAS AUTOMATICAS EN TIEMPO REAL
+  Los triggers de estado de animo y GPS generan incidentes automaticamente
+  sin intervencion humana. Un puntaje de animo de 1 o 2, o una deteccion de
+  GPS fuera del jardin, crea un incidente de severidad Alta visible de inmediato
+  en el dashboard del administrador.
+
+INTEGRIDAD DE SESIONES DE TERAPIA
+  El trigger trg_before_sesion_terapia implementa a nivel de base de datos la
+  restriccion de que un terapeuta no puede tener dos sesiones simultaneas y una
+  sala no puede estar doble-reservada. Esta validacion no puede ser saltada por
+  el backend porque ocurre antes de confirmar cualquier INSERT o UPDATE.
+
+PATRON REFCURSOR
+  Los stored procedures que retornan conjuntos de datos usan INOUT REFCURSOR.
+  El backend llama al SP dentro de una transaccion, abre el cursor y lo itera
+  para construir la respuesta. Este patron permite que los SPs devuelvan
+  resultados complejos sin acoplarse al lenguaje del cliente.
+
+AUDITORIA INTEGRAL
+  Cuatro triggers de auditoria (staff, residente, usuario_sistema, acceso_rfid)
+  escriben en log_auditoria de forma transparente, capturando la operacion,
+  el registro afectado y la marca de tiempo. El administrador puede consultar
+  el historial completo desde la seccion de Auditoria del panel.
+
+VISTAS DIFERENCIADAS POR ROL
+  Las vistas del portal familiar (v_familiar_*) filtran activamente los datos
+  sensibles antes de exponerlos. Esto asegura que incluso si el portal tuviera
+  una vulnerabilidad de inyeccion SQL, el familiar no podria acceder a
+  diagnosticos clinicos o notas de sesion.
+
+INTEGRACION IoT MULTI-PROTOCOLO
+  El sistema integra cuatro tecnologias IoT distintas:
+  - GPS via servidor Traccar (API HTTP)
+  - NFC via endpoint publico en la misma red local
+  - RFID via lectores conectados al backend
+  - Beacon BLE via scanner Python en la laptop de staff
+
+  Cada tecnologia tiene sus propias tablas, stored procedures y vistas,
+  pero convergen en el dashboard IoT unificado del administrador.
+
+
+================================================================================
+FIN DEL DOCUMENTO
+================================================================================

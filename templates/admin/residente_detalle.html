@@ -100,6 +100,26 @@
             </button>
           </div>
         </form>
+
+        <div style="border-top:1px solid var(--border);margin-top:16px;padding-top:16px">
+          <div style="font-size:12px;font-weight:600;color:var(--text-sm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Cambiar Cuidador</div>
+          <form method="POST" action="{{ url_for('admin_cambiar_cuidador', id_residente=residente.id_residente) }}">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <select name="id_cuidador" required style="margin:0">
+                <option value="">— Seleccionar cuidador —</option>
+                {% for c in cuidadores %}
+                {% set es_actual = asignaciones|selectattr('id_staff','eq',c.id_staff)|selectattr('tipo_rol','eq','Cuidador')|list|length > 0 %}
+                <option value="{{ c.id_staff }}" {% if es_actual %}selected{% endif %}>
+                  {{ c.nombre }}{% if es_actual %} (actual){% endif %}
+                </option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-outline btn-sm" style="justify-content:center">
+                <i class="fa-solid fa-user-pen"></i> Actualizar cuidador
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>

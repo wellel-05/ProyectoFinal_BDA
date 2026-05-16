@@ -11,7 +11,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-import psycopg2
+import psycopg
 from werkzeug.security import generate_password_hash
 
 # Credenciales de los usuarios semilla (texto plano original)
@@ -25,7 +25,7 @@ SEED_CREDENTIALS = {
 }
 
 def main():
-    conn = psycopg2.connect(
+    conn = psycopg.connect(
         host=os.environ.get('DB_HOST', 'localhost'),
         dbname=os.environ.get('DB_NAME', 'asilo_db'),
         user=os.environ.get('DB_USER'),

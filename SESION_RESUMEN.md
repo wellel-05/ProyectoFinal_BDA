@@ -1,9 +1,49 @@
 # ElderCare — Resumen de Sesión de Trabajo
-**Fecha:** 2026-05-14 | **Demo:** ~2026-05-19 | **Equipo 5 — BDA UDEM**
+**Fecha:** 2026-05-15 | **Demo:** 2026-05-19 | **Equipo 5 — BDA UDEM**
 
 ---
 
-## Lo que se arregló / implementó esta sesión
+## Sesión 2026-05-15
+
+### Migración psycopg2 → psycopg 3
+
+Driver de BD migrado completamente de `psycopg2` a `psycopg` (v3) + `psycopg-pool`.
+
+| Archivo | Cambio |
+|---|---|
+| `app.py` imports | `import psycopg` + `from psycopg.rows import dict_row` + `from psycopg_pool import ConnectionPool` |
+| `app.py` pool | `ConnectionPool(min_size=2, max_size=10, kwargs=DB_CONFIG, open=True)` |
+| `app.py` cursores | `row_factory=dict_row` en lugar de `cursor_factory=RealDictCursor` en todos los cursores |
+| `app.py` call_refcursor | Eliminados `cur.execute('BEGIN')` / `cur.execute('COMMIT')` → `conn.commit()` / `conn.rollback()` nativos |
+| `requirements.txt` | `psycopg[binary]>=3.3.0` + `psycopg-pool>=3.3.0` (reemplaza `psycopg2-binary`) |
+| `scripts/migrate_passwords.py` | `import psycopg` + `psycopg.connect(...)` |
+| `README.md` | Stack table + security section actualizados |
+| `SETUP.md` | Instrucciones de instalación y troubleshooting actualizados |
+| `DOCUMENTACION_TECNICA.txt` | Driver DB actualizado |
+
+### Correcciones de connection pool (psycopg3)
+
+| Función / Ruta | Bug | Fix |
+|---|---|---|
+| `query()` | Sin commit después de SELECT → conexiones en INTRANS al regresar al pool → warnings | Agregado `conn.commit()` en path feliz, `conn.rollback()` en except |
+| `call_proc()` | `fetchone()` después de `commit()` | Reordenado: `fetchone()` → `commit()` |
+| `nfc_confirmar` | Connection leak: faltaba `finally: release_db(conn)` | Agregado finally block |
+| `admin_actividad_nueva` | Connection leak: faltaba `finally: release_db(conn)` | Agregado finally block |
+| `admin_actividad_toggle` | Connection leak: faltaba `finally: release_db(conn)` | Agregado finally block |
+| `admin_actividad_delete` | Connection leak: faltaba `finally: release_db(conn)` | Agregado finally block |
+
+Todos los `get_db()` tienen su `release_db()` correspondiente (19/19). Los warnings `rolling back returned connection` desaparecen con el commit en `query()`.
+
+### Documentación generada
+
+- `DOCUMENTACION_TECNICA.txt` — documento técnico profesional de 10 secciones
+- `DIAGRAMA_ER.drawio` — diagrama nativo draw.io (32 tablas, 40 relaciones, layout en columnas para minimizar cruces)
+- `generar_diagrama.py` — script Python para regenerar el diagrama
+- `ENSAYO_DEMO.txt` — guía de ensayo completa: presencial 10 min + video, cobre todos los ítems de la rúbrica
+
+---
+
+## Lo que se arregló / implementó en sesión anterior (2026-05-14)
 
 ### Base de datos (SQL)
 
@@ -77,17 +117,19 @@ https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400
 
 ---
 
-## Lo que FALTA / pendiente para próxima sesión
+## Lo que FALTA / pendiente para demo (2026-05-19)
 
-### Alta prioridad (demo 2026-05-19)
+### Alta prioridad
 
-- [ ] **Ensayo completo de demo** — recorrer todo el flujo: login admin → KPI → residente → sesión → NFC scan → beacon → GPS → familiar portal
-- [ ] **Documentación técnica** — diagrama ER actualizado con tablas nuevas + documento Word/PDF con lista de SPs, vistas y triggers para la entrega
+- [ ] **Ensayo cronometrado** — recorrer el flujo completo con timer: login admin → KPI → residente → sesión → NFC scan → beacon → GPS → familiar portal (10 min presencial)
+- [ ] **Asignar segmentos de la presentación** a cada integrante del equipo (ver ENSAYO_DEMO.txt)
+- [ ] **Video** — grabar funcionalidades que no caben en los 10 min presenciales (ERD, DDL, portal terapeuta/cuidador completo, familiar, audit)
+- [ ] **Subir video a YouTube** antes del 2026-05-19
 
-### Mejoras opcionales (si hay tiempo)
+### Opcional (si hay tiempo)
 
-- [ ] **Seed data adicional** — asegurarse de que haya datos de hoy (turnos, checkins de ánimo, sesiones, accesos RFID) para que los dashboards no salgan vacíos en la demo
-- [ ] **Formulario de alta de residente** — verificar end-to-end con el trigger de auditoría
+- [ ] **Seed data adicional** — el SEED.sql usa `NOW()` / `CURRENT_DATE` relativos, así que es relativo a cuando se corre. OK para la demo.
+- [ ] **README técnico** (5% rúbrica) — el README.md ya existe, verificar que cubra todos los puntos de la rúbrica
 
 ---
 
@@ -134,3 +176,7 @@ python scripts/export_mongodb.py
 5. **Reiniciar Flask después de cambios en la DB** — el pool de conexiones puede quedar en estado de error
 6. **`call_refcursor` espera cursor llamado `resultado`** — el SP debe hacer `OPEN resultado FOR ...`
 7. **`DROP VIEW IF EXISTS` antes de recrear vistas** — PostgreSQL no permite cambiar columnas con `CREATE OR REPLACE VIEW`
+8. **psycopg 3: `row_factory=dict_row` en el cursor, NO `cursor_factory=RealDictCursor`** — ese era el patron de psycopg2
+9. **psycopg 3: NO usar `cur.execute('BEGIN')` ni `cur.execute('COMMIT')`** — psycopg3 gestiona las transacciones con `conn.commit()` / `conn.rollback()`
+10. **psycopg 3: siempre hacer `conn.commit()` después de SELECT** — si no, la conexión regresa al pool en estado `INTRANS` y aparecen los warnings `rolling back returned connection`
+11. **Todo `get_db()` debe tener su `release_db(conn)` en el `finally`** — si no, el pool se agota y la app se cuelga

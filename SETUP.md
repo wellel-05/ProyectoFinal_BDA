@@ -51,8 +51,10 @@ Password when prompted: `123`
 ## 4. Install Python Dependencies
 
 ```bash
-pip install flask psycopg2-binary werkzeug
+pip install -r requirements.txt
 ```
+
+> El proyecto usa **psycopg 3** (`psycopg[binary]`) + `psycopg-pool`. No instalar `psycopg2`.
 
 ---
 
@@ -82,5 +84,5 @@ Open: **http://127.0.0.1:8080**
 |---------------------------|-------------------------------------------------------------------|
 | `psql` not found          | Add `C:\Program Files\PostgreSQL\16\bin` to Windows PATH          |
 | Password prompt fails     | Add `-W` flag: `psql -U equipo5proyfin -d asilo_db -W -f DDL.sql` |
-| `psycopg2` install fails  | Make sure you're using `psycopg2-binary`, not `psycopg2`          |
+| `psycopg` install fails   | Run `pip install "psycopg[binary]" psycopg-pool`                  |
 | SEED.sql errors on re-run | Data already exists — safe to ignore duplicate key errors         |

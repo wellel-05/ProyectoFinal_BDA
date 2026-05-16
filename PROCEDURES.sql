@@ -1406,6 +1406,60 @@ END;
 $$;
 
 
+-- ─── Asignaciones activas de un residente ────────────────────────────────────
+DROP PROCEDURE IF EXISTS sp_asignaciones_residente(integer,refcursor);
+CREATE OR REPLACE PROCEDURE sp_asignaciones_residente(
+    p_id_residente INT,
+    p_cursor       REFCURSOR
+)
+LANGUAGE plpgsql AS $$
+BEGIN
+    OPEN p_cursor FOR
+    SELECT a.id_asignacion,
+           s.id_staff,
+           s.nombre || ' ' || s.apellidos AS staff_nombre,
+           a.tipo_rol,
+           a.es_principal,
+           a.fecha_inicio
+    FROM asignacion a
+    JOIN staff s ON a.id_staff = s.id_staff
+    WHERE a.id_residente = p_id_residente
+      AND a.fecha_fin IS NULL
+    ORDER BY a.es_principal DESC, a.tipo_rol;
+END;
+$$;
+
+
+-- ─── Cambiar cuidador principal de un residente ───────────────────────────────
+DROP PROCEDURE IF EXISTS sp_cambiar_cuidador(integer,integer,integer,text);
+CREATE OR REPLACE PROCEDURE sp_cambiar_cuidador(
+    p_id_residente      INT,
+    p_id_nuevo_cuidador INT,
+    OUT ok              INT,
+    OUT msg             TEXT
+)
+LANGUAGE plpgsql AS $$
+BEGIN
+    -- Cerrar asignaciones de Cuidador vigentes
+    UPDATE asignacion
+       SET fecha_fin = CURRENT_DATE
+     WHERE id_residente = p_id_residente
+       AND tipo_rol     = 'Cuidador'
+       AND fecha_fin    IS NULL;
+
+    -- Registrar nuevo cuidador principal
+    INSERT INTO asignacion (id_residente, id_staff, tipo_rol, es_principal)
+    VALUES (p_id_residente, p_id_nuevo_cuidador, 'Cuidador', TRUE);
+
+    ok  := 1;
+    msg := 'Cuidador actualizado correctamente.';
+EXCEPTION WHEN OTHERS THEN
+    ok  := 0;
+    msg := 'Error: ' || SQLERRM;
+END;
+$$;
+
+
 -- ─── Sesiones de hoy para un terapeuta ───────────────────────────────────────
 DROP PROCEDURE IF EXISTS sp_sesiones_hoy_terapeuta(integer,refcursor);
 CREATE OR REPLACE PROCEDURE sp_sesiones_hoy_terapeuta(

@@ -49,16 +49,18 @@
             {{ 'Activo' if s.activo else 'Inactivo' }}
           </span>
         </td>
-        <td style="display:flex;gap:6px;align-items:center">
-          <button class="btn btn-ghost btn-sm" title="Editar"
-            onclick="openEdit({{ s.id_staff }},'{{ s.nombre|e }}','{{ s.apellidos|e }}','{{ s.especialidad|e }}','{{ s.email|e }}',{{ s.id_rol }})">
-            <i class="fa-solid fa-pen-to-square" style="color:var(--primary)"></i>
-          </button>
-          <form method="POST" action="{{ url_for('admin_staff_toggle', id_staff=s.id_staff) }}">
-            <button type="submit" class="btn btn-ghost btn-sm" title="{{ 'Desactivar' if s.activo else 'Activar' }}">
-              <i class="fa-solid {% if s.activo %}fa-toggle-on{% else %}fa-toggle-off{% endif %}" style="color:{% if s.activo %}var(--success){% else %}var(--text-sm){% endif %}"></i>
+        <td>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button class="btn btn-ghost btn-sm" title="Editar"
+              onclick="openEdit({{ s.id_staff }},'{{ s.nombre|e }}','{{ s.apellidos|e }}','{{ s.especialidad|e }}','{{ s.email|e }}',{{ s.id_rol }})">
+              <i class="fa-solid fa-pen-to-square" style="color:var(--primary)"></i>
             </button>
-          </form>
+            <form method="POST" action="{{ url_for('admin_staff_toggle', id_staff=s.id_staff) }}">
+              <button type="submit" class="btn btn-ghost btn-sm" title="{{ 'Desactivar' if s.activo else 'Activar' }}">
+                <i class="fa-solid {% if s.activo %}fa-toggle-on{% else %}fa-toggle-off{% endif %}" style="color:{% if s.activo %}var(--success){% else %}var(--text-sm){% endif %}"></i>
+              </button>
+            </form>
+          </div>
         </td>
       </tr>
       {% else %}
