@@ -14,9 +14,9 @@ from flask_wtf.csrf import CSRFProtect
 from functools import wraps
 from datetime import date, timedelta
 from collections import defaultdict
-import psycopg2
-from psycopg2.extras import RealDictCursor
-from psycopg2.pool import ThreadedConnectionPool
+import psycopg
+from psycopg.rows import dict_row
+from psycopg_pool import ConnectionPool
 from werkzeug.security import check_password_hash, generate_password_hash
 from pymongo import MongoClient, DESCENDING
 from pymongo.errors import PyMongoError
@@ -57,19 +57,19 @@ DB_CONFIG = {
     'options':  '-c client_encoding=UTF8',
 }
 
-_pool: 'ThreadedConnectionPool | None' = None
+_pool: 'ConnectionPool | None' = None
 
-def _get_pool() -> ThreadedConnectionPool:
+def _get_pool() -> ConnectionPool:
     global _pool
     if _pool is None:
-        _pool = ThreadedConnectionPool(minconn=2, maxconn=10, **DB_CONFIG)
+        _pool = ConnectionPool(min_size=2, max_size=10, kwargs=DB_CONFIG, open=True)
         logger.info('Pool de conexiones inicializado (min=2, max=10)')
     return _pool
 
 def get_db():
     try:
         return _get_pool().getconn()
-    except psycopg2.pool.PoolError as e:
+    except Exception as e:
         logger.critical('Pool de conexiones agotado: %s', e)
         raise
 
@@ -81,13 +81,11 @@ def release_db(conn):
 def query(sql, params=None, fetchone=False, fetchall=False):
     conn = get_db()
     try:
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute(sql, params or ())
-        result = None
-        if fetchone:   result = cur.fetchone()
-        elif fetchall: result = cur.fetchall()
-        cur.close()
-        return result
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(sql, params or ())
+            if fetchone:   return cur.fetchone()
+            elif fetchall: return cur.fetchall()
+            return None
     except Exception as e:
         logger.error('query error [%.80s]: %s', sql, e)
         return None
@@ -116,21 +114,19 @@ def call_proc(sql, params=(), user_id=None):
 def call_refcursor(sql, params=()):
     """Llama un procedimiento que abre un REFCURSOR llamado 'resultado'."""
     conn = get_db()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
     try:
-        cur.execute("BEGIN")
-        cur.execute(sql, params)
-        cur.execute("FETCH ALL FROM resultado")
-        rows = cur.fetchall()
-        cur.execute("COMMIT")
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(sql, params)
+            cur.execute("FETCH ALL FROM resultado")
+            rows = cur.fetchall()
+        conn.commit()
         return rows
     except Exception as e:
-        try: cur.execute("ROLLBACK")
-        except: pass
+        try: conn.rollback()
+        except Exception: pass
         logger.error('refcursor error [%.80s]: %s', sql, e)
         return []
     finally:
-        cur.close()
         release_db(conn)
 
 # ── MongoDB (NoSQL) ───────────────────────────────────────────────────────────
@@ -1542,7 +1538,7 @@ def api_beacon():
 
     conn = get_db()
     try:
-        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur = conn.cursor(row_factory=dict_row)
         cur.execute(
             """INSERT INTO deteccion_beacon (id_beacon, id_staff)
                VALUES (%s, %s)
@@ -1792,7 +1788,7 @@ def _check_geofences(device_id, lat, lon):
     """Evalúa geocercas tras cada fix GPS; genera alertas cuando corresponde."""
     conn = get_db()
     try:
-        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur = conn.cursor(row_factory=dict_row)
         cur.execute("SELECT * FROM zona_gps WHERE activo = TRUE")
         for zona in cur.fetchall():
             dist = haversine_m(lat, lon, float(zona['latitud']), float(zona['longitud']))
@@ -2223,7 +2219,7 @@ def nfc_confirmar():
 
     conn = get_db()
     try:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
                 INSERT INTO asistencia_nfc (id_residente, id_actividad, id_staff, notas, metodo)
                 VALUES (%s, %s, %s, %s, 'nfc') RETURNING id_asistencia
