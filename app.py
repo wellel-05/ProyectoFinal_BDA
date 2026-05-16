@@ -2241,6 +2241,87 @@ def familiar_gps():
     return render_template('familiar/gps.html')
 
 
+# ── Familiar: Pagos ───────────────────────────────────────────────────────────
+
+@app.route('/familiar/pagos/<int:id_residente>', methods=['GET', 'POST'])
+@familiar_required
+def familiar_pagos(id_residente):
+    id_familiar = session['familiar_id']
+
+    # Verificar acceso
+    vinculo = query(
+        "SELECT 1 FROM familiar_residente WHERE id_familiar=%s AND id_residente=%s AND fecha_fin IS NULL",
+        (id_familiar, id_residente), fetchone=True)
+    if not vinculo:
+        flash('No tienes acceso a este residente.', 'error')
+        return redirect(url_for('familiar_dashboard'))
+
+    if request.method == 'POST':
+        metodo    = request.form.get('metodo_pago', '')
+        periodo   = request.form.get('periodo', '')
+        if not metodo or not periodo:
+            flash('Selecciona el método de pago y el periodo.', 'error')
+            return redirect(url_for('familiar_pagos', id_residente=id_residente))
+        try:
+            mes, anio = int(periodo.split('-')[1]), int(periodo.split('-')[0])
+        except (ValueError, IndexError):
+            flash('Periodo inválido.', 'error')
+            return redirect(url_for('familiar_pagos', id_residente=id_residente))
+
+        conn = get_db()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "CALL sp_registrar_pago(%s,%s,%s,%s,%s,NULL,NULL,NULL)",
+                    (id_familiar, id_residente, metodo, mes, anio))
+                row = cur.fetchone()
+            conn.commit()
+            ok, msg = (int(row[0]), str(row[1])) if row else (0, 'Sin respuesta.')
+        except Exception as exc:
+            try: conn.rollback()
+            except Exception: pass
+            ok, msg = 0, 'Error al procesar el pago.'
+            logger.error('sp_registrar_pago error: %s', exc)
+        finally:
+            release_db(conn)
+
+        flash(msg, 'exito' if ok else 'error')
+        return redirect(url_for('familiar_pagos', id_residente=id_residente))
+
+    # GET — datos del plan e historial
+    plan_rows = call_refcursor(
+        "CALL sp_plan_residente(%s,%s,'resultado')", (id_residente, id_familiar))
+    plan = plan_rows[0] if plan_rows else None
+
+    pagos = call_refcursor(
+        "CALL sp_pagos_residente(%s,%s,'resultado')", (id_residente, id_familiar))
+
+    residente_info = query(
+        "SELECT nombre || ' ' || apellidos AS nombre_completo, habitacion FROM residente WHERE id_residente=%s",
+        (id_residente,), fetchone=True)
+
+    # Meses disponibles para pagar: mes actual y los 2 próximos
+    today = date.today()
+    meses_disponibles = []
+    for delta in range(3):
+        mes_target = today.month + delta
+        anio_target = today.year
+        if mes_target > 12:
+            mes_target -= 12
+            anio_target += 1
+        meses_disponibles.append({
+            'value': f'{anio_target}-{mes_target:02d}',
+            'label': date(anio_target, mes_target, 1).strftime('%B %Y').capitalize()
+        })
+
+    return render_template('familiar/pagos.html',
+                           plan=plan,
+                           pagos=pagos,
+                           residente=residente_info,
+                           id_residente=id_residente,
+                           meses_disponibles=meses_disponibles)
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 #  NFC — Registro de asistencia a actividades
 # ─────────────────────────────────────────────────────────────────────────────

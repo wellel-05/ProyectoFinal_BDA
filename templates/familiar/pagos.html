@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+{% block title %}Pagos — {{ residente.nombre_completo }}{% endblock %}
+{% block page_title %}Estado de Cuenta{% endblock %}
+
+{% block content %}
+
+{# ── Breadcrumb ── #}
+<div class="page-header" style="margin-bottom:24px">
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <a href="{{ url_for('familiar_dashboard') }}" class="btn btn-outline btn-sm">
+      <i class="fa-solid fa-arrow-left"></i> Mis residentes
+    </a>
+    <a href="{{ url_for('familiar_residente', id_residente=id_residente) }}" class="btn btn-outline btn-sm">
+      <i class="fa-solid fa-user"></i> {{ residente.nombre_completo }}
+    </a>
+  </div>
+  <a href="{{ url_for('familiar_logout') }}" class="btn btn-outline btn-sm">
+    <i class="fa-solid fa-right-from-bracket"></i> Cerrar sesion
+  </a>
+</div>
+
+{# ── Flash messages ── #}
+{% with msgs = get_flashed_messages(with_categories=true) %}
+{% for cat, msg in msgs %}
+<div class="alert alert-{{ 'success' if cat == 'exito' else 'error' }}" style="margin-bottom:18px;padding:14px 18px;border-radius:10px;display:flex;align-items:center;gap:10px;
+     background:{{ '#ECFDF5' if cat == 'exito' else '#FEF2F2' }};
+     border:1px solid {{ '#6EE7B7' if cat == 'exito' else '#FECACA' }};
+     color:{{ '#065F46' if cat == 'exito' else '#991B1B' }}">
+  <i class="fa-solid fa-{{ 'circle-check' if cat == 'exito' else 'circle-exclamation' }}" style="font-size:16px"></i>
+  <span>{{ msg }}</span>
+</div>
+{% endfor %}
+{% endwith %}
+
+{% if plan %}
+
+{# ── Plan activo ── #}
+{% set colores = {'Esencial': '#3B82F6', 'Bienestar': '#7B5EA7', 'Premium': '#F59E0B'} %}
+{% set iconos  = {'Esencial': 'fa-seedling', 'Bienestar': 'fa-star', 'Premium': 'fa-crown'} %}
+{% set color_plan = colores.get(plan.tipo_plan, '#7B5EA7') %}
+{% set icono_plan = iconos.get(plan.tipo_plan,  'fa-star') %}
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:24px">
+
+  {# Tarjeta plan #}
+  <div class="card" style="border-top:4px solid {{ color_plan }};position:relative;overflow:hidden">
+    <div style="position:absolute;top:-18px;right:-18px;font-size:80px;opacity:.05;color:{{ color_plan }}">
+      <i class="fa-solid {{ icono_plan }}"></i>
+    </div>
+    <div class="card-body">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-sm);margin-bottom:6px">Plan Contratado</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:36px;height:36px;border-radius:8px;background:{{ color_plan }};display:flex;align-items:center;justify-content:center;color:#fff">
+          <i class="fa-solid {{ icono_plan }}" style="font-size:16px"></i>
+        </div>
+        <div style="font-size:22px;font-weight:800;color:{{ color_plan }}">{{ plan.tipo_plan }}</div>
+      </div>
+      <div style="font-size:26px;font-weight:800;color:var(--text-dk);margin-bottom:2px">
+        ${{ '{:,.0f}'.format(plan.monto_mensual) }}
+        <span style="font-size:13px;font-weight:500;color:var(--text-sm)">MXN/mes</span>
+      </div>
+      <div style="font-size:11.5px;color:var(--text-sm)">
+        Desde {{ plan.fecha_inicio.strftime('%d/%m/%Y') if plan.fecha_inicio else '—' }}
+      </div>
+    </div>
+  </div>
+
+  {# Total pagado #}
+  <div class="card" style="border-top:4px solid #52B788">
+    <div class="card-body">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-sm);margin-bottom:6px">Total Pagado</div>
+      <div style="font-size:32px;font-weight:800;color:#52B788;margin-bottom:4px">
+        ${{ '{:,.0f}'.format(plan.total_pagado) }}
+        <span style="font-size:13px;font-weight:500;color:var(--text-sm)">MXN</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-sm)">
+        {{ plan.num_pagos }} pago{{ 's' if plan.num_pagos != 1 else '' }} completado{{ 's' if plan.num_pagos != 1 else '' }}
+      </div>
+      {% if plan.ultimo_pago %}
+      <div style="font-size:11.5px;color:var(--text-sm);margin-top:8px">
+        <i class="fa-solid fa-clock-rotate-left" style="margin-right:4px;opacity:.5"></i>
+        Último: {{ plan.ultimo_pago.strftime('%d/%m/%Y') if plan.ultimo_pago else '—' }}
+        · {{ plan.ultimo_metodo }}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# Estado mes actual #}
+  <div class="card" style="border-top:4px solid {{ '#52B788' if plan.mes_actual_pagado else '#F59E0B' }}">
+    <div class="card-body">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-sm);margin-bottom:6px">Mes Actual</div>
+      {% if plan.mes_actual_pagado %}
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:40px;height:40px;border-radius:50%;background:#ECFDF5;display:flex;align-items:center;justify-content:center">
+          <i class="fa-solid fa-circle-check" style="color:#52B788;font-size:22px"></i>
+        </div>
+        <div>
+          <div style="font-size:16px;font-weight:700;color:#52B788">Al corriente</div>
+          <div style="font-size:12px;color:var(--text-sm)">Pago recibido</div>
+        </div>
+      </div>
+      {% else %}
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:40px;height:40px;border-radius:50%;background:#FFFBEB;display:flex;align-items:center;justify-content:center">
+          <i class="fa-solid fa-triangle-exclamation" style="color:#F59E0B;font-size:20px"></i>
+        </div>
+        <div>
+          <div style="font-size:16px;font-weight:700;color:#F59E0B">Pendiente</div>
+          <div style="font-size:12px;color:var(--text-sm)">Realiza tu pago</div>
+        </div>
+      </div>
+      {% endif %}
+      <div style="font-size:24px;font-weight:800;color:var(--text-dk)">
+        ${{ '{:,.0f}'.format(plan.monto_mensual) }}
+        <span style="font-size:12px;font-weight:400;color:var(--text-sm)">MXN</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{# ── Layout: formulario de pago + historial ── #}
+<div style="display:grid;grid-template-columns:380px 1fr;gap:20px;align-items:start">
+
+  {# ── Formulario de pago ── #}
+  <div>
+    <div class="card" style="border:2px solid {{ color_plan }}20">
+      <div class="card-header" style="background:linear-gradient(135deg,{{ color_plan }}18,{{ color_plan }}08)">
+        <span class="card-title" style="color:{{ color_plan }}">
+          <i class="fa-solid fa-credit-card" style="margin-right:8px"></i>Realizar Pago
+        </span>
+      </div>
+      <div class="card-body">
+        <form method="POST" id="payment-form">
+          <div class="form-group" style="margin-bottom:16px">
+            <label style="font-size:12px;font-weight:700;color:var(--text-md);margin-bottom:6px;display:block">
+              Periodo a pagar
+            </label>
+            <select name="periodo" required style="width:100%">
+              <option value="">Seleccionar…</option>
+              {% for m in meses_disponibles %}
+              <option value="{{ m.value }}">{{ m.label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom:20px">
+            <label style="font-size:12px;font-weight:700;color:var(--text-md);margin-bottom:8px;display:block">
+              Método de pago
+            </label>
+            <div style="display:flex;flex-direction:column;gap:10px">
+
+              <label id="opt-card" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:2px solid var(--border);
+                    border-radius:10px;cursor:pointer;transition:all .2s" onclick="selectMetodo('Tarjeta de crédito','opt-card')">
+                <input type="radio" name="metodo_pago" value="Tarjeta de crédito" style="display:none">
+                <div style="width:36px;height:24px;border-radius:4px;background:linear-gradient(135deg,#1A1A2E,#16213E);
+                            display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <i class="fa-brands fa-cc-visa" style="color:#fff;font-size:14px"></i>
+                </div>
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:var(--text-dk)">Tarjeta de crédito</div>
+                  <div style="font-size:11px;color:var(--text-sm)">Visa, Mastercard, Amex</div>
+                </div>
+                <div id="check-card" style="margin-left:auto;width:18px;height:18px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center"></div>
+              </label>
+
+              <label id="opt-spei" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:2px solid var(--border);
+                    border-radius:10px;cursor:pointer;transition:all .2s" onclick="selectMetodo('Transferencia SPEI','opt-spei')">
+                <input type="radio" name="metodo_pago" value="Transferencia SPEI" style="display:none">
+                <div style="width:36px;height:24px;border-radius:4px;background:linear-gradient(135deg,#134E4A,#0F766E);
+                            display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <i class="fa-solid fa-building-columns" style="color:#fff;font-size:12px"></i>
+                </div>
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:var(--text-dk)">Transferencia SPEI</div>
+                  <div style="font-size:11px;color:var(--text-sm)">Inmediato, sin comisión</div>
+                </div>
+                <div id="check-spei" style="margin-left:auto;width:18px;height:18px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center"></div>
+              </label>
+
+              <label id="opt-oxxo" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:2px solid var(--border);
+                    border-radius:10px;cursor:pointer;transition:all .2s" onclick="selectMetodo('OXXO Pay','opt-oxxo')">
+                <input type="radio" name="metodo_pago" value="OXXO Pay" style="display:none">
+                <div style="width:36px;height:24px;border-radius:4px;background:linear-gradient(135deg,#EA580C,#C2410C);
+                            display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <i class="fa-solid fa-store" style="color:#fff;font-size:12px"></i>
+                </div>
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:var(--text-dk)">OXXO Pay</div>
+                  <div style="font-size:11px;color:var(--text-sm)">Paga en efectivo en OXXO</div>
+                </div>
+                <div id="check-oxxo" style="margin-left:auto;width:18px;height:18px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center"></div>
+              </label>
+
+            </div>
+            <input type="hidden" name="metodo_pago" id="metodo_hidden">
+          </div>
+
+          {# Resumen del cobro #}
+          <div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:18px">
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--text-sm);margin-bottom:6px">
+              <span>Plan {{ plan.tipo_plan }}</span>
+              <span>${{ '{:,.0f}'.format(plan.monto_mensual) }} MXN</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--text-sm);margin-bottom:10px">
+              <span>Comisión</span>
+              <span style="color:#52B788">$0.00</span>
+            </div>
+            <div style="border-top:1px solid var(--border);padding-top:10px;display:flex;justify-content:space-between;font-weight:800;font-size:16px;color:var(--text-dk)">
+              <span>Total</span>
+              <span style="color:{{ color_plan }}">${{ '{:,.0f}'.format(plan.monto_mensual) }} MXN</span>
+            </div>
+          </div>
+
+          <button type="button" id="pay-btn" onclick="iniciarPago()"
+                  class="btn btn-accent" style="width:100%;justify-content:center;padding:14px;font-size:14px;font-weight:700">
+            <i class="fa-solid fa-lock" style="margin-right:8px"></i>
+            Pagar ${{ '{:,.0f}'.format(plan.monto_mensual) }} MXN
+          </button>
+
+          <p style="font-size:10.5px;color:var(--text-sm);text-align:center;margin-top:10px">
+            <i class="fa-solid fa-shield-halved" style="color:#52B788;margin-right:4px"></i>
+            Simulación segura · Entorno de demostración
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {# ── Historial de pagos ── #}
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-receipt" style="margin-right:8px"></i>Historial de Pagos</span>
+      <span style="font-size:12px;color:var(--text-sm)">Últimos 24 movimientos</span>
+    </div>
+    <div class="card-body" style="padding:0">
+      {% if pagos %}
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="background:var(--bg)">
+            <th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--text-sm);font-weight:700;text-transform:uppercase;letter-spacing:.6px">Fecha</th>
+            <th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--text-sm);font-weight:700;text-transform:uppercase;letter-spacing:.6px">Concepto</th>
+            <th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--text-sm);font-weight:700;text-transform:uppercase;letter-spacing:.6px">Método</th>
+            <th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--text-sm);font-weight:700;text-transform:uppercase;letter-spacing:.6px">Referencia</th>
+            <th style="padding:10px 16px;text-align:right;font-size:11px;color:var(--text-sm);font-weight:700;text-transform:uppercase;letter-spacing:.6px">Monto</th>
+            <th style="padding:10px 16px;text-align:center;font-size:11px;color:var(--text-sm);font-weight:700;text-transform:uppercase;letter-spacing:.6px">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in pagos %}
+          {% set estado_color = '#52B788' if p.estado == 'Completado' else ('#F59E0B' if p.estado == 'Pendiente' else '#EF4444') %}
+          {% set estado_bg    = '#ECFDF5' if p.estado == 'Completado' else ('#FFFBEB' if p.estado == 'Pendiente' else '#FEF2F2') %}
+          {% set metodo_icon  = 'fa-building-columns' if 'SPEI' in p.metodo_pago else ('fa-store' if 'OXXO' in p.metodo_pago else 'fa-credit-card') %}
+          <tr style="border-top:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+            <td style="padding:12px 16px;font-size:12.5px;color:var(--text-md);white-space:nowrap">
+              {{ p.fecha_pago.strftime('%d/%m/%Y') if p.fecha_pago else '—' }}<br>
+              <span style="font-size:11px;color:var(--text-sm)">{{ p.fecha_pago.strftime('%H:%M') if p.fecha_pago else '' }}</span>
+            </td>
+            <td style="padding:12px 16px;font-size:12.5px;color:var(--text-dk)">
+              {{ p.concepto or ('Mensualidad ' ~ p.tipo_plan) }}<br>
+            </td>
+            <td style="padding:12px 16px;font-size:12px;color:var(--text-md);white-space:nowrap">
+              <i class="fa-solid {{ metodo_icon }}" style="margin-right:5px;opacity:.6"></i>{{ p.metodo_pago }}
+            </td>
+            <td style="padding:12px 16px;font-size:11px;color:var(--text-sm);font-family:monospace">{{ p.referencia }}</td>
+            <td style="padding:12px 16px;text-align:right;font-weight:700;font-size:13px;color:var(--text-dk);white-space:nowrap">
+              ${{ '{:,.0f}'.format(p.monto) }}
+            </td>
+            <td style="padding:12px 16px;text-align:center">
+              <span style="background:{{ estado_bg }};color:{{ estado_color }};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">
+                {{ p.estado }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state" style="padding:40px">
+        <i class="fa-solid fa-receipt" style="font-size:36px;opacity:.3;margin-bottom:12px"></i>
+        <p>No hay pagos registrados aún.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+{% else %}
+{# Sin plan asignado #}
+<div class="card">
+  <div class="card-body">
+    <div class="empty-state">
+      <i class="fa-solid fa-file-invoice-dollar" style="font-size:42px;opacity:.25;margin-bottom:14px"></i>
+      <p>Este residente aún no tiene un plan asignado. Contacta al administrador del asilo.</p>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# ── Modal de procesamiento ── #}
+<div id="pay-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;
+     align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:18px;padding:40px 48px;text-align:center;min-width:320px;box-shadow:0 24px 64px rgba(0,0,0,.25)">
+    <div id="pay-spinner" style="width:60px;height:60px;border-radius:50%;border:5px solid #E5E7EB;
+         border-top-color:#7B5EA7;animation:spin 1s linear infinite;margin:0 auto 20px"></div>
+    <div style="font-size:18px;font-weight:700;color:#1F2937;margin-bottom:8px">Procesando pago…</div>
+    <div style="font-size:13px;color:#6B7280">Espera un momento, estamos verificando tu transacción.</div>
+  </div>
+</div>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+.form-group select { width:100%; }
+</style>
+
+<script>
+let metodoSeleccionado = '';
+const COLOR_PLAN = '{{ color_plan }}';
+
+function selectMetodo(valor, optId) {
+  metodoSeleccionado = valor;
+  document.getElementById('metodo_hidden').value = valor;
+
+  const opts = ['opt-card', 'opt-spei', 'opt-oxxo'];
+  const checks = ['check-card', 'check-spei', 'check-oxxo'];
+  opts.forEach((id, i) => {
+    const el = document.getElementById(id);
+    const ch = document.getElementById(checks[i]);
+    if (id === optId) {
+      el.style.borderColor = COLOR_PLAN;
+      el.style.background  = COLOR_PLAN + '10';
+      ch.style.borderColor = COLOR_PLAN;
+      ch.style.background  = COLOR_PLAN;
+      ch.innerHTML = '<i class="fa-solid fa-check" style="color:#fff;font-size:10px"></i>';
+    } else {
+      el.style.borderColor = 'var(--border)';
+      el.style.background  = '';
+      ch.style.borderColor = 'var(--border)';
+      ch.style.background  = '';
+      ch.innerHTML = '';
+    }
+  });
+}
+
+function iniciarPago() {
+  const form    = document.getElementById('payment-form');
+  const periodo = form.querySelector('[name="periodo"]').value;
+  if (!periodo) { alert('Selecciona el periodo a pagar.'); return; }
+  if (!metodoSeleccionado) { alert('Selecciona un método de pago.'); return; }
+
+  // Mostrar overlay de procesamiento
+  const overlay = document.getElementById('pay-overlay');
+  overlay.style.display = 'flex';
+
+  // Simular delay de pasarela (2 s) y luego enviar el form
+  setTimeout(() => { form.submit(); }, 2000);
+}
+</script>
+
+{% endblock %}
