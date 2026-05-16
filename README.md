@@ -311,6 +311,46 @@ Los datos de prueba usan `NOW()` y `CURRENT_DATE` relativos — siempre muestran
 
 ---
 
+## Integración MongoDB — Relación lógica con PostgreSQL
+
+MongoDB actúa como capa de registro analítico y de eventos en tiempo real, complementando a PostgreSQL que gestiona el estado transaccional del sistema. Cada inserción en MongoDB se dispara desde Flask inmediatamente después de que la operación principal en PostgreSQL confirma (commit).
+
+### Colecciones exportadas
+
+Los archivos JSON se encuentran en `mongo_exports/` y son regenerables con `python scripts/export_mongodb.py`.
+
+| Archivo | Documentos | Descripcion |
+|---------|-----------|-------------|
+| `mongo_exports/eventos_iot.json` | ~173 | Eventos de beacons BLE, RFID, NFC y GPS |
+| `mongo_exports/checkins_animo.json` | ~120 | Historial de check-ins de estado de animo |
+| `mongo_exports/logs_aplicacion.json` | ~84 | Logs de autenticacion y alertas del sistema |
+
+### Mapa de eventos: PostgreSQL → MongoDB
+
+| Evento / tabla PG | Coleccion MongoDB | Campos clave del documento | Relacion con PG |
+|-------------------|------------------|---------------------------|-----------------|
+| Login exitoso (`usuario_sistema`) | `logs_aplicacion` | `evento`, `username`, `id_staff`, `ip` | `id_staff` → `staff.id_staff` |
+| Login fallido | `logs_aplicacion` | `evento`, `username`, `ip` | — |
+| Login familiar (`usuario_familiar`) | `logs_aplicacion` | `evento`, `id_familiar`, `username` | `id_familiar` → `familiar.id_familiar` |
+| INSERT `checkin_estado_animo` | `checkins_animo` | `id_residente`, `puntaje`, `id_cuidador`, `timestamp` | `id_residente` → `residente`, `id_cuidador` → `staff` |
+| INSERT `nfc_evento` + `log_medicamento` | `eventos_iot` | `tipo='nfc_medicamento'`, `tag`, `id_staff`, `pg_log_id` | `pg_log_id` → `log_medicamento.id_log` |
+| INSERT `acceso_rfid` | `eventos_iot` | `tipo='rfid'`, `id_lector`, `id_staff`, `concedido` | `id_lector` → `lector_rfid`, `id_staff` → `staff` |
+| INSERT `deteccion_beacon` | `eventos_iot` | `tipo='beacon'`, `id_beacon`, `id_staff`, `rssi`, `pg_deteccion_id` | `pg_deteccion_id` → `deteccion_beacon.id_deteccion` |
+| GPS update (Traccar → `/api/traccar`) | `eventos_iot` | `tipo='gps_update'`, `device_id`, `latitud`, `longitud` | `device_id` → `dispositivo_gps.device_id` |
+| Alerta GPS perimetro (trigger PG) | `logs_aplicacion` | `evento='alerta_gps'`, `device_id`, `zona`, `mensaje` | `zona` → `zona_gps.nombre` |
+
+### Uso de MongoDB en dashboards (Highcharts)
+
+Tres reportes consumen MongoDB directamente via API REST:
+
+| Tab en `/admin/reportes` | Endpoint Flask | Coleccion | Tipo de grafica |
+|--------------------------|---------------|-----------|-----------------|
+| IoT en Tiempo Real | `GET /api/mongo/eventos_iot` | `eventos_iot` | Serie de tiempo (line chart) |
+| Animo Historico | `GET /api/mongo/animo` | `checkins_animo` | Barras comparativas (column chart) |
+| Seguridad | `GET /api/mongo/logs` + `/api/mongo/eventos_iot` | `logs_aplicacion` + `eventos_iot` | Solid gauge (KPIs de seguridad) |
+
+---
+
 ## Seguridad implementada
 
 | Mecanismo | Descripcion |
