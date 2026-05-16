@@ -343,6 +343,56 @@ INSERT INTO asistencia_nfc (id_residente, id_actividad, id_staff, ts_registro, n
 (1, 2, 4, NOW() - INTERVAL '10 hours',        'Segunda sesion de musicoterapia de la semana.', 'nfc'),
 (3, 3, 6, NOW() - INTERVAL '3 hours',         'Terapia ocupacional individual — tejido.', 'manual');
 
+-- ============================================================
+-- 17. PLANES Y PAGOS (portal familiar)
+-- ============================================================
+
+-- Planes activos para los primeros 5 residentes
+INSERT INTO plan_residente (id_residente, tipo_plan, monto_mensual, fecha_inicio)
+SELECT id_res, tipo, monto, fini::DATE
+FROM (VALUES
+    (1, 'Bienestar', 38000.00, '2024-03-01'),
+    (2, 'Premium',   55000.00, '2024-01-15'),
+    (3, 'Esencial',  22500.00, '2024-06-01'),
+    (4, 'Bienestar', 38000.00, '2024-09-01'),
+    (5, 'Premium',   55000.00, '2023-11-01')
+) AS t(id_res, tipo, monto, fini)
+WHERE NOT EXISTS (
+    SELECT 1 FROM plan_residente pr
+    WHERE pr.id_residente = t.id_res AND pr.activo = TRUE
+);
+
+-- Historial de pagos demo (familiar1 vinculado al residente 1)
+INSERT INTO pago (id_familiar, id_residente, id_plan, monto, fecha_pago,
+                  metodo_pago, referencia, estado, periodo_mes, periodo_anio, concepto)
+SELECT
+    f.id_familiar,
+    1,
+    (SELECT id_plan FROM plan_residente WHERE id_residente = 1 AND activo = TRUE LIMIT 1),
+    38000.00,
+    t.gen_fecha,
+    t.metodo,
+    t.ref,
+    'Completado',
+    t.mes,
+    t.anio,
+    'Mensualidad Plan Bienestar — ' || TO_CHAR(t.gen_fecha, 'TMMonth YYYY')
+FROM familiar f
+CROSS JOIN (VALUES
+    (NOW() - INTERVAL '4 months', 'Transferencia SPEI', 'SPEI20250101', 1, 2025),
+    (NOW() - INTERVAL '3 months', 'Tarjeta de crédito', 'CARD20250202', 2, 2025),
+    (NOW() - INTERVAL '2 months', 'Transferencia SPEI', 'SPEI20250303', 3, 2025),
+    (NOW() - INTERVAL '1 month',  'OXXO Pay',           'OXXO20250404', 4, 2025),
+    (NOW() - INTERVAL '5 days',   'Tarjeta de crédito', 'CARD20250505', 5, 2025)
+) AS t(gen_fecha, metodo, ref, mes, anio)
+WHERE f.email = 'maria.lopez@familiar.com'
+  AND NOT EXISTS (
+      SELECT 1 FROM pago p2
+      WHERE p2.id_residente = 1
+        AND p2.periodo_mes  = t.mes
+        AND p2.periodo_anio = t.anio
+  );
+
 COMMIT;
 
 

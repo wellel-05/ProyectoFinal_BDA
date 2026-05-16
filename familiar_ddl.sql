@@ -60,10 +60,12 @@ CREATE TABLE IF NOT EXISTS plan_residente (
     fecha_inicio    DATE         NOT NULL DEFAULT CURRENT_DATE,
     activo          BOOLEAN      NOT NULL DEFAULT TRUE,
     CONSTRAINT fk_plan_residente FOREIGN KEY (id_residente)
-        REFERENCES residente(id_residente) ON UPDATE CASCADE,
-    CONSTRAINT uq_plan_activo_residente UNIQUE (id_residente, activo)
-        DEFERRABLE INITIALLY DEFERRED
+        REFERENCES residente(id_residente) ON UPDATE CASCADE
 );
+
+-- Solo un plan activo por residente
+CREATE UNIQUE INDEX IF NOT EXISTS uq_plan_activo
+    ON plan_residente (id_residente) WHERE activo = TRUE;
 
 -- Historial de pagos simulados
 CREATE TABLE IF NOT EXISTS pago (
@@ -115,11 +117,16 @@ ON CONFLICT (username) DO NOTHING;
 
 -- Planes demo para los 3 residentes vinculados a familiares
 INSERT INTO plan_residente (id_residente, tipo_plan, monto_mensual, fecha_inicio)
-VALUES
+SELECT id_residente, tipo_plan, monto_mensual, fecha_inicio::DATE
+FROM (VALUES
     (1, 'Bienestar', 38000.00, '2024-03-01'),
     (2, 'Premium',   55000.00, '2024-01-15'),
     (3, 'Esencial',  22500.00, '2024-06-01')
-ON CONFLICT (id_residente, activo) DO NOTHING;
+) AS t(id_residente, tipo_plan, monto_mensual, fecha_inicio)
+WHERE NOT EXISTS (
+    SELECT 1 FROM plan_residente pr
+    WHERE pr.id_residente = t.id_residente AND pr.activo = TRUE
+);
 
 -- Historial de pagos demo (últimos 4 meses para residente 1)
 INSERT INTO pago (id_familiar, id_residente, id_plan, monto, fecha_pago,

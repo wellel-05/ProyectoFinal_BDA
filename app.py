@@ -259,6 +259,7 @@ SIDEBAR = {
             {'endpoint': 'admin_reportes',     'icon': 'fa-chart-bar',       'label': 'Reportes'},
             {'endpoint': 'admin_kpi',         'icon': 'fa-ranking-star',      'label': 'KPI'},
             {'endpoint': 'admin_familiares',  'icon': 'fa-people-roof',      'label': 'Familiares'},
+            {'endpoint': 'admin_pagos',       'icon': 'fa-file-invoice-dollar', 'label': 'Pagos'},
             {'endpoint': 'admin_auditoria',   'icon': 'fa-list-check',       'label': 'Auditoria'},
             {'endpoint': 'admin_gps',         'icon': 'fa-location-dot',     'label': 'GPS Residentes'},
         ],
@@ -1762,6 +1763,95 @@ def admin_familiar_toggle(id_familiar):
         release_db(conn)
     return redirect(url_for('admin_familiares'))
 
+
+# ── Admin: Pagos ──────────────────────────────────────────────────────────────
+
+@app.route('/admin/pagos')
+@rol_required(1)
+def admin_pagos():
+    # Resumen general
+    resumen = query("""
+        SELECT
+            COUNT(*)                                          AS total_pagos,
+            COALESCE(SUM(monto), 0)                          AS total_recaudado,
+            COUNT(*) FILTER (WHERE estado = 'Completado')    AS pagos_completados,
+            COUNT(*) FILTER (WHERE estado = 'Pendiente')     AS pagos_pendientes,
+            COUNT(*) FILTER (WHERE estado = 'Rechazado')     AS pagos_rechazados
+        FROM pago
+    """, fetchone=True)
+
+    # Pagos del mes actual
+    mes_actual = query("""
+        SELECT
+            COUNT(*)              AS pagos_mes,
+            COALESCE(SUM(monto), 0) AS recaudado_mes
+        FROM pago
+        WHERE periodo_mes  = EXTRACT(MONTH FROM CURRENT_DATE)::INT
+          AND periodo_anio = EXTRACT(YEAR  FROM CURRENT_DATE)::INT
+          AND estado = 'Completado'
+    """, fetchone=True)
+
+    # Residentes con plan: quién pagó y quién no este mes
+    estado_residentes = query("""
+        SELECT r.id_residente,
+               r.nombre || ' ' || r.apellidos  AS residente,
+               r.habitacion,
+               pr.tipo_plan,
+               pr.monto_mensual,
+               EXISTS (
+                   SELECT 1 FROM pago p2
+                   WHERE p2.id_residente = r.id_residente
+                     AND p2.periodo_mes  = EXTRACT(MONTH FROM CURRENT_DATE)::INT
+                     AND p2.periodo_anio = EXTRACT(YEAR  FROM CURRENT_DATE)::INT
+                     AND p2.estado       = 'Completado'
+               ) AS pagado_este_mes,
+               f.nombre || ' ' || f.apellidos  AS familiar_nombre,
+               uf.username                      AS familiar_username
+        FROM plan_residente pr
+        JOIN residente r ON r.id_residente = pr.id_residente AND r.activo = TRUE
+        LEFT JOIN familiar_residente fr ON fr.id_residente = r.id_residente AND fr.fecha_fin IS NULL
+        LEFT JOIN familiar f  ON f.id_familiar  = fr.id_familiar
+        LEFT JOIN usuario_familiar uf ON uf.id_familiar = fr.id_familiar
+        WHERE pr.activo = TRUE
+        ORDER BY pagado_este_mes ASC, r.apellidos
+    """, fetchall=True) or []
+
+    # Últimos 30 pagos
+    pagos_recientes = query("""
+        SELECT p.id_pago, p.monto, p.fecha_pago, p.metodo_pago,
+               p.referencia, p.estado, p.periodo_mes, p.periodo_anio,
+               p.concepto,
+               r.nombre || ' ' || r.apellidos AS residente,
+               f.nombre || ' ' || f.apellidos AS familiar,
+               pr.tipo_plan
+        FROM pago p
+        JOIN residente r ON r.id_residente = p.id_residente
+        JOIN familiar  f ON f.id_familiar  = p.id_familiar
+        JOIN plan_residente pr ON pr.id_plan = p.id_plan
+        ORDER BY p.fecha_pago DESC
+        LIMIT 30
+    """, fetchall=True) or []
+
+    # Ingresos por plan
+    por_plan = query("""
+        SELECT pr.tipo_plan,
+               COUNT(p.id_pago)     AS num_pagos,
+               SUM(p.monto)         AS total
+        FROM pago p
+        JOIN plan_residente pr ON pr.id_plan = p.id_plan
+        WHERE p.estado = 'Completado'
+        GROUP BY pr.tipo_plan
+        ORDER BY total DESC
+    """, fetchall=True) or []
+
+    return render_template('admin/pagos.html',
+                           resumen=resumen,
+                           mes_actual=mes_actual,
+                           estado_residentes=estado_residentes,
+                           pagos_recientes=pagos_recientes,
+                           por_plan=por_plan)
+
+
 # ── API MongoDB ───────────────────────────────────────────────────────────────
 
 @app.route('/api/mongo/eventos_iot')
@@ -2250,7 +2340,7 @@ def familiar_pagos(id_residente):
 
     # Verificar acceso
     vinculo = query(
-        "SELECT 1 FROM familiar_residente WHERE id_familiar=%s AND id_residente=%s AND fecha_fin IS NULL",
+        "SELECT 1 FROM familiar_residente WHERE id_familiar=%s::int AND id_residente=%s::int AND fecha_fin IS NULL",
         (id_familiar, id_residente), fetchone=True)
     if not vinculo:
         flash('No tienes acceso a este residente.', 'error')
@@ -2272,7 +2362,7 @@ def familiar_pagos(id_residente):
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    "CALL sp_registrar_pago(%s,%s,%s,%s,%s,NULL,NULL,NULL)",
+                    "CALL sp_registrar_pago(%s::int,%s::int,%s,%s::int,%s::int,NULL,NULL,NULL)",
                     (id_familiar, id_residente, metodo, mes, anio))
                 row = cur.fetchone()
             conn.commit()
@@ -2290,11 +2380,11 @@ def familiar_pagos(id_residente):
 
     # GET — datos del plan e historial
     plan_rows = call_refcursor(
-        "CALL sp_plan_residente(%s,%s,'resultado')", (id_residente, id_familiar))
+        "CALL sp_plan_residente(%s::int,%s::int,'resultado')", (id_residente, id_familiar))
     plan = plan_rows[0] if plan_rows else None
 
     pagos = call_refcursor(
-        "CALL sp_pagos_residente(%s,%s,'resultado')", (id_residente, id_familiar))
+        "CALL sp_pagos_residente(%s::int,%s::int,'resultado')", (id_residente, id_familiar))
 
     residente_info = query(
         "SELECT nombre || ' ' || apellidos AS nombre_completo, habitacion FROM residente WHERE id_residente=%s",
