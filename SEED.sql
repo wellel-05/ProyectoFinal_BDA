@@ -285,6 +285,64 @@ INSERT INTO reporte_incidente (id_residente, id_staff, fecha, tipo, descripcion,
 (2, 4, NOW() - INTERVAL '6 days', 'Agitacion',
  'Episodio de llanto prolongado durante visita familiar. Se ofrecio acompañamiento.', 'Baja');
 
+-- ============================================================
+-- 15. PORTAL FAMILIAR — ESCENARIO 6
+--     3 familiares vinculados a residentes distintos.
+--     Todos con contraseña familiar123 (hash werkzeug scrypt).
+--     familiar1 también existe en familiar_ddl.sql (ON CONFLICT lo ignora).
+-- ============================================================
+
+INSERT INTO familiar (nombre, apellidos, email, telefono) VALUES
+('Rosa',   'Garcia Torres',   'rosa.garcia@familiar.com',   '3312001111'),
+('Luis',   'Vega Maldonado',  'luis.vega@familiar.com',     '3312002222'),
+('Sofia',  'Morales Perez',   'sofia.morales@familiar.com', '3312003333')
+ON CONFLICT (email) DO NOTHING;
+
+-- Vinculos familiar <-> residente
+INSERT INTO familiar_residente (id_familiar, id_residente, parentesco, es_contacto_principal)
+SELECT f.id_familiar, 1, 'Hija', TRUE
+FROM familiar f WHERE f.email = 'rosa.garcia@familiar.com'
+ON CONFLICT (id_familiar, id_residente) DO NOTHING;
+
+INSERT INTO familiar_residente (id_familiar, id_residente, parentesco, es_contacto_principal)
+SELECT f.id_familiar, 2, 'Hijo', TRUE
+FROM familiar f WHERE f.email = 'luis.vega@familiar.com'
+ON CONFLICT (id_familiar, id_residente) DO NOTHING;
+
+INSERT INTO familiar_residente (id_familiar, id_residente, parentesco, es_contacto_principal)
+SELECT f.id_familiar, 3, 'Hija', TRUE
+FROM familiar f WHERE f.email = 'sofia.morales@familiar.com'
+ON CONFLICT (id_familiar, id_residente) DO NOTHING;
+
+-- Cuentas de acceso (contraseña: familiar123)
+INSERT INTO usuario_familiar (username, password_hash, id_familiar)
+SELECT 'familiar2',
+       'scrypt:32768:8:1$mNrfhGCK6TJbBTCj$2d57d6db36438698fee16613fd251a680ce53b9a415608509890a82cff5e38e71358f7e79ebc8a94d8c68a101f7f933539815e2126a68d5e907fbfa17ab608f0',
+       f.id_familiar
+FROM familiar f WHERE f.email = 'luis.vega@familiar.com'
+ON CONFLICT (username) DO NOTHING;
+
+INSERT INTO usuario_familiar (username, password_hash, id_familiar)
+SELECT 'familiar3',
+       'scrypt:32768:8:1$mNrfhGCK6TJbBTCj$2d57d6db36438698fee16613fd251a680ce53b9a415608509890a82cff5e38e71358f7e79ebc8a94d8c68a101f7f933539815e2126a68d5e907fbfa17ab608f0',
+       f.id_familiar
+FROM familiar f WHERE f.email = 'sofia.morales@familiar.com'
+ON CONFLICT (username) DO NOTHING;
+
+-- ============================================================
+-- 16. ASISTENCIA NFC A ACTIVIDADES
+--     Requiere que nfc_ddl.sql haya insertado las actividades.
+--     Ana (id=6) registra asistencia de residentes via NFC.
+-- ============================================================
+
+INSERT INTO asistencia_nfc (id_residente, id_actividad, id_staff, ts_registro, notas, metodo) VALUES
+(1, 1, 4, NOW() - INTERVAL '2 days 10 hours', 'Roberto participo activamente en los ejercicios.', 'nfc'),
+(2, 2, 4, NOW() - INTERVAL '2 days 10 hours', 'Carmen mostro interes durante la musicoterapia.', 'nfc'),
+(3, 1, 6, NOW() - INTERVAL '1 day 10 hours',  'Luis completo todos los ejercicios sin dificultad.', 'nfc'),
+(4, 4, 6, NOW() - INTERVAL '1 day 10 hours',  'Elena jugo domino con otros residentes.', 'nfc'),
+(1, 2, 4, NOW() - INTERVAL '10 hours',        'Segunda sesion de musicoterapia de la semana.', 'nfc'),
+(3, 3, 6, NOW() - INTERVAL '3 hours',         'Terapia ocupacional individual — tejido.', 'manual');
+
 COMMIT;
 
 

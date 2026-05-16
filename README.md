@@ -32,19 +32,29 @@ proyectoFinalBDA-main/
 ├── .env.example              # Plantilla de configuracion
 ├── requirements.txt          # Dependencias Python
 │
-├── DDL.sql                   # Esquema BD: 32 tablas, indices, constraints
-├── PROCEDURES.sql            # 54+ procedimientos almacenados
-├── VIEWS_TRIGGERS.sql        # 15 vistas + 10 triggers
-├── SEED.sql                  # Datos de prueba (5 escenarios completos)
+│   ── SQL — ejecutar en este orden ──────────────────────────────
+├── DDL.sql                   # Esquema principal: 32 tablas, indices, constraints
+├── gps_ddl.sql               # Tablas GPS avanzadas: dispositivo_gps, posicion_gps,
+│                             #   zona_gps, alerta_gps (integracion Traccar)
+├── nfc_ddl.sql               # Tablas NFC adicionales: actividad, asistencia_nfc
+├── familiar_ddl.sql          # Tablas portal familiar: familiar, familiar_residente,
+│                             #   usuario_familiar
+├── PROCEDURES.sql            # 54+ procedimientos almacenados (requiere superusuario)
+├── familiar_procedures.sql   # SPs exclusivos del portal familiar (requiere superusuario)
+├── VIEWS_TRIGGERS.sql        # 15 vistas + 10 triggers (requiere superusuario)
+├── SEED.sql                  # Datos de prueba (5 escenarios + familiares)
 │
+│   ── Documentacion ──────────────────────────────────────────────
 ├── DOCUMENTACION_TECNICA.txt # Documentacion tecnica del sistema
 ├── DIAGRAMA_ER.drawio        # Diagrama Entidad-Relacion (draw.io)
 ├── generar_diagrama.py       # Script para regenerar el diagrama ER
 │
+│   ── Aplicacion ────────────────────────────────────────────────
 ├── logs/                     # Logs rotativos (auto-generado en runtime)
 ├── scripts/
 │   ├── migrate_passwords.py  # Migra contrasenas texto plano -> scrypt
 │   ├── export_mongodb.py     # Exporta eventos IoT a MongoDB
+│   ├── seed_mongodb.py       # Seed inicial de colecciones MongoDB
 │   └── beacon_scanner.py     # Scanner BLE para deteccion de beacons
 │
 ├── static/
@@ -53,7 +63,7 @@ proyectoFinalBDA-main/
 │
 └── templates/
     ├── base.html             # Layout principal con sidebar, CSRF, toasts
-    ├── login.html            # Pantalla split-screen
+    ├── login.html            # Pantalla split-screen (staff)
     ├── errors/               # Paginas 404 y 500
     ├── admin/                # 14 plantillas: dashboard, residentes, staff,
     │                         #   medicamentos, turnos, IoT, RFID, NFC,
@@ -62,7 +72,7 @@ proyectoFinalBDA-main/
     │                         #   sesiones, incidentes
     ├── cuidador/             # 6 plantillas: dashboard, residentes,
     │                         #   medicamentos, checkin, NFC
-    ├── familiar/             # 3 plantillas: login, dashboard, residente
+    ├── familiar/             # 3 plantillas: login propio, dashboard, residente
     └── nfc/                  # 2 plantillas: scan, confirmacion
 ```
 
@@ -134,14 +144,41 @@ pip install -r requirements.txt
 copy .env.example .env
 ```
 
-Editar `.env` con las credenciales de PostgreSQL. Nunca subir `.env` a git.
+Editar `.env` con los valores reales. El archivo completo luce asi:
+
+```env
+SECRET_KEY=clave_aleatoria_larga_y_segura
+
+# PostgreSQL
+DB_HOST=localhost
+DB_NAME=asilo_db
+DB_USER=tu_usuario_postgres
+DB_PASSWORD=tu_password_postgres
+DB_PORT=5432
+
+# Flask
+FLASK_DEBUG=False
+LOG_LEVEL=INFO
+
+# Seguridad
+WTF_CSRF_ENABLED=True
+
+# API key para dispositivos IoT externos (Traccar, beacons)
+IOT_API_KEY=cambia_esta_api_key
+
+# MongoDB (opcional — eventos IoT y logs NoSQL)
+MONGO_URI=mongodb://localhost:27017/
+MONGO_DB=eldercare_nosql
+```
+
+> Nunca subir `.env` a git. El `.gitignore` ya lo excluye.
 
 ### 4. Crear base de datos y usuario
 
 ```sql
 -- Ejecutar como superusuario en psql
 CREATE DATABASE asilo_db;
-CREATE USER equipo5proyfin WITH PASSWORD '123';
+CREATE USER tu_usuario WITH PASSWORD 'tu_password';
 GRANT ALL PRIVILEGES ON DATABASE asilo_db TO equipo5proyfin;
 ```
 
@@ -151,13 +188,26 @@ GRANT ALL PRIVILEGES ON DATABASE asilo_db TO equipo5proyfin;
 $env:PGPASSWORD = "tu_password_postgres"
 $psql = "C:\Program Files\PostgreSQL\18\bin\psql.exe"
 
+# 1. Esquema principal
 & $psql -U equipo5proyfin -d asilo_db -f DDL.sql
+
+# 2. Extensiones IoT y portal familiar
+& $psql -U equipo5proyfin -d asilo_db -f gps_ddl.sql
+& $psql -U equipo5proyfin -d asilo_db -f nfc_ddl.sql
+& $psql -U equipo5proyfin -d asilo_db -f familiar_ddl.sql
+
+# 3. Procedimientos almacenados (requieren superusuario postgres)
 & $psql -U postgres       -d asilo_db -f PROCEDURES.sql
+& $psql -U postgres       -d asilo_db -f familiar_procedures.sql
 & $psql -U postgres       -d asilo_db -f VIEWS_TRIGGERS.sql
+
+# 4. Datos de prueba
 & $psql -U equipo5proyfin -d asilo_db -f SEED.sql
 ```
 
-> `PROCEDURES.sql` y `VIEWS_TRIGGERS.sql` requieren el superusuario `postgres` para crear funciones con `SECURITY DEFINER`.
+> Los archivos `PROCEDURES.sql`, `familiar_procedures.sql` y `VIEWS_TRIGGERS.sql` requieren el superusuario `postgres` para crear funciones con `SECURITY DEFINER`.
+>
+> El orden importa: el SEED.sql referencia tablas creadas en los DDL de extensiones, y los procedimientos deben existir antes de levantar la aplicacion.
 
 ### 6. Ejecutar la aplicacion
 
@@ -171,6 +221,8 @@ Acceso: [http://127.0.0.1:8080](http://127.0.0.1:8080)
 
 ## Usuarios de prueba
 
+### Portal de staff — `http://127.0.0.1:8080/`
+
 | Usuario | Contrasena | Rol | Portal |
 |---------|-----------|-----|--------|
 | admin | admin123 | Administrador | /admin/dashboard |
@@ -179,6 +231,16 @@ Acceso: [http://127.0.0.1:8080](http://127.0.0.1:8080)
 | mlopez | cuidador123 | Cuidador | /cuidador/dashboard |
 | psanchez | cuidador123 | Cuidador | /cuidador/dashboard |
 | agarcia | cuidador123 | Cuidador | /cuidador/dashboard |
+
+### Portal familiar — `http://127.0.0.1:8080/familiar/login`
+
+El portal familiar tiene su propio login independiente, con credenciales separadas del personal.
+
+| Usuario | Contrasena | Familiar de |
+|---------|-----------|-------------|
+| familiar1 | familiar123 | Roberto Garcia (Residente 101) |
+| familiar2 | familiar123 | Carmen Vega (Residente 102) |
+| familiar3 | familiar123 | Luis Morales (Residente 103) |
 
 > Contrasenas almacenadas con **scrypt** via `werkzeug.security.generate_password_hash`. Ningun dato sensible en texto plano.
 
@@ -245,6 +307,7 @@ Los datos de prueba usan `NOW()` y `CURRENT_DATE` relativos — siempre muestran
 | 3 | NFC medicamento | Ana escanea tag de Luis → log transaccional + evento NFC |
 | 4 | GPS perimetro | Luis: 3 pings dentro del jardin + 1 fuera → trigger genera alerta |
 | 5 | RFID no autorizado | Pedro accede a Ala A sin turno asignado → trigger auditoria + sp_accesos_no_autorizados |
+| 6 | Portal familiar | 3 familiares vinculados a residentes distintos; consultan estado, sesiones e incidentes |
 
 ---
 
@@ -299,17 +362,38 @@ python app.py
 # Correr tests
 pytest tests/ -v
 
-# Re-ejecutar SQL (requiere superusuario para PROCEDURES y VIEWS_TRIGGERS)
-$env:PGPASSWORD = "pwd_postgres"
+# Re-cargar schema completo desde cero (borrar y recrear la DB)
+$env:PGPASSWORD = "tu_password_postgres"
+$psql = "C:\Program Files\PostgreSQL\18\bin\psql.exe"
+& $psql -U postgres -d asilo_db -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+& $psql -U equipo5proyfin -d asilo_db -f DDL.sql
+& $psql -U equipo5proyfin -d asilo_db -f gps_ddl.sql
+& $psql -U equipo5proyfin -d asilo_db -f nfc_ddl.sql
+& $psql -U equipo5proyfin -d asilo_db -f familiar_ddl.sql
+& $psql -U postgres       -d asilo_db -f PROCEDURES.sql
+& $psql -U postgres       -d asilo_db -f familiar_procedures.sql
+& $psql -U postgres       -d asilo_db -f VIEWS_TRIGGERS.sql
+& $psql -U equipo5proyfin -d asilo_db -f SEED.sql
+
+# Re-ejecutar solo procedures (cuando se modifican SPs)
+$env:PGPASSWORD = "tu_password_postgres"
 & "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U postgres -d asilo_db -f PROCEDURES.sql
+& "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U postgres -d asilo_db -f familiar_procedures.sql
 & "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U postgres -d asilo_db -f VIEWS_TRIGGERS.sql
 
-# Demo NFC sin hardware (abrir en navegador o telefono en la misma red)
+# Demo NFC sin hardware — abrir en navegador o telefono en la misma red LOCAL
+# IMPORTANTE: usar http:// (no https://) — NFC en iPhone solo funciona con HTTP
 # http://<IP_LOCAL>:8080/nfc/1
 
 # Exportar eventos IoT a MongoDB
 python scripts/export_mongodb.py
 
+# Seed inicial de colecciones MongoDB
+python scripts/seed_mongodb.py
+
 # Migrar contrasenas a scrypt (solo si hay usuarios con texto plano)
 python scripts/migrate_passwords.py
+
+# Generar hash para un nuevo usuario (desde Python)
+python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('nueva_contrasena'))"
 ```

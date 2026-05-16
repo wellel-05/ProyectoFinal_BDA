@@ -61,10 +61,10 @@ FROM familiar f
 WHERE f.email = 'maria.lopez@familiar.com'
 ON CONFLICT (id_familiar, id_residente) DO NOTHING;
 
--- Contraseña: familiar123  (hash werkzeug scrypt)
+-- Contraseña: familiar123  (hash werkzeug scrypt generado con generate_password_hash)
 INSERT INTO usuario_familiar (username, password_hash, id_familiar)
 SELECT 'familiar1',
-       'scrypt:32768:8:1$salt12345678901234$c2NyeXB0OjMyNzY4OjA4OjE$dummyhash',
+       'scrypt:32768:8:1$mNrfhGCK6TJbBTCj$2d57d6db36438698fee16613fd251a680ce53b9a415608509890a82cff5e38e71358f7e79ebc8a94d8c68a101f7f933539815e2126a68d5e907fbfa17ab608f0',
        f.id_familiar
 FROM familiar f
 WHERE f.email = 'maria.lopez@familiar.com'
