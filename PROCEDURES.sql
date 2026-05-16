@@ -54,7 +54,7 @@ DECLARE
     v_edad          INT;
     v_fecha_max     DATE;
 BEGIN
-    -- Validar edad minima de 65 años antes de intentar el INSERT
+    -- Validar edad minima de 65 años
     v_edad      := EXTRACT(YEAR FROM AGE(p_fecha_nacimiento))::INT;
     v_fecha_max := CURRENT_DATE - INTERVAL '65 years';
 
@@ -65,6 +65,19 @@ BEGIN
             || 'La fecha de nacimiento no puede ser posterior al '
             || TO_CHAR(v_fecha_max, 'DD/MM/YYYY') || '.';
         RETURN;
+    END IF;
+
+    -- Validar que la habitacion no este ocupada por otro residente activo
+    IF p_habitacion IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1 FROM residente
+            WHERE habitacion = p_habitacion AND activo = TRUE
+        ) THEN
+            ok  := 0;
+            msg := 'La habitacion ' || p_habitacion || ' ya esta ocupada por otro residente activo. '
+                || 'Asigne una habitacion diferente o deje el campo vacio.';
+            RETURN;
+        END IF;
     END IF;
 
     -- Insertar residente
@@ -126,6 +139,21 @@ CREATE OR REPLACE PROCEDURE sp_actualizar_residente(
 )
 LANGUAGE plpgsql AS $$
 BEGIN
+    -- Validar que la habitacion no este ocupada por otro residente activo distinto
+    IF p_habitacion IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1 FROM residente
+            WHERE habitacion = p_habitacion
+              AND activo     = TRUE
+              AND id_residente <> p_id_residente
+        ) THEN
+            ok  := 0;
+            msg := 'La habitacion ' || p_habitacion || ' ya esta ocupada por otro residente activo. '
+                || 'Asigne una habitacion diferente o deje el campo vacio.';
+            RETURN;
+        END IF;
+    END IF;
+
     UPDATE residente
     SET habitacion            = p_habitacion,
         diagnostico_principal = p_diagnostico,
@@ -140,7 +168,7 @@ BEGIN
         ok := 1; msg := 'Residente actualizado.';
     END IF;
 EXCEPTION WHEN OTHERS THEN
-    ok := 0; msg := 'Error: ' || SQLERRM;
+    ok := 0; msg := 'Error al actualizar el residente: ' || SQLERRM;
 END;
 $$;
 

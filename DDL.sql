@@ -100,7 +100,7 @@ CREATE TABLE residente (
     apellidos           VARCHAR(100) NOT NULL,
     fecha_nacimiento    DATE         NOT NULL,
     sexo                CHAR(1)      NOT NULL CHECK (sexo IN ('M', 'F')),
-    habitacion          VARCHAR(10),
+    habitacion          VARCHAR(10) UNIQUE,
     diagnostico_principal TEXT,
     nivel_movilidad     VARCHAR(20)  NOT NULL DEFAULT 'Autonomo'
                         CHECK (nivel_movilidad IN ('Autonomo', 'Asistido', 'Encamado')),
