@@ -37,6 +37,8 @@
     ('mongo_iot',       'fa-database',             'IoT Tiempo Real'),
     ('mongo_animo',     'fa-brain',                'Animo Historico'),
     ('mongo_seguridad', 'fa-shield-halved',        'Seguridad'),
+    ('mongo_tipos',     'fa-chart-pie',            'Distribucion IoT'),
+    ('mongo_actividad', 'fa-calendar-days',        'Actividad Diaria'),
   ] %}
   {% for tid, icon, label in tabs %}
   <a href="?tab={{ tid }}&dias={{ dias }}"
@@ -744,6 +746,240 @@ GET /api/mongo/eventos_iot?limit=200 → KPI 2: rfid_autorizados / total_rfid * 
     document.getElementById('gauge-row').style.display    = 'none';
     document.getElementById('hc-seg-empty').style.display = 'flex';
   });
+})();
+</script>
+{% endif %}
+
+
+{# ════════════════════════════════════════════════════════════════════════════
+   TAB 10 — DISTRIBUCION IoT (Highcharts · Pie · MongoDB)
+   Fuente: colección eventos_iot en MongoDB (eldercare_nosql)
+   Consulta Flask: GET /api/mongo/resumen_iot
+   ════════════════════════════════════════════════════════════════════════════ #}
+{% if tab == 'mongo_tipos' %}
+<div class="card" style="margin-bottom:16px">
+  <div class="card-header">
+    <span class="card-title">Distribucion de Eventos IoT por Tipo</span>
+    <span class="badge" style="background:#e0f2fe;color:#0369a1">
+      <i class="fa-solid fa-database" style="margin-right:5px"></i>Fuente: MongoDB · eventos_iot
+    </span>
+  </div>
+  <div class="card-body">
+    <p style="font-size:12.5px;color:var(--text-sm);margin-bottom:20px">
+      Proporcion de cada tecnologia IoT registrada. Cada documento en
+      <code>eventos_iot</code> contiene un campo <code>tipo</code> con referencia
+      logica a las tablas PostgreSQL correspondientes
+      (<code>deteccion_beacon</code>, <code>acceso_rfid</code>, <code>nfc_evento</code>, <code>gps_ping</code>).
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:center">
+      <div id="hc-tipos" style="height:340px"></div>
+      <div id="tabla-tipos" style="font-size:13px"></div>
+    </div>
+    <div id="hc-tipos-empty" class="empty-state" style="display:none">
+      <i class="fa-solid fa-chart-pie"></i><p>Sin eventos IoT en MongoDB aun.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="card-title" style="font-size:12.5px">Codigo de consulta (Flask → MongoDB)</span></div>
+  <div class="card-body" style="padding:0">
+    <pre style="margin:0;padding:16px;font-size:11.5px;background:var(--bg);border-radius:0 0 12px 12px;overflow-x:auto;color:var(--text-md)">GET /api/mongo/resumen_iot
+
+# Agrupacion en Flask (app.py):
+resumen = {}
+for d in mongo_find('eventos_iot', {}, limit=500):
+    t = d.get('tipo', 'otro')
+    resumen[t] = resumen.get(t, 0) + 1
+
+# Relacion logica con PostgreSQL:
+# tipo='beacon'          → deteccion_beacon.id_deteccion (pg_deteccion_id)
+# tipo='rfid'            → acceso_rfid.id_acceso
+# tipo='nfc_medicamento' → log_medicamento.id_log (pg_log_id)
+# tipo='gps_update'      → dispositivo_gps.device_id</pre>
+  </div>
+</div>
+
+<script>
+(function () {
+  const COLORES = {
+    beacon:          '#6366F1',
+    rfid:            '#F59E0B',
+    nfc_medicamento: '#52B788',
+    gps_update:      '#3B82F6',
+    otro:            '#94A3B8',
+  };
+  const ETIQUETAS = {
+    beacon:          'Beacon BLE',
+    rfid:            'Acceso RFID',
+    nfc_medicamento: 'NFC Medicamento',
+    gps_update:      'GPS Update',
+    otro:            'Otro',
+  };
+
+  fetch('/api/mongo/resumen_iot')
+    .then(r => r.json())
+    .then(res => {
+      const data = res.data || {};
+      const keys = Object.keys(data);
+      if (!keys.length) {
+        document.getElementById('hc-tipos').style.display      = 'none';
+        document.getElementById('tabla-tipos').style.display   = 'none';
+        document.getElementById('hc-tipos-empty').style.display = 'flex';
+        return;
+      }
+
+      const total = keys.reduce((s, k) => s + data[k], 0);
+      const series = keys.map(k => ({
+        name: ETIQUETAS[k] || k,
+        y:    data[k],
+        color: COLORES[k] || '#94A3B8',
+      }));
+
+      Highcharts.chart('hc-tipos', {
+        chart: { type: 'pie', backgroundColor: 'transparent', style: { fontFamily: 'inherit' } },
+        title: { text: null },
+        tooltip: {
+          pointFormat: '<b>{point.name}</b>: {point.y} eventos ({point.percentage:.1f}%)'
+        },
+        plotOptions: {
+          pie: {
+            innerSize: '55%',
+            dataLabels: {
+              enabled: true,
+              format: '<b>{point.name}</b><br>{point.percentage:.1f}%',
+              style: { fontSize: '11px', fontWeight: '600' }
+            }
+          }
+        },
+        series: [{ name: 'Eventos', colorByPoint: true, data: series }],
+        credits: { enabled: false },
+      });
+
+      // Tabla resumen lateral
+      const filas = keys
+        .sort((a, b) => data[b] - data[a])
+        .map(k => `<tr>
+          <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${COLORES[k]||'#94A3B8'};margin-right:8px"></span>${ETIQUETAS[k]||k}</td>
+          <td style="text-align:right;font-weight:700">${data[k]}</td>
+          <td style="text-align:right;color:var(--text-sm)">${(data[k]/total*100).toFixed(1)}%</td>
+        </tr>`).join('');
+      document.getElementById('tabla-tipos').innerHTML = `
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr style="font-size:11px;color:var(--text-sm);border-bottom:1px solid var(--border)">
+            <th style="text-align:left;padding:6px 0">Tipo</th>
+            <th style="text-align:right;padding:6px 0">Eventos</th>
+            <th style="text-align:right;padding:6px 0">%</th>
+          </tr></thead>
+          <tbody>${filas}</tbody>
+          <tfoot><tr style="border-top:1px solid var(--border);font-weight:700">
+            <td style="padding:6px 0">Total</td>
+            <td style="text-align:right;padding:6px 0">${total}</td>
+            <td style="text-align:right;padding:6px 0">100%</td>
+          </tr></tfoot>
+        </table>`;
+    }).catch(() => {
+      document.getElementById('hc-tipos-empty').style.display = 'flex';
+    });
+})();
+</script>
+{% endif %}
+
+
+{# ════════════════════════════════════════════════════════════════════════════
+   TAB 11 — ACTIVIDAD DIARIA (Highcharts · Columnas agrupadas · MongoDB)
+   Fuente: colección logs_aplicacion en MongoDB (eldercare_nosql)
+   Consulta Flask: GET /api/mongo/actividad_diaria
+   ════════════════════════════════════════════════════════════════════════════ #}
+{% if tab == 'mongo_actividad' %}
+<div class="card" style="margin-bottom:16px">
+  <div class="card-header">
+    <span class="card-title">Actividad Diaria del Sistema (14 dias)</span>
+    <span class="badge" style="background:#e0f2fe;color:#0369a1">
+      <i class="fa-solid fa-database" style="margin-right:5px"></i>Fuente: MongoDB · logs_aplicacion
+    </span>
+  </div>
+  <div class="card-body">
+    <p style="font-size:12.5px;color:var(--text-sm);margin-bottom:20px">
+      Logins exitosos, intentos fallidos y alertas de sistema por dia durante
+      los ultimos 14 dias. Fuente: coleccion <code>logs_aplicacion</code> de MongoDB.
+      El campo <code>user_id</code> mantiene la relacion logica con
+      <code>usuario_sistema</code> en PostgreSQL.
+    </p>
+    <div id="hc-actividad" style="height:360px"></div>
+    <div id="hc-actividad-empty" class="empty-state" style="display:none">
+      <i class="fa-solid fa-calendar-days"></i><p>Sin logs de actividad en MongoDB aun.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="card-title" style="font-size:12.5px">Codigo de consulta (Flask → MongoDB)</span></div>
+  <div class="card-body" style="padding:0">
+    <pre style="margin:0;padding:16px;font-size:11.5px;background:var(--bg);border-radius:0 0 12px 12px;overflow-x:auto;color:var(--text-md)">GET /api/mongo/actividad_diaria
+
+# Agrupacion en Flask (app.py) — ultimos 14 dias:
+for d in mongo_find('logs_aplicacion', {}, limit=500):
+    fecha = d['timestamp'].strftime('%Y-%m-%d')
+    if 'login_exitoso' in d['evento']: dias[fecha]['logins']  += 1
+    if 'login_fallido' in d['evento']: dias[fecha]['fallidos'] += 1
+    if 'alerta'        in d['evento']: dias[fecha]['alertas']  += 1
+
+# Documento ejemplo en logs_aplicacion:
+{ "evento": "login_exitoso", "user_id": 1,   # FK → usuario_sistema.id_staff
+  "username": "admin", "ip": "192.168.1.5", "timestamp": ISODate(...) }</pre>
+  </div>
+</div>
+
+<script>
+(function () {
+  fetch('/api/mongo/actividad_diaria')
+    .then(r => r.json())
+    .then(res => {
+      const data = res.data || [];
+      const total = data.reduce((s, d) => s + d.logins + d.fallidos + d.alertas, 0);
+
+      if (!total) {
+        document.getElementById('hc-actividad').style.display      = 'none';
+        document.getElementById('hc-actividad-empty').style.display = 'flex';
+        return;
+      }
+
+      const fechas   = data.map(d => d.fecha.slice(5));   // MM-DD
+      const logins   = data.map(d => d.logins);
+      const fallidos = data.map(d => d.fallidos);
+      const alertas  = data.map(d => d.alertas);
+
+      Highcharts.chart('hc-actividad', {
+        chart: { type: 'column', backgroundColor: 'transparent', style: { fontFamily: 'inherit' } },
+        title: { text: null },
+        xAxis: {
+          categories: fechas,
+          labels: { style: { fontSize: '11px' } }
+        },
+        yAxis: {
+          min: 0, allowDecimals: false,
+          title: { text: 'Eventos', style: { fontSize: '11px' } },
+          stackLabels: { enabled: false }
+        },
+        tooltip: { shared: true },
+        plotOptions: {
+          column: {
+            grouping: true, borderRadius: 3,
+            dataLabels: { enabled: false }
+          }
+        },
+        series: [
+          { name: 'Logins exitosos', data: logins,   color: '#52B788' },
+          { name: 'Logins fallidos', data: fallidos, color: '#EF4444' },
+          { name: 'Alertas sistema', data: alertas,  color: '#F59E0B' },
+        ],
+        legend: { enabled: true, itemStyle: { fontSize: '12px' } },
+        credits: { enabled: false },
+      });
+    }).catch(() => {
+      document.getElementById('hc-actividad-empty').style.display = 'flex';
+    });
 })();
 </script>
 {% endif %}

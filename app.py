@@ -1791,6 +1791,53 @@ def api_mongo_logs():
     return jsonify({'ok': True, 'data': docs, 'total': len(docs)})
 
 
+@app.route('/api/mongo/resumen_iot')
+@rol_required(1)
+def api_mongo_resumen_iot():
+    """Conteo de eventos IoT agrupados por tipo desde MongoDB."""
+    docs = mongo_find('eventos_iot', {}, limit=500)
+    resumen = {}
+    for d in docs:
+        t = d.get('tipo', 'otro')
+        resumen[t] = resumen.get(t, 0) + 1
+    return jsonify({'ok': True, 'data': resumen, 'total': len(docs)})
+
+
+@app.route('/api/mongo/actividad_diaria')
+@rol_required(1)
+def api_mongo_actividad_diaria():
+    """Actividad diaria de los últimos 14 días desde logs_aplicacion."""
+    docs = mongo_find('logs_aplicacion', {}, limit=500)
+    dias = {}
+    for d in docs:
+        ts = d.get('timestamp')
+        if not ts:
+            continue
+        if isinstance(ts, str):
+            try:
+                ts = datetime.fromisoformat(ts)
+            except Exception:
+                continue
+        fecha = ts.strftime('%Y-%m-%d')
+        if fecha not in dias:
+            dias[fecha] = {'logins': 0, 'fallidos': 0, 'alertas': 0}
+        ev = d.get('evento', '')
+        if 'login_exitoso' in ev:
+            dias[fecha]['logins'] += 1
+        elif 'login_fallido' in ev:
+            dias[fecha]['fallidos'] += 1
+        elif 'alerta' in ev:
+            dias[fecha]['alertas'] += 1
+
+    hoy = datetime.utcnow().date()
+    resultado = []
+    for i in range(13, -1, -1):
+        fecha = (hoy - timedelta(days=i)).strftime('%Y-%m-%d')
+        entrada = dias.get(fecha, {'logins': 0, 'fallidos': 0, 'alertas': 0})
+        resultado.append({'fecha': fecha, **entrada})
+    return jsonify({'ok': True, 'data': resultado})
+
+
 # ═════════════════════════════════════════════════════════════════════════════
 # GPS / TRACCAR (OsmAnd HTTP protocol)
 # ═════════════════════════════════════════════════════════════════════════════
