@@ -732,5 +732,78 @@
     "user_id": 3,
     "username": "deigo",
     "ip": "127.0.0.1"
+  },
+  {
+    "evento": "login_fallido",
+    "timestamp": "2026-05-16T20:53:57.420000",
+    "username": "admin",
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-16T20:54:02.251000",
+    "user_id": 1,
+    "username": "admin",
+    "nivel_acceso": 1,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-16T21:09:22.069000",
+    "user_id": 2,
+    "username": "jramirez",
+    "nivel_acceso": 2,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-16T21:09:50.010000",
+    "user_id": 4,
+    "username": "mlopez",
+    "nivel_acceso": 3,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+  },
+  {
+    "evento": "login_exitoso_familiar",
+    "timestamp": "2026-05-16T21:10:11.211000",
+    "user_id": 1,
+    "username": "familiar1",
+    "ip": "127.0.0.1"
+  },
+  {
+    "evento": "login_exitoso_familiar",
+    "timestamp": "2026-05-16T22:14:55.591000",
+    "user_id": 1,
+    "username": "familiar1",
+    "ip": "127.0.0.1"
+  },
+  {
+    "evento": "login_exitoso_familiar",
+    "timestamp": "2026-05-16T22:15:27.755000",
+    "user_id": 1,
+    "username": "familiar1",
+    "ip": "127.0.0.1"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-16T22:26:30.822000",
+    "user_id": 1,
+    "username": "admin",
+    "nivel_acceso": 1,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+  },
+  {
+    "evento": "login_exitoso",
+    "timestamp": "2026-05-18T17:28:48.157000",
+    "user_id": 1,
+    "username": "admin",
+    "nivel_acceso": 1,
+    "ip": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
   }
 ]

@@ -72,7 +72,9 @@
       <div class="ptab" onclick="switchTab('alertas',this)">
         <i class="fa-solid fa-bell"></i> Alertas
         {% if alertas_count > 0 %}
-        <span class="cnt">{{ alertas_count }}</span>
+        <span id="alertas-badge" class="cnt">{{ alertas_count }}</span>
+        {% else %}
+        <span id="alertas-badge" class="cnt" style="display:none"></span>
         {% endif %}
       </div>
     </div>
@@ -240,33 +242,32 @@
 
     {# TAB: Alertas #}
     <div id="tab-alertas" class="panel-body" style="display:none">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-sm);margin-bottom:10px">
-        Alertas pendientes ({{ alertas_count }})
-      </div>
-      {% for a in alertas %}
-      <div class="alert-item">
-        <div class="a-msg">
-          <i class="fa-solid fa-triangle-exclamation" style="margin-right:5px"></i>
-          {{ a.residente_nombre or a.device_id }}
+      <div id="alertas-list">
+        {% for a in alertas %}
+        <div class="alert-item">
+          <div class="a-msg">
+            <i class="fa-solid fa-triangle-exclamation" style="margin-right:5px"></i>
+            {{ a.residente_nombre or a.device_id }}
+          </div>
+          <div style="font-size:12px;color:#991B1B;margin-bottom:6px">{{ a.mensaje }}</div>
+          <div class="a-meta">
+            <span>{{ a.ts_alerta.strftime('%d %b %H:%M') if a.ts_alerta else '—' }}</span>
+            <form method="POST" action="{{ url_for('admin_gps_alerta_atender', id_alerta=a.id_alerta) }}" style="margin:0">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" style="background:#EF4444;color:#fff;border:none;border-radius:6px;
+                      padding:3px 10px;font-size:10.5px;font-weight:600;cursor:pointer">
+                Atender
+              </button>
+            </form>
+          </div>
         </div>
-        <div style="font-size:12px;color:#991B1B;margin-bottom:6px">{{ a.mensaje }}</div>
-        <div class="a-meta">
-          <span>{{ a.ts_alerta.strftime('%d %b %H:%M') if a.ts_alerta else '—' }}</span>
-          <form method="POST" action="{{ url_for('admin_gps_alerta_atender', id_alerta=a.id_alerta) }}" style="margin:0">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" style="background:#EF4444;color:#fff;border:none;border-radius:6px;
-                    padding:3px 10px;font-size:10.5px;font-weight:600;cursor:pointer">
-              Atender
-            </button>
-          </form>
+        {% else %}
+        <div style="text-align:center;padding:30px;color:var(--text-sm)">
+          <i class="fa-solid fa-shield-halved fa-lg" style="opacity:.3;display:block;margin-bottom:8px"></i>
+          Sin alertas pendientes
         </div>
+        {% endfor %}
       </div>
-      {% else %}
-      <div style="text-align:center;padding:30px;color:var(--text-sm)">
-        <i class="fa-solid fa-shield-halved fa-lg" style="opacity:.3;display:block;margin-bottom:8px"></i>
-        Sin alertas pendientes
-      </div>
-      {% endfor %}
     </div>
   </div>
 
@@ -428,10 +429,51 @@ function switchTab(name, el) {
   if (name==='zonas') map.getContainer().style.cursor='';
 }
 
+// ── Alertas dinámicas ───────────────────────────────────────────────────────
+const CSRF = "{{ csrf_token() }}";
+
+function actualizarAlertas() {
+  fetch('/api/gps/alertas').then(r=>r.json()).then(data => {
+    // Badge en pestaña
+    const badge = document.getElementById('alertas-badge');
+    if (data.length > 0) {
+      badge.textContent = data.length;
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
+
+    // Lista de alertas
+    const panel = document.getElementById('alertas-list');
+    if (!panel) return;
+    if (!data.length) {
+      panel.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-sm)">
+        <i class="fa-solid fa-shield-halved fa-lg" style="opacity:.3;display:block;margin-bottom:8px"></i>
+        Sin alertas pendientes</div>`;
+      return;
+    }
+    panel.innerHTML = data.map(a => `
+      <div class="alert-item">
+        <div class="a-msg"><i class="fa-solid fa-triangle-exclamation" style="margin-right:5px"></i>${a.residente_nombre}</div>
+        <div style="font-size:12px;color:#991B1B;margin-bottom:6px">${a.mensaje}</div>
+        <div class="a-meta">
+          <span>${a.ts_fmt}</span>
+          <form method="POST" action="/admin/gps/alerta/${a.id_alerta}/atender" style="margin:0">
+            <input type="hidden" name="csrf_token" value="${CSRF}">
+            <button type="submit" style="background:#EF4444;color:#fff;border:none;border-radius:6px;
+                    padding:3px 10px;font-size:10.5px;font-weight:600;cursor:pointer">Atender</button>
+          </form>
+        </div>
+      </div>`).join('');
+  }).catch(()=>{});
+}
+
 // ── Init ────────────────────────────────────────────────────────────────────
 cargarZonas();
 actualizarPosiciones();
-setInterval(actualizarPosiciones, 15000);
+actualizarAlertas();
+setInterval(actualizarPosiciones, 4000);
 setInterval(cargarZonas, 60000);
+setInterval(actualizarAlertas, 5000);
 </script>
 {% endblock %}

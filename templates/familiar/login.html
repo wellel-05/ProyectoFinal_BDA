@@ -176,7 +176,72 @@
       </button>
     </form>
 
-    <div class="divider">o si eres personal del asilo</div>
+    <div class="divider">¿problemas para ingresar?</div>
+
+    <button type="button" onclick="toggleReset()"
+            style="width:100%;padding:10px;border-radius:9px;border:1.5px solid rgba(123,94,167,.3);
+                   background:transparent;color:#7B5EA7;font-size:13px;font-weight:600;
+                   cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;
+                   margin-bottom:14px;transition:background .15s"
+            onmouseover="this.style.background='rgba(123,94,167,.06)'"
+            onmouseout="this.style.background='transparent'">
+      <i class="fa-solid fa-key"></i> Restablecer contraseña
+    </button>
+
+    {# Formulario de restablecimiento (oculto por defecto) #}
+    <div id="reset-form" style="display:{% if show_reset %}block{% else %}none{% endif %};
+         background:#F9F6FF;border:1.5px solid rgba(123,94,167,.2);border-radius:12px;
+         padding:18px;margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;color:#4C3575;margin-bottom:14px;
+                  display:flex;align-items:center;gap:7px">
+        <i class="fa-solid fa-key"></i> Restablecer contraseña
+      </div>
+
+      {% if reset_ok %}
+      <div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;
+                  padding:10px 13px;font-size:12.5px;color:#166534;display:flex;align-items:center;gap:8px">
+        <i class="fa-solid fa-circle-check"></i> {{ reset_ok }}
+      </div>
+      {% else %}
+      {% if reset_error %}
+      <div style="background:#FEE2E2;border:1px solid #FECACA;border-radius:8px;
+                  padding:10px 13px;font-size:12.5px;color:#7F1D1D;margin-bottom:12px;
+                  display:flex;align-items:center;gap:8px">
+        <i class="fa-solid fa-circle-xmark"></i> {{ reset_error }}
+      </div>
+      {% endif %}
+      <form method="POST" action="{{ url_for('familiar_restablecer_password') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Usuario</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-user"></i>
+            <input type="text" name="username" placeholder="tu.usuario" required>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Nueva contraseña</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-lock-open"></i>
+            <input type="password" name="password_nueva" placeholder="••••••••" minlength="6" required>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>Confirmar contraseña</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-lock-open"></i>
+            <input type="password" name="password_confirmar" placeholder="••••••••" minlength="6" required>
+          </div>
+        </div>
+        <button type="submit"
+                style="width:100%;padding:11px;border-radius:9px;border:none;
+                       background:linear-gradient(135deg,#7B5EA7,#4C3575);
+                       color:#fff;font-size:13px;font-weight:600;cursor:pointer">
+          <i class="fa-solid fa-floppy-disk" style="margin-right:6px"></i>Guardar nueva contraseña
+        </button>
+      </form>
+      {% endif %}
+    </div>
 
     <a href="{{ url_for('login') }}" class="staff-link">
       <i class="fa-solid fa-arrow-left"></i>
@@ -184,6 +249,13 @@
     </a>
   </div>
 </div>
+
+<script>
+function toggleReset() {
+  const f = document.getElementById('reset-form');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+</script>
 
 </body>
 </html>

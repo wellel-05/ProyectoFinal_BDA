@@ -1107,10 +1107,20 @@ def terapeuta_residente_detalle(id_residente):
                            preselect_residente=str(id_residente))
 
 @app.route('/terapeuta/sesiones')
-@rol_required(2)
+@rol_required(1, 2)
 def terapeuta_sesiones():
-    sesiones = call_refcursor(
-        "CALL sp_sesiones_terapeuta(%s, 'resultado')", (session['staff_id'],))
+    if session.get('nivel_acceso') == 1:
+        sesiones = query("""
+            SELECT st.*, r.nombre || ' ' || r.apellidos AS residente, sa.nombre AS sala,
+                   TO_CHAR(st.fecha_sesion, 'DD Mon YYYY HH12:MI AM') AS fecha_sesion_fmt
+            FROM sesion_terapia st
+            JOIN residente r ON st.id_residente = r.id_residente
+            JOIN sala sa     ON st.id_sala      = sa.id_sala
+            ORDER BY st.fecha_sesion DESC
+        """, fetchall=True) or []
+    else:
+        sesiones = call_refcursor(
+            "CALL sp_sesiones_terapeuta(%s, 'resultado')", (session['staff_id'],))
     return render_template('terapeuta/sesiones.html', sesiones=sesiones)
 
 @app.route('/terapeuta/sesiones/nueva', methods=['GET', 'POST'])
@@ -1650,6 +1660,49 @@ def familiar_logout():
     return redirect(url_for('familiar_login'))
 
 
+@app.route('/familiar/restablecer-password', methods=['POST'])
+def familiar_restablecer_password():
+    username  = request.form.get('username', '').strip()
+    nueva     = request.form.get('password_nueva', '').strip()
+    confirmar = request.form.get('password_confirmar', '').strip()
+
+    error = None
+    if not username or not nueva or not confirmar:
+        error = 'Todos los campos son obligatorios.'
+    elif nueva != confirmar:
+        error = 'Las contraseñas no coinciden.'
+    elif len(nueva) < 6:
+        error = 'La nueva contraseña debe tener al menos 6 caracteres.'
+    else:
+        user = query(
+            "SELECT id_usuario FROM usuario_familiar WHERE username = %s AND activo = TRUE",
+            (username,), fetchone=True
+        )
+        if not user:
+            error = 'No existe una cuenta con ese usuario.'
+        else:
+            nuevo_hash = generate_password_hash(nueva)
+            conn = get_db()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "UPDATE usuario_familiar SET password_hash = %s WHERE id_usuario = %s",
+                        (nuevo_hash, user['id_usuario'])
+                    )
+                conn.commit()
+                return render_template('familiar/login.html', error=None,
+                                       reset_ok='Contraseña actualizada. Ya puedes iniciar sesión.')
+            except Exception as e:
+                try: conn.rollback()
+                except Exception: pass
+                logger.error('familiar_restablecer_password: %s', e)
+                error = 'Error al actualizar. Intenta de nuevo.'
+            finally:
+                release_db(conn)
+
+    return render_template('familiar/login.html', error=None, reset_error=error, show_reset=True)
+
+
 @app.route('/familiar/dashboard')
 @familiar_required
 def familiar_dashboard():
@@ -2179,6 +2232,22 @@ def api_gps_alertas_count():
     return jsonify({'count': int(rows['n']) if rows else 0})
 
 
+@app.route('/api/gps/alertas')
+@rol_required(1)
+def api_gps_alertas():
+    rows = query("""
+        SELECT a.id_alerta, a.device_id, a.mensaje,
+               to_char(a.ts_alerta, 'DD Mon HH24:MI') AS ts_fmt,
+               COALESCE(r.nombre||' '||r.apellidos, a.device_id) AS residente_nombre
+        FROM alerta_gps a
+        LEFT JOIN dispositivo_gps d ON a.device_id = d.device_id
+        LEFT JOIN residente r ON d.id_residente = r.id_residente
+        WHERE a.atendida = FALSE
+        ORDER BY a.ts_alerta DESC LIMIT 50
+    """, fetchall=True) or []
+    return jsonify([dict(r) for r in rows])
+
+
 # ── Admin GPS ─────────────────────────────────────────────────────────────────
 
 @app.route('/admin/gps')
@@ -2594,7 +2663,7 @@ def admin_asistencias():
 def cuidador_asistencias_nfc():
     id_staff = session['staff_id']
     rows = query("""
-        SELECT n.ts_registro, n.metodo,
+        SELECT n.ts_registro, n.metodo, n.notas,
                r.nombre || ' ' || r.apellidos AS residente, r.habitacion,
                act.nombre AS actividad, act.tipo
         FROM asistencia_nfc n

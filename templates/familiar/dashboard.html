@@ -8,9 +8,6 @@
     <h1>Bienvenido, {{ user_name }}</h1>
     <p>Aqui puedes ver el estado de tus familiares residentes en ElderCare.</p>
   </div>
-  <a href="{{ url_for('familiar_logout') }}" class="btn btn-outline btn-sm">
-    <i class="fa-solid fa-right-from-bracket"></i> Cerrar sesion
-  </a>
 </div>
 
 {% if residentes %}
