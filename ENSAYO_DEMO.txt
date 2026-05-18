@@ -1,383 +1,383 @@
 ================================================================================
-GUION DE DEMO — ELDERCARE
-Presentacion presencial + Video YouTube
-Equipo 5 — BDA UDEM — 2026-05-19
+GUION DEMO 20 MINUTOS — ELDERCARE
+Equipo 5 — BDA UDEM — 2026-05-19 | Sin mostrar codigo
 ================================================================================
 
+DISTRIBUCION DE TIEMPO:
+  Elias  : Seg 1 + Seg 8 + Seg 10  =  5 min
+  Alex   : Seg 3 + Seg 4 + Seg 7   =  6 min 30 seg
+  Adrian : Seg 2 + Seg 5 + Seg 6 + Seg 9 = 8 min 30 seg
 
 ================================================================================
-PARTE 1: PRESENTACION PRESENCIAL (10 MINUTOS)
+CHECKLIST 15 MINUTOS ANTES
 ================================================================================
 
-Criterios a demostrar (por peso descendente):
-  [15%] Stored Procedures, Triggers y Views
-  [10%] Sistema de KPI y analitica (>=10 KPIs)
-  [10%] Integracion PostgreSQL + MongoDB
-  [10%] Reportes con Highcharts (>=5 escenarios)
-  [10%] Implementacion DDL / integridad
-  [ 5%] Arquitectura Flask + UI/UX
+  [ ] Navegador en http://34.172.186.10:8080
+  [ ] Sesion de admin abierta
+  [ ] Pestana 2: /familiar/login lista
+  [ ] Telefono con Traccar corriendo apuntando a la VM
+  [ ] Telefono con NFC configurado a la VM
+  [ ] Beacon scanner corriendo en laptop (si hay hardware)
+  [ ] Verificar que hay datos de HOY visibles en el dashboard
 
-ANTES DE EMPEZAR — checklist tecnico (hacer 15 min antes):
-  [ ] python app.py corriendo en terminal
-  [ ] Navegador abierto en http://localhost:8080
-  [ ] Telefono en la misma red WiFi con http://<IP_LOCAL>:8080 abierto
-  [ ] Terminal 2 lista con: python scripts/export_mongodb.py
-  [ ] Terminal 3 lista con el comando del beacon scanner (si hay hardware)
-  [ ] Verificar que hay datos de HOY en la BD:
-        - Al menos 1 turno para hoy
-        - Al menos 1 checkin de animo de hoy
-        - Al menos 1 sesion de terapia de hoy
-        - Al menos 1 acceso RFID de hoy
+================================================================================
+SEGMENTO 1 — INTRODUCCION Y ARQUITECTURA
+Tiempo: 0:00 – 1:30 | ELIAS
+================================================================================
 
---------------------------------------------------------------------------------
-SEGMENTO 1 — CONTEXTO Y ARQUITECTURA (1 min)
---------------------------------------------------------------------------------
+PANTALLA: Login en http://34.172.186.10:8080
 
-QUE DECIR:
-  "ElderCare es un sistema integral de gestion para un asilo de salud mental.
-  Corre sobre Flask con PostgreSQL como base de datos principal y MongoDB para
-  eventos IoT. Tiene 32 tablas, 54 stored procedures, 15 vistas, 10 triggers
-  y 4 roles de usuario distintos."
+DECIR:
+  "ElderCare es un sistema de gestion integral para un asilo de adultos mayores
+  con enfoque en salud mental. Tiene cuatro portales completamente independientes:
+  Administrador, Terapeuta, Cuidador y Familiar, cada uno con su propio acceso
+  y permisos."
 
-QUE MOSTRAR:
-  - La pantalla de login
-  - Mencionar brevemente los 4 roles: Admin, Terapeuta, Cuidador, Familiar
+  → Señalar la pantalla de login.
 
-TIEMPO ESTIMADO: 45 segundos
+  "La base de datos tiene 32 tablas, 54 stored procedures, 15 vistas y 10 triggers
+  en PostgreSQL. Para eventos IoT usamos MongoDB en paralelo. Todo corre en una
+  maquina virtual de Google Cloud con IP publica, lo que significa que los
+  dispositivos IoT — telefonos con GPS, tags NFC y beacons Bluetooth — se conectan
+  directamente desde cualquier red."
 
---------------------------------------------------------------------------------
-SEGMENTO 2 — KPI Y ANALITICA (2 min)
-[Rubrica: Sistema de KPI y analitica — 10%]
---------------------------------------------------------------------------------
+  → Iniciar sesion como admin.
 
-PASOS:
-  1. Iniciar sesion como admin (usuario: admin / contrasena: la del seed)
-  2. Ir a /admin/kpi
+  "Empezamos con el portal de administrador, que es el centro de operaciones
+  del sistema."
 
-QUE SENALAR Y DECIR para cada KPI visible:
-  1.  Total de residentes activos
-  2.  Residentes con animo bajo (puntaje <= 2) en ultimas 24h
-  3.  Sesiones de terapia completadas hoy
-  4.  Medicamentos pendientes de administrar hoy
-  5.  Tasa de adherencia terapeutica (% dosis administradas vs programadas)
-  6.  Incidentes sin resolver
-  7.  Accesos RFID del dia
-  8.  Alertas GPS activas
-  9.  Staff en turno hoy
-  10. Eventos NFC registrados
+================================================================================
+SEGMENTO 2 — DASHBOARD ADMIN Y KPIs
+Tiempo: 1:30 – 4:00 | ADRIAN
+================================================================================
 
-  "Todos estos KPIs se calculan en tiempo real desde PostgreSQL mediante
-  stored procedures y vistas. Superamos el minimo de 10 KPIs que pide la rubrica."
+PANTALLA: Dashboard de admin
 
-TIEMPO ESTIMADO: 1 min 30 seg
+DECIR:
+  "El dashboard del administrador muestra en tiempo real el estado completo del
+  asilo. Cada numero que ven aqui viene de una consulta en vivo a PostgreSQL."
 
---------------------------------------------------------------------------------
-SEGMENTO 3 — STORED PROCEDURES EN ACCION (2.5 min)
-[Rubrica: SP, Triggers y Views — 15% — criterio de mayor peso]
---------------------------------------------------------------------------------
+  → Señalar las tarjetas superiores del dashboard brevemente.
+  → Navegar a: Admin → KPIs en el menu.
 
-PARTE A — Registrar un residente nuevo (SP: sp_registrar_residente):
-  1. Ir a /admin/residentes/nuevo
-  2. Llenar el formulario con datos de ejemplo rapido
-  3. Guardar
-  4. DECIR: "Esta operacion llama a sp_registrar_residente, que en una sola
-     transaccion inserta el residente Y crea la asignacion con su cuidador
-     principal. Todo dentro del stored procedure, sin SQL inline en el backend."
+  "Implementamos mas de 10 KPIs, que es el minimo que pide la rubrica.
+  Cada uno se calcula en tiempo real."
 
-PARTE B — Registrar turno y medicamento (SP: sp_registrar_turno / sp_registrar_medicamento):
-  1. Ir a /admin/turnos → crear un turno
-  2. Ir a /admin/medicamentos → agregar horario de medicamento
-  3. DECIR: "Cada operacion de escritura en el sistema pasa por un stored
-     procedure que valida, transacciona y retorna parametros OUT (p_ok, p_msg)
-     para manejo de errores de negocio."
+  → Señalar y mencionar cada KPI:
 
-PARTE C — Toggle de horario (SP: sp_toggle_horario_medicamento):
-  1. En /admin/medicamentos, suspender un horario
-  2. DECIR: "sp_toggle_horario_medicamento retorna tres parametros OUT:
-     p_ok, p_msg y p_activo, lo que permite al frontend actualizar la UI
-     sin hacer una segunda consulta."
+  "Total de residentes activos en este momento. Residentes con estado de animo
+  bajo en las ultimas 24 horas — este numero dispara alertas automaticas.
+  Sesiones de terapia completadas hoy versus las programadas."
 
-TIEMPO ESTIMADO: 2 min 30 seg
+  "Medicamentos pendientes de administrar — si este numero sube es una senal de
+  alerta inmediata. Tasa de adherencia terapeutica: que porcentaje de dosis se
+  administraron versus las programadas."
 
---------------------------------------------------------------------------------
-SEGMENTO 4 — TRIGGERS EN ACCION (1.5 min)
-[Rubrica: SP, Triggers y Views — 15%]
---------------------------------------------------------------------------------
+  "Incidentes sin resolver. Accesos RFID del dia. Alertas GPS activas ahora mismo.
+  Staff en turno hoy. Y eventos NFC registrados."
 
-TRIGGER 1 — Alerta automatica por animo bajo (trg_after_checkin_animo):
-  1. Ir a /cuidador/checkin (o desde el dashboard admin simular)
-  2. Registrar un checkin con puntaje 1 o 2
-  3. Ir a /admin/residentes → ver que aparecio un incidente automatico
-  4. DECIR: "El trigger trg_after_checkin_animo detecta puntajes menores o
-     iguales a 2 e invoca sp_crear_incidente_automatico sin ningun codigo
-     en el backend. El incidente se genera solo, a nivel de base de datos."
+  "Todos estos indicadores los calculan stored procedures y vistas analiticas de
+  PostgreSQL. No hay un solo numero hardcodeado — todo es dinamico."
 
-TRIGGER 2 — Historial inmutable (trg_before_delete_log_medicamento):
-  1. DECIR (sin necesidad de demostrar en vivo): "Tenemos un trigger BEFORE
-     DELETE sobre log_medicamento que bloquea cualquier eliminacion del
-     historial de medicacion. El historial clinico es inmutable por diseno."
+================================================================================
+SEGMENTO 3 — STORED PROCEDURES EN LA APP
+Tiempo: 4:00 – 7:00 | ALEX
+================================================================================
 
-TRIGGER 3 — Baja logica obligatoria (trg_before_delete_residente):
-  1. DECIR: "Este trigger bloquea DELETE fisico sobre la tabla de residentes.
-     Las bajas solo se pueden hacer por sp_dar_baja_residente, que registra
-     fecha y motivo. Ningun residente se puede borrar accidentalmente."
+DECIR:
+  "El criterio de mayor peso en la rubrica son los stored procedures, triggers y
+  vistas con el 15%. Vamos a verlos en accion directamente desde la aplicacion."
 
-TIEMPO ESTIMADO: 1 min 30 seg
+  → Navegar a: Admin → Residentes → Nuevo Residente.
 
---------------------------------------------------------------------------------
-SEGMENTO 5 — VISTAS Y REPORTES HIGHCHARTS (2 min)
-[Rubrica: SP, Triggers y Views 15% / Reportes Highcharts 10%]
---------------------------------------------------------------------------------
+  "Al registrar un residente, la aplicacion llama a un stored procedure que en una
+  sola transaccion valida los datos, inserta al residente y crea su asignacion con
+  un cuidador. Si algo falla — por ejemplo una edad menor a 65 anos — el
+  procedimiento regresa un mensaje de error especifico y no guarda nada."
 
-PASOS:
-  1. Ir a /admin/reportes
+  → Intentar guardar con fecha de nacimiento reciente — mostrar el error.
+  → Llenar correctamente y guardar.
 
-QUE SENALAR (>=5 escenarios con graficas):
-  Grafica 1: Evolucion de animo global (linea) — v_adherencia_medicamentos
-  Grafica 2: Incidentes por severidad (barras) — v_resumen_incidentes_mes
-  Grafica 3: Adherencia terapeutica por residente (columnas)
-  Grafica 4: Resumen IoT — eventos por tecnologia (pie/dona)
-  Grafica 5: Carga operativa del staff (columnas agrupadas)
+  "Vieron como el sistema rechazo el registro por edad invalida. Esa validacion
+  no esta en la aplicacion web — esta dentro del stored procedure en PostgreSQL."
 
-  "Cada grafica consume un stored procedure con REFCURSOR que devuelve
-  los datos, los cuales se renderizan en tiempo real con Highcharts.
-  Los datos vienen de las vistas analiticas de PostgreSQL."
+  → Navegar a: Admin → Medicamentos.
 
-  2. Ir a /admin/iot — mostrar grafica de beacon y GPS en tiempo real
-  3. DECIR: "Esta es la vista v_ubicacion_actual_staff y v_estado_gps_residentes
-     actualizandose via API REST cada pocos segundos."
+  "Los horarios de medicamentos tienen un stored procedure que puede suspender o
+  reactivar un horario. El procedimiento regresa el nuevo estado directamente,
+  asi la pantalla se actualiza al instante sin necesitar otra consulta."
 
-TIEMPO ESTIMADO: 2 min
+  → Suspender un horario y volver a activarlo.
 
---------------------------------------------------------------------------------
-SEGMENTO 6 — INTEGRACION MONGODB (1 min)
-[Rubrica: Integracion PostgreSQL + MongoDB — 10%]
---------------------------------------------------------------------------------
+  → Navegar a: Admin → Turnos.
 
-PASOS:
-  1. En terminal 2, ejecutar: python scripts/export_mongodb.py
-  2. Mostrar el output en consola
-  3. Ir a /api/mongo/eventos_iot en el navegador (o mostrar el JSON)
-  4. DECIR: "Los eventos IoT (NFC, GPS, beacon) se almacenan en MongoDB
-     ademas de PostgreSQL. El script export_mongodb.py sincroniza los datos.
-     Las graficas de IoT del dashboard consumen directamente de MongoDB via
-     pymongo, mientras que los datos transaccionales viven en PostgreSQL."
+  "Para los turnos del personal, el stored procedure valida que no haya
+  solapamientos. Si el mismo empleado ya tiene turno en ese horario, la operacion
+  se cancela automaticamente con un mensaje explicando el conflicto."
 
-TIEMPO ESTIMADO: 1 min
+  → Navegar a: Admin → Sesiones de Terapia — mostrar la lista.
 
---------------------------------------------------------------------------------
-RESUMEN DE TIEMPO PRESENCIAL
---------------------------------------------------------------------------------
+  "Las sesiones de terapia tambien pasan por un stored procedure que valida
+  disponibilidad de sala y terapeuta simultaneamente antes de confirmar
+  cualquier reserva."
 
-  Seg. 1 — Contexto y arquitectura       : 0:45
-  Seg. 2 — KPI y analitica               : 1:30
-  Seg. 3 — Stored Procedures             : 2:30
-  Seg. 4 — Triggers                      : 1:30
-  Seg. 5 — Vistas + Reportes Highcharts  : 2:00
-  Seg. 6 — MongoDB                       : 1:00
-  Buffer / preguntas                      : 0:45
-  ─────────────────────────────────────────────
-  TOTAL                                  : 10:00
+================================================================================
+SEGMENTO 4 — TRIGGERS EN VIVO
+Tiempo: 7:00 – 9:00 | ALEX (continua)
+================================================================================
 
---------------------------------------------------------------------------------
-POSIBLES PREGUNTAS DEL MAESTRO Y RESPUESTAS
---------------------------------------------------------------------------------
+DECIR:
+  "Ahora los triggers — logica que se ejecuta automaticamente en la base de datos
+  sin que nadie la llame explicitamente."
 
-P: "Por que usaron stored procedures en vez de SQL directo en Flask?"
-R: "Para separar la logica de negocio de la capa de aplicacion. Toda
-   validacion y transaccion ocurre dentro de la BD, lo que garantiza
-   integridad incluso si se accede por otra aplicacion."
+  → Abrir nueva pestana, entrar como cuidador.
+  → Navegar a: Cuidador → Check-in de Animo.
 
-P: "Como funciona el patron REFCURSOR?"
-R: "El SP declara un parametro INOUT de tipo REFCURSOR. Dentro del SP se
-   abre con OPEN cursor FOR SELECT... El backend llama al SP dentro de una
+  "Vamos a registrar un estado de animo muy bajo — puntaje 1 — para algun
+  residente."
+
+  → Registrar el check-in con puntaje 1.
+
+  → Volver a pestana de admin, ir a Admin → Residentes, abrir ese residente.
+
+  "¿Ven ese incidente que acaba de aparecer? Nadie lo creo manualmente. El trigger
+  detecto el puntaje bajo y genero el incidente solo, a nivel de base de datos.
+  El cuidador solo registro el check-in — el resto fue automatico."
+
+  → Navegar a: Admin → Auditoria.
+
+  "Aqui esta el registro de auditoria. Tenemos triggers que escriben en esta tabla
+  de forma transparente en cada operacion critica del sistema — altas de residentes,
+  cambios de personal, accesos. Todo queda trazado: que se hizo, cuando y desde
+  que direccion IP."
+
+  "Tambien tenemos triggers de proteccion: uno que bloquea el borrado fisico de
+  residentes — las bajas solo se pueden hacer por procedimiento — y otro que hace
+  el historial de medicacion completamente inmutable."
+
+================================================================================
+SEGMENTO 5 — VISTAS Y REPORTES HIGHCHARTS
+Tiempo: 9:00 – 11:30 | ADRIAN
+================================================================================
+
+  → Navegar a: Admin → Reportes.
+
+DECIR:
+  "Los reportes visuales consumen las vistas analiticas de PostgreSQL y los
+  renderiza Highcharts en tiempo real."
+
+  → Señalar cada grafica:
+
+  "Primera grafica: evolucion del estado de animo global en los ultimos 30 dias.
+  Pueden ver tendencias semana a semana."
+
+  "Segunda: incidentes por severidad este mes — leve, moderado y critico. Esto le
+  permite al director del asilo ver de un vistazo si hay un problema recurrente."
+
+  "Tercera: adherencia terapeutica por residente — que tan bien esta tomando sus
+  medicamentos cada paciente esta semana."
+
+  "Cuarta: resumen de eventos IoT por tecnologia — cuantos registros NFC, GPS y
+  beacon se generaron. Esta grafica cruza datos de PostgreSQL con MongoDB."
+
+  "Quinta: carga operativa del staff — cuantas actividades maneja cada cuidador.
+  Superamos los 5 escenarios que pide la rubrica."
+
+  → Navegar a: Admin → IoT.
+
+  "Esta pantalla usa dos vistas en tiempo real: una que muestra donde esta cada
+  empleado segun su ultima deteccion beacon, y otra con el estado GPS de los
+  residentes. Se actualizan automaticamente cada pocos segundos."
+
+================================================================================
+SEGMENTO 6 — IoT EN TIEMPO REAL
+Tiempo: 11:30 – 14:00 | ADRIAN (continua)
+================================================================================
+
+  → Navegar a: Admin → GPS.
+
+DECIR:
+  "El modulo GPS recibe posiciones en tiempo real desde la app Traccar en el
+  telefono. El mapa se actualiza cada 4 segundos."
+
+  → Señalar marcador en el mapa si hay GPS activo. Si no, señalar las zonas.
+
+  "Configuramos zonas peligrosas y seguras en el mapa. Cuando un residente sale
+  del perimetro autorizado, el sistema genera una alerta automatica."
+
+  → Hacer clic en la pestana Alertas.
+
+  "Las alertas aparecen aqui en tiempo real y simultaneamente en el portal del
+  cuidador, donde puede marcarlas como verificadas. Esto es un trigger en
+  PostgreSQL que detecta la posicion y genera la alerta sin intervencion humana."
+
+  → Navegar a: Admin → Tags NFC.
+
+  "El NFC funciona con tags fisicos programados con la URL de la VM. El cuidador
+  acerca el telefono al tag del residente y automaticamente se abre la pantalla
+  con sus medicamentos del dia."
+
+  → Si hay telefono: escanear un tag y mostrar la pantalla.
+  → Si no: mostrar la lista de Asistencias NFC.
+
+  "Cada escaneo queda registrado en la base de datos. En Admin → Asistencias NFC
+  pueden ver el historial completo con fecha, hora, actividad y el cuidador que
+  lo registro."
+
+  → Navegar a: Admin → Accesos RFID.
+
+  "Los accesos RFID controlan la entrada fisica a areas del asilo. Cada intento
+  — autorizado o denegado — queda registrado automaticamente en el log de
+  auditoria por un trigger."
+
+================================================================================
+SEGMENTO 7 — PORTAL TERAPEUTA
+Tiempo: 14:00 – 15:30 | ALEX
+================================================================================
+
+  → Abrir nueva pestana, entrar como terapeuta.
+
+DECIR:
+  "El portal del terapeuta esta enfocado en seguimiento clinico. Su dashboard
+  muestra las sesiones del dia y los residentes que tiene asignados."
+
+  → Navegar a: Terapeuta → Sesiones.
+
+  "Al programar una sesion, el sistema valida en tiempo real que la sala este
+  disponible y que el terapeuta no tenga otro compromiso en ese horario. Si hay
+  conflicto, la operacion se cancela antes de guardar nada."
+
+  → Hacer clic en algun residente para ver su detalle.
+
+  "En el perfil del residente el terapeuta ve la evolucion de animo graficada,
+  el historial de sesiones y los incidentes. Esta es informacion clinica completa
+  — el familiar va a ver una version filtrada de esto, que les muestro ahora."
+
+================================================================================
+SEGMENTO 8 — PORTAL FAMILIAR
+Tiempo: 15:30 – 17:30 | ELIAS
+================================================================================
+
+  → Abrir nueva pestana, ir a /familiar/login.
+
+DECIR:
+  "El portal familiar tiene su propio sistema de autenticacion completamente
+  independiente — tabla separada, flujo de login separado, sesion separada.
+  Los familiares no tienen ningun acceso al sistema administrativo."
+
+  → Iniciar sesion con: familiar1 / familiar123
+
+  "El familiar ve el estado general de su residente: estado de animo actual,
+  medicamentos de hoy y las sesiones de terapia recientes. Pero no tiene acceso
+  a las notas clinicas del terapeuta, ni a incidentes internos, ni a informacion
+  de otros residentes."
+
+  "Eso no es solo una restriccion en la aplicacion — las consultas usan vistas
+  especificas del portal familiar que filtran activamente los datos sensibles
+  desde PostgreSQL."
+
+  → Ir a la seccion GPS familiar.
+
+  "El familiar puede ver la ubicacion de su residente en el mapa en tiempo real,
+  exactamente lo mismo que ve el administrador pero solo para su familiar."
+
+  → Ir a la seccion de Pagos.
+
+  "Tiene acceso al historial de pagos y mensualidades. Y si olvida su contrasena,
+  puede restablecerla directamente desde la pantalla de login sin necesitar
+  contactar al administrador."
+
+================================================================================
+SEGMENTO 9 — MONGODB DESDE LA APP
+Tiempo: 17:30 – 18:30 | ADRIAN
+================================================================================
+
+  → Regresar a sesion de admin, ir a Admin → IoT.
+
+DECIR:
+  "Los eventos IoT que ven aqui — detecciones beacon, pings GPS, escaneos NFC —
+  se almacenan simultaneamente en PostgreSQL y en MongoDB. Usamos dos bases de
+  datos con propositos distintos."
+
+  "PostgreSQL maneja todo lo transaccional: residentes, medicamentos, sesiones,
+  pagos — donde necesitamos integridad y relaciones. MongoDB almacena los eventos
+  de alta frecuencia de IoT, donde la velocidad de escritura importa mas que las
+  relaciones entre datos."
+
+  → Señalar los eventos en pantalla.
+
+  "Esta pantalla esta consumiendo MongoDB en tiempo real via pymongo. Cada
+  deteccion del beacon, cada ping de GPS, cada escaneo NFC genera un documento
+  en MongoDB ademas del registro en PostgreSQL. Son sistemas complementarios,
+  no redundantes."
+
+================================================================================
+SEGMENTO 10 — CIERRE
+Tiempo: 18:30 – 20:00 | ELIAS
+================================================================================
+
+  → Regresar al dashboard de admin.
+
+DECIR:
+  "Para cerrar: ElderCare cubre gestion clinica, IoT en tiempo real, cuatro
+  portales diferenciados y analitica avanzada — todo respaldado por una
+  arquitectura de base de datos con integridad garantizada a nivel de PostgreSQL."
+
+  "32 tablas, 54 stored procedures, 15 vistas, 10 triggers. Mas de 10 KPIs en
+  tiempo real. 5 reportes con Highcharts. Integracion PostgreSQL mas MongoDB.
+  Cuatro protocolos IoT: GPS, NFC, RFID y Beacon BLE. Corriendo en Google Cloud,
+  accesible desde cualquier dispositivo."
+
+  "Gracias. ¿Tienen alguna pregunta?"
+
+================================================================================
+RESPUESTAS A PREGUNTAS FRECUENTES
+================================================================================
+
+P: "¿Por que stored procedures en vez de SQL directo en Flask?"
+R: "Para separar la logica de negocio de la aplicacion. Toda validacion y
+   transaccion ocurre en la base de datos — si manana cambiamos el frontend,
+   la logica sigue intacta en PostgreSQL."
+
+P: "¿Como funciona el patron REFCURSOR?"
+R: "El stored procedure declara un parametro de tipo cursor. Dentro abre ese
+   cursor con un SELECT. El backend llama al procedimiento dentro de una
    transaccion, obtiene el cursor y lo itera para construir la respuesta."
 
-P: "Que pasa si dos terapeutas intentan reservar la misma sala al mismo tiempo?"
-R: "El trigger trg_before_sesion_terapia valida solapamientos antes de
-   confirmar cualquier INSERT o UPDATE en sesion_terapia. Si hay conflicto,
-   lanza una excepcion y cancela la operacion a nivel de BD."
+P: "¿Como justifican MongoDB con PostgreSQL?"
+R: "PostgreSQL para datos transaccionales con integridad estricta. MongoDB para
+   eventos IoT de alta frecuencia donde necesitamos escritura rapida y documentos
+   flexibles — un ping GPS tiene campos distintos a una deteccion beacon."
 
-P: "Como justifican MongoDB junto con PostgreSQL?"
-R: "PostgreSQL maneja los datos transaccionales y relacionales. MongoDB
-   almacena los eventos IoT de alta frecuencia (pings GPS, detecciones
-   beacon) donde la flexibilidad de documentos y la velocidad de escritura
-   son mas importantes que las relaciones."
+P: "¿Cuantas vistas implementaron?"
+R: "15 vistas: 8 operacionales para los dashboards, 2 analiticas para los
+   reportes, y 5 del portal familiar que filtran datos clinicos sensibles."
 
-P: "Cuantas vistas implementaron y para que sirven?"
-R: "15 vistas. 8 operacionales para los dashboards, 2 analiticas para
-   reportes, y 5 del portal familiar que filtran datos clinicos sensibles
-   para que los familiares solo vean informacion apropiada."
-
+P: "¿Que pasa si dos terapeutas reservan la misma sala al mismo tiempo?"
+R: "Un trigger valida solapamientos antes de confirmar cualquier reserva. Si hay
+   conflicto, cancela la operacion automaticamente — sin ningun codigo en la
+   aplicacion."
 
 ================================================================================
-PARTE 2: VIDEO DEMOSTRATIVO YOUTUBE
+RESUMEN DE TIEMPOS
 ================================================================================
 
-Objetivo: cubrir lo que NO alcanzo en la presentacion presencial.
-Criterios pendientes: ERD, Normalizacion 3NF, DDL, roles adicionales,
-funcionalidades IoT completas, portal familiar.
+  Seg 1  Introduccion y arquitectura     1:30   ELIAS
+  Seg 2  Dashboard Admin y KPIs          2:30   ADRIAN
+  Seg 3  Stored Procedures en la app     3:00   ALEX
+  Seg 4  Triggers en vivo                2:00   ALEX
+  Seg 5  Vistas y Reportes Highcharts    2:30   ADRIAN
+  Seg 6  IoT GPS / NFC / RFID / Beacon   2:30   ADRIAN
+  Seg 7  Portal Terapeuta                1:30   ALEX
+  Seg 8  Portal Familiar                 2:00   ELIAS
+  Seg 9  MongoDB desde la app            1:00   ADRIAN
+  Seg 10 Cierre                          1:30   ELIAS
+  ─────────────────────────────────────────────────────
+  TOTAL                                 20:00
 
-Formato sugerido: grabacion de pantalla con voz en off. Cada integrante
-presenta una seccion para cumplir "participacion total" (rubrica 100%).
-
---------------------------------------------------------------------------------
-SECCION 1 — ERD Y NORMALIZACION (2.5 min) — Integrante A
---------------------------------------------------------------------------------
-
-  1. Abrir DIAGRAMA_ER.drawio en draw.io
-  2. Mostrar el diagrama completo
-  3. DECIR: "El diagrama tiene 32 tablas organizadas en 9 modulos:
-     catalogos, personas, operacional, clinico, IoT, auditoria,
-     familiar, GPS avanzado y actividades NFC."
-  4. Hacer zoom a un grupo (ej: clinico) y explicar las relaciones
-  5. Explicar normalizacion 3NF en 2 ejemplos:
-     Ejemplo A — tabla STAFF:
-       "1FN: todos los campos son atomicos, no hay grupos repetidos.
-        2FN: los campos nombre, email, especialidad dependen completamente
-             de id_staff, no de parte de la clave.
-        3FN: no hay dependencias transitivas. El nombre del rol no esta
-             en STAFF, esta en la tabla ROL referenciada por FK."
-     Ejemplo B — tabla LOG_MEDICAMENTO:
-       "Separamos el catalogo de medicamentos, el horario y el log en
-        tres tablas distintas para eliminar redundancia y cumplir 3FN."
-
-TIEMPO: 2 min 30 seg
-
---------------------------------------------------------------------------------
-SECCION 2 — DDL E INTEGRIDAD (1.5 min) — Integrante B
---------------------------------------------------------------------------------
-
-  1. Abrir DDL.sql en un editor de texto
-  2. Mostrar brevemente la definicion de 2-3 tablas con sus constraints
-  3. DESTACAR:
-     - CHECK (nivel_acceso BETWEEN 1 AND 3) en tabla ROL
-     - UNIQUE (codigo_tag) en NFC_TAG
-     - FK con ON UPDATE CASCADE en sala → ala
-     - CONSTRAINT ck_lat CHECK (lat_min < lat_max) en limite_jardin
-  4. DECIR: "Todos los constraints de integridad estan definidos en el DDL,
-     no en el backend. La integridad de datos es responsabilidad de la BD."
-
-TIEMPO: 1 min 30 seg
-
---------------------------------------------------------------------------------
-SECCION 3 — DASHBOARD TERAPEUTA Y CUIDADOR (2 min) — Integrante C
---------------------------------------------------------------------------------
-
-  1. Cerrar sesion de admin
-  2. Login como terapeuta
-     - Mostrar dashboard: sesiones del dia, residentes asignados
-     - Ir a un residente → ver grafica de evolucion de animo (Highcharts)
-     - Mostrar registro de sesion (sp_reservar_sesion + trigger solapamiento)
-  3. Logout → login como cuidador
-     - Mostrar dashboard: medicamentos pendientes, checkins
-     - Registrar un checkin de animo normal (puntaje 4)
-     - Mostrar la lista de medicamentos del dia
-
-TIEMPO: 2 min
-
---------------------------------------------------------------------------------
-SECCION 4 — NFC EN VIVO + PORTAL FAMILIAR (2 min) — Integrante D
---------------------------------------------------------------------------------
-
-  PARTE A — NFC desde telefono (1 min):
-  1. Con el telefono en la misma red, abrir: http://<IP_LOCAL>:8080/nfc/1
-  2. Mostrar la pantalla de confirmacion de actividad NFC
-  3. Volver al admin → /admin/nfc/asistencias → ver el registro
-  4. DECIR: "El endpoint /nfc/<codigo_tag> es publico y funciona con HTTP
-     puro para compatibilidad con iOS. Registra la asistencia o
-     administracion de medicamento sin login."
-
-  PARTE B — Portal familiar (1 min):
-  1. Abrir en otra pestana: /familiar/login
-  2. Login con credenciales del familiar
-  3. Mostrar: info del residente, historial de sesiones (sin notas clinicas),
-     medicamentos de hoy, grafica de animo de los ultimos 30 dias
-  4. DECIR: "Las vistas v_familiar_* filtran activamente los datos clinicos
-     sensibles. El familiar ve solo lo que le corresponde."
-
-TIEMPO: 2 min
-
---------------------------------------------------------------------------------
-SECCION 5 — IOT COMPLETO: GPS + RFID + BEACON (2 min) — Integrante A o B
---------------------------------------------------------------------------------
-
-  1. Ir a /admin/gps
-     - Mostrar el mapa con posicion del residente
-     - Mostrar zonas configuradas y alertas
-     - DECIR: "El trigger trg_after_gps_ping compara la posicion con
-       limite_jardin y genera incidentes automaticos si el residente
-       sale del area segura."
-
-  2. Ir a /admin/rfid
-     - Mostrar los accesos del dia (concedidos y denegados)
-     - DECIR: "El trigger trg_after_acceso_rfid registra en log_auditoria
-       cada acceso, permitiendo auditoria de seguridad fisica."
-
-  3. Ir a /admin/iot
-     - Mostrar el panel de beacons: ubicacion actual del staff
-     - DECIR: "v_ubicacion_actual_staff muestra la ultima deteccion beacon
-       de cada empleado con los minutos transcurridos desde la deteccion."
-
-TIEMPO: 2 min
-
---------------------------------------------------------------------------------
-SECCION 6 — AUDITORIA Y CIERRE (30 seg) — cualquier integrante
---------------------------------------------------------------------------------
-
-  1. Ir a /admin/auditoria
-  2. Mostrar el log de operaciones con tabla, operacion e IP
-  3. DECIR: "Cuatro triggers de auditoria (staff, residente, usuario_sistema,
-     acceso_rfid) escriben en log_auditoria de forma transparente.
-     El admin tiene trazabilidad completa de todas las operaciones criticas."
-  4. Cerrar con creditos del equipo
-
-TIEMPO: 30 seg
-
---------------------------------------------------------------------------------
-RESUMEN DE TIEMPO DEL VIDEO
---------------------------------------------------------------------------------
-
-  Sec. 1 — ERD y Normalizacion 3NF          : 2:30
-  Sec. 2 — DDL e integridad                 : 1:30
-  Sec. 3 — Dashboards terapeuta y cuidador  : 2:00
-  Sec. 4 — NFC en vivo + Portal familiar    : 2:00
-  Sec. 5 — IoT completo GPS/RFID/Beacon     : 2:00
-  Sec. 6 — Auditoria y cierre               : 0:30
-  ─────────────────────────────────────────────
-  TOTAL                                     : 10:30
-
---------------------------------------------------------------------------------
-COBERTURA DE RUBRICA
---------------------------------------------------------------------------------
-
-  Criterio                            Pres. | Video | Cubierto en
-  ─────────────────────────────────────────────────────────────────
-  Analisis del problema (10%)           --    Sec.1   Video (intro ERD)
-  ERD Crow's Foot (10%)                 --    Sec.1   Video
-  Normalizacion 3NF (10%)               --    Sec.1   Video
-  Implementacion DDL (10%)              --    Sec.2   Video
-  SP, Triggers y Views (15%)           Seg3-4  Sec.3-5 AMBOS
-  KPI y analitica (10%)                Seg2    --      Presencial
-  PostgreSQL + MongoDB (10%)           Seg6    --      Presencial
-  Reportes Highcharts (10%)            Seg5    Sec.3   AMBOS
-  Flask + UI/UX (5%)                   Seg1    Sec.3-4 AMBOS
-  Documento tecnico (5%)               --      --      DOCUMENTACION_TECNICA.txt
-  README tecnico (5%)                  --      --      (pendiente: ver abajo)
-  Video YouTube (5%)                   --      Todo    Video
-  Coevaluacion (5%)                    --      --      Formato separado
-
---------------------------------------------------------------------------------
-PENDIENTE ANTES DEL DIA DE LA DEMO
---------------------------------------------------------------------------------
-
-  [ ] README.md del proyecto (criterio 5% — "Claro, detallado y profesional")
-  [ ] Seed data de hoy — verificar que los dashboards no salgan vacios
-  [ ] Ensayo cronometrado con el equipo (al menos una vez con temporizador)
-  [ ] Definir quien presenta cada segmento de la presencial
-  [ ] Definir quien graba cada seccion del video
-  [ ] Subir video a YouTube (no listado o publico segun indicaciones del profe)
-  [ ] Llevar laptop cargada + cable HDMI si hay proyector
+  Elias  : Seg 1 + 8 + 10  =  5:00 min
+  Alex   : Seg 3 + 4 + 7   =  6:30 min
+  Adrian : Seg 2 + 5 + 6 + 9 = 8:30 min
 
 ================================================================================
 FIN DEL GUION
