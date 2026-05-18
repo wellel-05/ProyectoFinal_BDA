@@ -2369,7 +2369,7 @@ def admin_gps_zona_delete(id_zona):
 
 
 @app.route('/admin/gps/alerta/<int:id_alerta>/atender', methods=['POST'])
-@rol_required(1)
+@rol_required(1, 3)
 def admin_gps_alerta_atender(id_alerta):
     conn = get_db()
     try:

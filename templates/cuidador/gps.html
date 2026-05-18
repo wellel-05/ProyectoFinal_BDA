@@ -152,15 +152,37 @@ function centrar(dev,lat,lon){
   actualizar();
 }
 
+const CSRF = "{{ csrf_token() }}";
+
+function atenderAlerta(id) {
+  fetch(`/admin/gps/alerta/${id}/atender`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: `csrf_token=${encodeURIComponent(CSRF)}`
+  }).then(()=> actualizarAlertas()).catch(()=>{});
+}
+
 function actualizarAlertas() {
   fetch('/api/gps/alertas').then(r=>r.json()).then(data=>{
     const wrap = document.getElementById('alerta-wrap');
     if (!data.length) { wrap.innerHTML=''; return; }
     wrap.innerHTML = data.map(a=>`
-      <div class="alert-banner">
-        <i class="fa-solid fa-triangle-exclamation" style="margin-right:6px"></i>
-        <b>${a.residente_nombre}</b> — ${a.mensaje}
-        <div style="font-size:10.5px;margin-top:3px;opacity:.75">${a.ts_fmt}</div>
+      <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;
+                  margin:10px 12px 0;padding:11px 13px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div>
+            <div style="font-size:12.5px;font-weight:700;color:#991B1B;display:flex;align-items:center;gap:6px">
+              <i class="fa-solid fa-triangle-exclamation"></i> ${a.residente_nombre}
+            </div>
+            <div style="font-size:11.5px;color:#7F1D1D;margin-top:3px">${a.mensaje}</div>
+            <div style="font-size:10.5px;color:#B91C1C;margin-top:4px;opacity:.8">${a.ts_fmt}</div>
+          </div>
+          <button onclick="atenderAlerta(${a.id_alerta})"
+                  style="flex-shrink:0;background:#EF4444;color:#fff;border:none;border-radius:7px;
+                         padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
+            <i class="fa-solid fa-check"></i> Verificar
+          </button>
+        </div>
       </div>`).join('');
   }).catch(()=>{});
 }
