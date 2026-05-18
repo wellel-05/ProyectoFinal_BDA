@@ -2226,14 +2226,14 @@ def api_gps_zonas():
 
 
 @app.route('/api/gps/alertas/count')
-@rol_required(1)
+@rol_required(1, 3)
 def api_gps_alertas_count():
     rows = query("SELECT COUNT(*) AS n FROM alerta_gps WHERE atendida=FALSE", fetchone=True)
     return jsonify({'count': int(rows['n']) if rows else 0})
 
 
 @app.route('/api/gps/alertas')
-@rol_required(1)
+@rol_required(1, 3)
 def api_gps_alertas():
     rows = query("""
         SELECT a.id_alerta, a.device_id, a.mensaje,

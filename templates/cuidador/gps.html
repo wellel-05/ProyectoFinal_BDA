@@ -50,7 +50,7 @@
       </div>
     </div>
     <div style="padding:10px 12px;border-top:1px solid var(--border);font-size:11px;color:var(--text-sm);text-align:center">
-      Actualiza cada 15 s · <span id="ultimo-update">—</span>
+      Actualiza cada 4 s · <span id="ultimo-update">—</span>
     </div>
   </div>
 
@@ -152,7 +152,22 @@ function centrar(dev,lat,lon){
   actualizar();
 }
 
+function actualizarAlertas() {
+  fetch('/api/gps/alertas').then(r=>r.json()).then(data=>{
+    const wrap = document.getElementById('alerta-wrap');
+    if (!data.length) { wrap.innerHTML=''; return; }
+    wrap.innerHTML = data.map(a=>`
+      <div class="alert-banner">
+        <i class="fa-solid fa-triangle-exclamation" style="margin-right:6px"></i>
+        <b>${a.residente_nombre}</b> — ${a.mensaje}
+        <div style="font-size:10.5px;margin-top:3px;opacity:.75">${a.ts_fmt}</div>
+      </div>`).join('');
+  }).catch(()=>{});
+}
+
 actualizar();
+actualizarAlertas();
 setInterval(actualizar,4000);
+setInterval(actualizarAlertas,5000);
 </script>
 {% endblock %}
