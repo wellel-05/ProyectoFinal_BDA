@@ -1069,15 +1069,20 @@ def terapeuta_dashboard():
                            incidentes=incidentes)
 
 @app.route('/terapeuta/residentes')
-@rol_required(2)
+@rol_required(1, 2)
 def terapeuta_residentes():
-    id_staff   = session['staff_id']
-    residentes = call_refcursor(
-        "CALL sp_residentes_asignados_terapeuta(%s, 'resultado')", (id_staff,))
+    if session.get('nivel_acceso') == 1:
+        residentes = query(
+            "SELECT id_residente, nombre, apellidos, habitacion, diagnostico_principal, "
+            "nivel_movilidad, activo FROM residente WHERE activo = TRUE ORDER BY apellidos",
+            fetchall=True) or []
+    else:
+        residentes = call_refcursor(
+            "CALL sp_residentes_asignados_terapeuta(%s, 'resultado')", (session['staff_id'],))
     return render_template('terapeuta/residentes.html', residentes=residentes)
 
 @app.route('/terapeuta/residentes/<int:id_residente>')
-@rol_required(2)
+@rol_required(1, 2)
 def terapeuta_residente_detalle(id_residente):
     rows = call_refcursor("CALL sp_detalle_residente(%s, 'resultado')", (id_residente,))
     residente = rows[0] if rows else None
@@ -1085,9 +1090,16 @@ def terapeuta_residente_detalle(id_residente):
         flash('Residente no encontrado.', 'error')
         return redirect(url_for('terapeuta_residentes'))
 
-    sesiones = call_refcursor(
-        "CALL sp_sesiones_residente_terapeuta(%s, %s, 'resultado')",
-        (id_residente, session['staff_id']))
+    if session.get('nivel_acceso') == 1:
+        sesiones = query(
+            "SELECT st.*, sa.nombre AS sala FROM sesion_terapia st "
+            "JOIN sala sa ON st.id_sala = sa.id_sala "
+            "WHERE st.id_residente = %s ORDER BY st.fecha_sesion DESC",
+            (id_residente,), fetchall=True) or []
+    else:
+        sesiones = call_refcursor(
+            "CALL sp_sesiones_residente_terapeuta(%s, %s, 'resultado')",
+            (id_residente, session['staff_id']))
 
     evolucion_animo = call_refcursor(
         "CALL sp_evolucion_animo_residente(%s, %s, 'resultado')",
@@ -1124,26 +1136,43 @@ def terapeuta_sesiones():
     return render_template('terapeuta/sesiones.html', sesiones=sesiones)
 
 @app.route('/terapeuta/sesiones/nueva', methods=['GET', 'POST'])
-@rol_required(2)
+@rol_required(1, 2)
 def terapeuta_sesion_nueva():
-    id_staff    = session['staff_id']
-    residentes  = call_refcursor("CALL sp_residentes_sesion_nueva(%s, 'resultado')", (id_staff,))
-    salas       = call_refcursor("CALL sp_salas('resultado')")
+    es_admin = session.get('nivel_acceso') == 1
+    id_staff  = session['staff_id']
+
+    if es_admin:
+        residentes = query(
+            "SELECT id_residente, nombre, apellidos, habitacion FROM residente "
+            "WHERE activo = TRUE ORDER BY apellidos", fetchall=True) or []
+        terapeutas = query(
+            "SELECT id_staff, nombre, apellidos FROM staff "
+            "WHERE activo = TRUE AND id_rol = 2 ORDER BY apellidos",
+            fetchall=True) or []
+    else:
+        residentes = call_refcursor("CALL sp_residentes_sesion_nueva(%s, 'resultado')", (id_staff,))
+        terapeutas = []
+
+    salas = call_refcursor("CALL sp_salas('resultado')")
     preselect_residente = request.args.get('id_residente', '')
     conflicto = None
 
     if request.method == 'POST':
         f = request.form
-        if not require_fields(f, 'id_residente', 'id_sala', 'fecha_sesion',
-                               'duracion_min', 'tipo_sesion'):
+        campos = ['id_residente', 'id_sala', 'fecha_sesion', 'duracion_min', 'tipo_sesion']
+        if es_admin:
+            campos.append('id_terapeuta')
+        if not require_fields(f, *campos):
             return render_template('terapeuta/sesion_nueva.html',
                                    residentes=residentes, salas=salas,
+                                   terapeutas=terapeutas, es_admin=es_admin,
                                    conflicto=conflicto,
                                    preselect_residente=preselect_residente)
 
+        id_terapeuta = f['id_terapeuta'] if es_admin else id_staff
         ok, msg = call_proc(
             "CALL sp_reservar_sesion(%s,%s,%s,%s,%s,%s,NULL,NULL)",
-            (f['id_residente'], id_staff, f['id_sala'],
+            (f['id_residente'], id_terapeuta, f['id_sala'],
              f['fecha_sesion'], f['duracion_min'], f['tipo_sesion']))
         if ok:
             flash(msg, 'exito')
@@ -1154,11 +1183,13 @@ def terapeuta_sesion_nueva():
     return render_template('terapeuta/sesion_nueva.html',
                            residentes=residentes,
                            salas=salas,
+                           terapeutas=terapeutas,
+                           es_admin=es_admin,
                            conflicto=conflicto,
                            preselect_residente=preselect_residente)
 
 @app.route('/terapeuta/sesiones/<int:id_sesion>/editar', methods=['POST'])
-@rol_required(2)
+@rol_required(1, 2)
 def terapeuta_sesion_editar(id_sesion):
     f = request.form
     asistio = f.get('asistio') in ('on', '1', 'true')
@@ -1169,22 +1200,23 @@ def terapeuta_sesion_editar(id_sesion):
     return redirect(url_for('terapeuta_sesiones'))
 
 @app.route('/terapeuta/sesiones/<int:id_sesion>/eliminar', methods=['POST'])
-@rol_required(2)
+@rol_required(1, 2)
 def terapeuta_sesion_eliminar(id_sesion):
+    id_terapeuta = None if session.get('nivel_acceso') == 1 else session['staff_id']
     ok, msg = call_proc(
         "CALL sp_eliminar_sesion(%s,%s,NULL,NULL)",
-        (id_sesion, session['staff_id']))
+        (id_sesion, id_terapeuta))
     flash(msg, 'exito' if ok else 'error')
     return redirect(url_for('terapeuta_sesiones'))
 
 @app.route('/terapeuta/incidentes')
-@rol_required(2)
+@rol_required(1, 2)
 def terapeuta_incidentes():
     incidentes = call_refcursor("CALL sp_todos_incidentes('resultado')")
     return render_template('terapeuta/incidentes.html', incidentes=incidentes)
 
 @app.route('/terapeuta/incidentes/<int:id_incidente>/editar', methods=['POST'])
-@rol_required(2)
+@rol_required(1, 2)
 def terapeuta_incidente_editar(id_incidente):
     f = request.form
     ok, msg = call_proc(
@@ -1229,27 +1261,57 @@ def cuidador_dashboard():
                            animo_bajo=animo_bajo)
 
 @app.route('/cuidador/residentes')
-@rol_required(3)
+@rol_required(1, 3)
 def cuidador_residentes():
-    id_staff   = session['staff_id']
-    residentes = call_refcursor(
-        "CALL sp_residentes_cuidador_vista(%s, 'resultado')", (id_staff,))
+    if session.get('nivel_acceso') == 1:
+        residentes = query(
+            "SELECT id_residente, nombre, apellidos, habitacion, diagnostico_principal, "
+            "nivel_movilidad FROM residente WHERE activo = TRUE ORDER BY apellidos",
+            fetchall=True) or []
+    else:
+        residentes = call_refcursor(
+            "CALL sp_residentes_cuidador_vista(%s, 'resultado')", (session['staff_id'],))
     return render_template('cuidador/residentes.html', residentes=residentes)
 
 @app.route('/cuidador/medicamentos')
-@rol_required(3)
+@rol_required(1, 3)
 def cuidador_medicamentos():
-    id_staff      = session['staff_id']
-    pendientes    = call_refcursor(
-        "CALL sp_meds_pendientes_cuidador(%s, 'resultado')", (id_staff,))
-    administrados = call_refcursor(
-        "CALL sp_medicamentos_admin_hoy(%s, 'resultado')", (id_staff,))
+    if session.get('nivel_acceso') == 1:
+        pendientes = query("""
+            SELECT r.nombre || ' ' || r.apellidos AS residente, m.nombre AS medicamento,
+                   hm.dosis, hm.hora_programada, hm.id_horario
+            FROM horario_medicamento hm
+            JOIN residente r    ON hm.id_residente   = r.id_residente
+            JOIN medicamento m  ON hm.id_medicamento = m.id_medicamento
+            WHERE hm.activo = TRUE AND r.activo = TRUE
+              AND NOT EXISTS (
+                  SELECT 1 FROM log_medicamento lm
+                  WHERE lm.id_horario = hm.id_horario
+                    AND lm.fecha_administracion::date = CURRENT_DATE)
+            ORDER BY hm.hora_programada
+        """, fetchall=True) or []
+        administrados = query("""
+            SELECT r.nombre || ' ' || r.apellidos AS residente, m.nombre AS medicamento,
+                   hm.dosis, lm.fecha_administracion
+            FROM log_medicamento lm
+            JOIN horario_medicamento hm ON lm.id_horario    = hm.id_horario
+            JOIN residente r            ON hm.id_residente  = r.id_residente
+            JOIN medicamento m          ON hm.id_medicamento = m.id_medicamento
+            WHERE lm.fecha_administracion::date = CURRENT_DATE
+            ORDER BY lm.fecha_administracion DESC
+        """, fetchall=True) or []
+    else:
+        id_staff      = session['staff_id']
+        pendientes    = call_refcursor(
+            "CALL sp_meds_pendientes_cuidador(%s, 'resultado')", (id_staff,))
+        administrados = call_refcursor(
+            "CALL sp_medicamentos_admin_hoy(%s, 'resultado')", (id_staff,))
     return render_template('cuidador/medicamentos.html',
                            pendientes=pendientes,
                            administrados=administrados)
 
 @app.route('/cuidador/checkin', methods=['GET', 'POST'])
-@rol_required(3)
+@rol_required(1, 3)
 def cuidador_checkin():
     id_staff = session['staff_id']
     if request.method == 'POST':
@@ -1276,12 +1338,17 @@ def cuidador_checkin():
             flash(msg, 'error')
         return redirect(url_for('cuidador_residentes'))
 
-    residentes = call_refcursor(
-        "CALL sp_residentes_cuidador_lista(%s, 'resultado')", (id_staff,))
+    if session.get('nivel_acceso') == 1:
+        residentes = query(
+            "SELECT id_residente, nombre, apellidos FROM residente "
+            "WHERE activo = TRUE ORDER BY apellidos", fetchall=True) or []
+    else:
+        residentes = call_refcursor(
+            "CALL sp_residentes_cuidador_lista(%s, 'resultado')", (id_staff,))
     return render_template('cuidador/checkin.html', residentes=residentes)
 
 @app.route('/cuidador/incidente', methods=['GET', 'POST'])
-@rol_required(3)
+@rol_required(1, 3)
 def cuidador_incidente():
     id_staff = session['staff_id']
     if request.method == 'POST':
@@ -1297,14 +1364,19 @@ def cuidador_incidente():
               'exito' if ok else 'error')
         return redirect(url_for('cuidador_residentes'))
 
-    residentes = call_refcursor(
-        "CALL sp_residentes_cuidador_lista(%s, 'resultado')", (id_staff,))
+    if session.get('nivel_acceso') == 1:
+        residentes = query(
+            "SELECT id_residente, nombre, apellidos FROM residente "
+            "WHERE activo = TRUE ORDER BY apellidos", fetchall=True) or []
+    else:
+        residentes = call_refcursor(
+            "CALL sp_residentes_cuidador_lista(%s, 'resultado')", (id_staff,))
     return render_template('cuidador/incidente.html', residentes=residentes)
 
 # ── NFC: Simulacion de escaneo ────────────────────────────────────────────────
 
 @app.route('/cuidador/nfc', methods=['GET', 'POST'])
-@rol_required(3)
+@rol_required(1, 3)
 def cuidador_nfc():
     id_staff = session['staff_id']
     tags_nfc = call_refcursor("CALL sp_tags_nfc('resultado')")
@@ -2387,7 +2459,7 @@ def admin_gps_alerta_atender(id_alerta):
 # ── Cuidador GPS ──────────────────────────────────────────────────────────────
 
 @app.route('/cuidador/gps')
-@rol_required(3)
+@rol_required(1, 3)
 def cuidador_gps():
     return render_template('cuidador/gps.html')
 
@@ -2659,23 +2731,33 @@ def admin_asistencias():
 # ── Cuidador: historial de asistencias NFC de sus residentes ─────────────────
 
 @app.route('/cuidador/asistencias-nfc')
-@rol_required(3)
+@rol_required(1, 3)
 def cuidador_asistencias_nfc():
-    id_staff = session['staff_id']
-    rows = query("""
-        SELECT n.ts_registro, n.metodo, n.notas,
-               r.nombre || ' ' || r.apellidos AS residente, r.habitacion,
-               act.nombre AS actividad, act.tipo
-        FROM asistencia_nfc n
-        JOIN residente r   ON n.id_residente = r.id_residente
-        JOIN actividad act ON n.id_actividad  = act.id_actividad
-        JOIN asignacion a  ON a.id_residente  = r.id_residente
-                          AND a.id_staff      = %s
-                          AND a.tipo_rol      = 'Cuidador'
-                          AND a.fecha_fin IS NULL
-        ORDER BY n.ts_registro DESC
-        LIMIT 100
-    """, (id_staff,), fetchall=True) or []
+    if session.get('nivel_acceso') == 1:
+        rows = query("""
+            SELECT n.ts_registro, n.metodo, n.notas,
+                   r.nombre || ' ' || r.apellidos AS residente, r.habitacion,
+                   act.nombre AS actividad, act.tipo
+            FROM asistencia_nfc n
+            JOIN residente r   ON n.id_residente = r.id_residente
+            JOIN actividad act ON n.id_actividad  = act.id_actividad
+            ORDER BY n.ts_registro DESC LIMIT 200
+        """, fetchall=True) or []
+    else:
+        id_staff = session['staff_id']
+        rows = query("""
+            SELECT n.ts_registro, n.metodo, n.notas,
+                   r.nombre || ' ' || r.apellidos AS residente, r.habitacion,
+                   act.nombre AS actividad, act.tipo
+            FROM asistencia_nfc n
+            JOIN residente r   ON n.id_residente = r.id_residente
+            JOIN actividad act ON n.id_actividad  = act.id_actividad
+            JOIN asignacion a  ON a.id_residente  = r.id_residente
+                              AND a.id_staff      = %s
+                              AND a.tipo_rol      = 'Cuidador'
+                              AND a.fecha_fin IS NULL
+            ORDER BY n.ts_registro DESC LIMIT 100
+        """, (id_staff,), fetchall=True) or []
     return render_template('cuidador/asistencias_nfc.html', rows=rows)
 
 

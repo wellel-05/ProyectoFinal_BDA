@@ -194,6 +194,7 @@ DECLARE
     v_fin           TIMESTAMP;
     v_conflicto_t   INT := 0;
     v_conflicto_s   INT := 0;
+    v_conflicto_r   INT := 0;
 BEGIN
     v_fin := p_fecha_sesion + (p_duracion_min || ' minutes')::INTERVAL;
 
@@ -211,6 +212,13 @@ BEGIN
       AND fecha_sesion < v_fin
       AND (fecha_sesion + (duracion_min || ' minutes')::INTERVAL) > p_fecha_sesion;
 
+    -- Conflicto de residente
+    SELECT COUNT(*) INTO v_conflicto_r
+    FROM sesion_terapia
+    WHERE id_residente = p_id_residente
+      AND fecha_sesion < v_fin
+      AND (fecha_sesion + (duracion_min || ' minutes')::INTERVAL) > p_fecha_sesion;
+
     IF v_conflicto_t > 0 THEN
         ok := 0; msg := 'El terapeuta ya tiene una sesion en ese horario.';
         RETURN;
@@ -218,6 +226,11 @@ BEGIN
 
     IF v_conflicto_s > 0 THEN
         ok := 0; msg := 'La sala ya esta ocupada en ese horario.';
+        RETURN;
+    END IF;
+
+    IF v_conflicto_r > 0 THEN
+        ok := 0; msg := 'El residente ya tiene una sesion programada en ese horario.';
         RETURN;
     END IF;
 
@@ -364,6 +377,7 @@ $$;
 -- ============================================================
 
 -- Registra un evento de acceso RFID.
+-- Si el lector es restringido, concede acceso solo si el staff tiene turno en esa ala hoy.
 CREATE OR REPLACE PROCEDURE sp_registrar_acceso_rfid(
     p_id_lector         INT,
     p_id_staff          INT,
@@ -372,10 +386,32 @@ CREATE OR REPLACE PROCEDURE sp_registrar_acceso_rfid(
     OUT msg             TEXT
 )
 LANGUAGE plpgsql AS $$
+DECLARE
+    v_restringido   BOOLEAN;
+    v_id_ala        INT;
+    v_concedido     BOOLEAN;
 BEGIN
+    SELECT es_restringido, id_ala INTO v_restringido, v_id_ala
+    FROM lector_rfid WHERE id_lector = p_id_lector;
+
+    IF p_acceso_concedido IS NOT NULL THEN
+        v_concedido := p_acceso_concedido;
+    ELSIF v_restringido THEN
+        SELECT EXISTS (
+            SELECT 1 FROM turno
+            WHERE id_staff = p_id_staff
+              AND fecha     = CURRENT_DATE
+              AND id_ala    = v_id_ala
+        ) INTO v_concedido;
+    ELSE
+        v_concedido := TRUE;
+    END IF;
+
     INSERT INTO acceso_rfid (id_lector, id_staff, acceso_concedido)
-    VALUES (p_id_lector, p_id_staff, COALESCE(p_acceso_concedido, TRUE));
-    ok := 1; msg := 'Acceso registrado.';
+    VALUES (p_id_lector, p_id_staff, v_concedido);
+
+    ok := 1;
+    msg := CASE WHEN v_concedido THEN 'Acceso concedido.' ELSE 'Acceso denegado: sin turno asignado.' END;
 EXCEPTION WHEN OTHERS THEN
     ok := 0; msg := 'Error: ' || SQLERRM;
 END;
@@ -409,8 +445,7 @@ END;
 $$;
 
 
--- Detecta accesos a areas restringidas por staff sin turno asignado
--- en ese ala en esa fecha.
+-- Devuelve accesos denegados (acceso_concedido = FALSE).
 CREATE OR REPLACE PROCEDURE sp_accesos_no_autorizados(
     p_fecha DATE,
     INOUT resultado REFCURSOR
@@ -433,14 +468,7 @@ BEGIN
     JOIN lector_rfid lr  ON ar.id_lector  = lr.id_lector
     LEFT JOIN ala    a   ON lr.id_ala     = a.id_ala
     WHERE ar.accedido_en::DATE = p_fecha
-      AND lr.es_restringido = TRUE
-      AND ar.acceso_concedido = TRUE
-      AND NOT EXISTS (
-          SELECT 1 FROM turno t
-          WHERE t.id_staff = ar.id_staff
-            AND t.fecha    = p_fecha
-            AND t.id_ala   = lr.id_ala
-      )
+      AND ar.acceso_concedido = FALSE
     ORDER BY ar.accedido_en DESC;
 END;
 $$;
@@ -705,6 +733,9 @@ CREATE OR REPLACE PROCEDURE sp_checkin_estado_animo(
 )
 LANGUAGE plpgsql AS $$
 BEGIN
+    IF p_puntaje IS NULL OR p_puntaje < 1 OR p_puntaje > 5 THEN
+        ok := 0; msg := 'El puntaje de animo debe estar entre 1 y 5.'; RETURN;
+    END IF;
     INSERT INTO checkin_estado_animo (id_residente, id_cuidador, puntaje, notas)
     VALUES (p_id_residente, p_id_cuidador, p_puntaje, p_notas);
     ok := 1; msg := 'Check-in registrado.';
@@ -763,7 +794,7 @@ END;
 $$;
 
 
--- Elimina una sesion de terapia (solo el propio terapeuta puede borrarla).
+-- Elimina una sesion de terapia. Admin (p_id_terapeuta NULL) puede borrar cualquiera.
 CREATE OR REPLACE PROCEDURE sp_eliminar_sesion(
     p_id_sesion     INT,
     p_id_terapeuta  INT,
@@ -772,8 +803,12 @@ CREATE OR REPLACE PROCEDURE sp_eliminar_sesion(
 )
 LANGUAGE plpgsql AS $$
 BEGIN
-    DELETE FROM sesion_terapia
-    WHERE id_sesion = p_id_sesion AND id_terapeuta = p_id_terapeuta;
+    IF p_id_terapeuta IS NULL THEN
+        DELETE FROM sesion_terapia WHERE id_sesion = p_id_sesion;
+    ELSE
+        DELETE FROM sesion_terapia
+        WHERE id_sesion = p_id_sesion AND id_terapeuta = p_id_terapeuta;
+    END IF;
     IF NOT FOUND THEN
         ok := 0; msg := 'Sesion no encontrada o no pertenece a este terapeuta.';
     ELSE
@@ -1240,7 +1275,30 @@ CREATE OR REPLACE PROCEDURE sp_registrar_turno(
     OUT p_id  INT
 )
 LANGUAGE plpgsql AS $$
+DECLARE
+    v_conflicto INT;
 BEGIN
+    SELECT COUNT(*) INTO v_conflicto
+    FROM turno
+    WHERE id_staff    = p_id_staff
+      AND fecha       = p_fecha
+      AND hora_inicio < p_hora_fin
+      AND hora_fin    > p_hora_inicio;
+
+    IF v_conflicto > 0 THEN
+        p_ok := FALSE;
+        p_msg := 'Conflicto de horario: el empleado ya tiene un turno en ese intervalo.';
+        p_id := NULL;
+        RETURN;
+    END IF;
+
+    IF p_hora_inicio >= p_hora_fin THEN
+        p_ok := FALSE;
+        p_msg := 'La hora de inicio debe ser anterior a la hora de fin.';
+        p_id := NULL;
+        RETURN;
+    END IF;
+
     INSERT INTO turno (id_staff, id_ala, fecha, hora_inicio, hora_fin)
     VALUES (p_id_staff, p_id_ala, p_fecha, p_hora_inicio, p_hora_fin)
     RETURNING id_turno INTO p_id;
@@ -1483,6 +1541,13 @@ CREATE OR REPLACE PROCEDURE sp_cambiar_cuidador(
 )
 LANGUAGE plpgsql AS $$
 BEGIN
+    -- Validar que el nuevo cuidador existe, esta activo y tiene rol Cuidador
+    IF NOT EXISTS (
+        SELECT 1 FROM staff WHERE id_staff = p_id_nuevo_cuidador AND activo = TRUE AND id_rol = 3
+    ) THEN
+        ok := 0; msg := 'El cuidador seleccionado no existe, esta inactivo o no tiene el rol correcto.'; RETURN;
+    END IF;
+
     -- Cerrar asignaciones de Cuidador vigentes
     UPDATE asignacion
        SET fecha_fin = CURRENT_DATE

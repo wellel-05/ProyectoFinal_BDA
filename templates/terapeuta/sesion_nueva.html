@@ -25,6 +25,17 @@
     <div class="card-body">
       <form method="POST" action="{{ url_for('terapeuta_sesion_nueva') }}">
         <div class="form-grid" style="margin-bottom:18px">
+          {% if es_admin %}
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Terapeuta *</label>
+            <select name="id_terapeuta" required>
+              <option value="">Seleccionar terapeuta…</option>
+              {% for t in terapeutas %}
+              <option value="{{ t.id_staff }}">{{ t.nombre }} {{ t.apellidos }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% endif %}
           <div class="form-group">
             <label>Residente *</label>
             <select name="id_residente" required>
