@@ -120,7 +120,7 @@ CREATE TABLE asignacion (
     fecha_inicio    DATE         NOT NULL DEFAULT CURRENT_DATE,
     fecha_fin       DATE,
     es_principal    BOOLEAN      NOT NULL DEFAULT FALSE,
-    CONSTRAINT ck_asignacion_fechas CHECK (fecha_fin IS NULL OR fecha_fin > fecha_inicio),
+    CONSTRAINT ck_asignacion_fechas CHECK (fecha_fin IS NULL OR fecha_fin >= fecha_inicio),
     CONSTRAINT fk_asignacion_residente FOREIGN KEY (id_residente)
         REFERENCES residente(id_residente) ON UPDATE CASCADE,
     CONSTRAINT fk_asignacion_staff FOREIGN KEY (id_staff)

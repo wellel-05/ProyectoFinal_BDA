@@ -22,7 +22,7 @@ except ImportError:
 
 # ── Configuracion ─────────────────────────────────────────────────────────────
 
-API_URL      = "http://localhost:8080/api/beacon"
+API_URL      = "http://34.27.195.120:8080/api/beacon"
 API_KEY      = "eldercare_iot_2026_demo"   # debe coincidir con .env IOT_API_KEY
 SCAN_TIMEOUT = 8.0    # segundos que dura cada escaneo BLE
 RSSI_MIN     = -85    # dBm — señales mas debiles se ignoran (muy lejos)

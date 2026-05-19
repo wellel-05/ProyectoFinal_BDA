@@ -1,6 +1,6 @@
 # ElderCare — Sistema de Gestion de Asilo de Adultos Mayores
 
-Sistema integral para la gestion clinica, operativa y de monitoreo de un asilo de adultos mayores con enfoque en salud mental. Integra tres portales diferenciados por rol, monitoreo IoT en tiempo real (GPS, NFC, RFID, Beacon BLE) y analítica con graficas interactivas.
+Sistema integral para la gestion clinica, operativa y de monitoreo de un asilo de adultos mayores con enfoque en salud mental. Integra cuatro portales diferenciados por rol, monitoreo IoT en tiempo real (GPS, NFC, RFID, Beacon BLE) y analítica con graficas interactivas.
 
 **Equipo 5 — Bases de Datos Avanzadas — UDEM**
 
@@ -33,7 +33,7 @@ proyectoFinalBDA-main/
 ├── requirements.txt          # Dependencias Python
 │
 │   ── SQL — ejecutar en este orden ──────────────────────────────
-├── DDL.sql                   # Esquema principal: 32 tablas, indices, constraints
+├── DDL.sql                   # Esquema principal: tablas core, indices, constraints
 ├── gps_ddl.sql               # Tablas GPS avanzadas: dispositivo_gps, posicion_gps,
 │                             #   zona_gps, alerta_gps (integracion Traccar)
 ├── nfc_ddl.sql               # Tablas NFC adicionales: actividad, asistencia_nfc
@@ -45,7 +45,6 @@ proyectoFinalBDA-main/
 ├── SEED.sql                  # Datos de prueba (5 escenarios + familiares)
 │
 │   ── Documentacion ──────────────────────────────────────────────
-├── DOCUMENTACION_TECNICA.txt # Documentacion tecnica del sistema
 ├── DIAGRAMA_ER.drawio        # Diagrama Entidad-Relacion (draw.io)
 ├── generar_diagrama.py       # Script para regenerar el diagrama ER
 │
@@ -80,7 +79,7 @@ proyectoFinalBDA-main/
 
 ## Base de datos
 
-### Tablas (32)
+### Tablas (34)
 
 | Modulo | Tablas |
 |--------|--------|
@@ -92,9 +91,9 @@ proyectoFinalBDA-main/
 | IoT — NFC | `nfc_tag`, `nfc_evento`, `actividad`, `asistencia_nfc` |
 | IoT — RFID | `lector_rfid`, `acceso_rfid` |
 | IoT — Beacon | `beacon`, `deteccion_beacon` |
-| IoT — GPS | `dispositivo_gps`, `posicion_gps`, `zona_gps`, `alerta_gps`, `limite_jardin` |
+| IoT — GPS | `gps_ping`, `dispositivo_gps`, `posicion_gps`, `zona_gps`, `alerta_gps`, `limite_jardin` |
 | Auditoria | `log_auditoria` |
-| Familiares | `familiar`, `familiar_residente`, `usuario_familiar` |
+| Familiares | `familiar`, `familiar_residente`, `usuario_familiar`, `plan_residente`, `pago` |
 
 ### Procedimientos almacenados (54+)
 
@@ -379,14 +378,14 @@ El esquema cumple **Tercera Forma Normal (3NF)**:
 
 ## Diagrama ER
 
-El archivo `DIAGRAMA_ER.drawio` contiene el diagrama Entidad-Relacion completo con las 32 tablas organizadas por modulo:
+El archivo `DIAGRAMA_ER.drawio` contiene el diagrama Entidad-Relacion completo con las 34 tablas organizadas por modulo:
 
 - Catalogo (top): `rol`, `ala`, `sala`, `medicamento`, `limite_jardin`
 - Core (centro): `staff`, `usuario_sistema`, `residente`, `asignacion`
 - Clinico: `sesion_terapia`, `checkin_estado_animo`, `reporte_incidente`, `horario_medicamento`, `log_medicamento`
 - IoT: `nfc_tag`, `nfc_evento`, `actividad`, `asistencia_nfc`, `lector_rfid`, `acceso_rfid`, `beacon`, `deteccion_beacon`
-- GPS: `dispositivo_gps`, `posicion_gps`, `zona_gps`, `alerta_gps`
-- Familiar: `familiar`, `familiar_residente`, `usuario_familiar`
+- GPS: `gps_ping`, `dispositivo_gps`, `posicion_gps`, `zona_gps`, `alerta_gps`
+- Familiar: `familiar`, `familiar_residente`, `usuario_familiar`, `plan_residente`, `pago`
 - Auditoria: `log_auditoria`, `turno`
 
 Para abrir: [draw.io](https://app.diagrams.net/) → File → Open from → Device → seleccionar `DIAGRAMA_ER.drawio`.
